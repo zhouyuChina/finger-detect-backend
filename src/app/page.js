@@ -1,10 +1,12 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -12,8 +14,8 @@ export default function Home() {
     
     // 简单的登录验证（实际项目中应该调用后端 API）
     if (username === 'admin' && password === 'admin123') {
-      alert('登录成功！')
-      // 这里可以跳转到管理后台
+      // 登录成功，跳转到仪表盘
+      router.push('/dashboard')
     } else {
       alert('用户名或密码错误！')
     }
