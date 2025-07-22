@@ -1,5 +1,7 @@
+import AdminLayout from '@/components/layout/AdminLayout'
+
 export default function Dashboard() {
-  return (
+  const dashboardContent = (
     <div className="space-y-6">
       {/* 页面标题 */}
       <div>
@@ -115,4 +117,6 @@ export default function Dashboard() {
       </div>
     </div>
   )
+
+  return <AdminLayout>{dashboardContent}</AdminLayout>
 } 
