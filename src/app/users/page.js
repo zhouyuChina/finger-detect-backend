@@ -1,9 +1,13 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [searchWechatName, setSearchWechatName] = useState('')
+  const [searchIdentity, setSearchIdentity] = useState('')
+  const [searchStatus, setSearchStatus] = useState('')
+  const [allUsers, setAllUsers] = useState([])
   
   // 模拟用户数据
   const generateUsers = () => {
@@ -23,22 +27,35 @@ export default function UsersPage() {
         age: 20 + (i % 50),
         gender: genders[i % genders.length],
         address: `${cities[i % cities.length]}市`,
-        subUsers: Math.floor(Math.random() * 10),
-        archives: Math.floor(Math.random() * 20),
-        photos: Math.floor(Math.random() * 50),
-        reports: Math.floor(Math.random() * 15),
+        subUsers: (i * 3) % 10,
+        archives: (i * 5) % 20,
+        photos: (i * 7) % 50,
+        reports: (i * 11) % 15,
+        unreadMessages: (i * 13) % 20,
         createdAt: `2024-${String(Math.floor(i / 30) + 1).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`
       })
     }
     return users
   }
 
-  const allUsers = generateUsers()
-  const totalUsers = allUsers.length
+  // 使用useEffect确保只在客户端生成数据
+  useEffect(() => {
+    setAllUsers(generateUsers())
+  }, [])
+  
+  // 过滤用户数据
+  const filteredUsers = allUsers.filter(user => {
+    const matchWechatName = !searchWechatName || user.wechatName.toLowerCase().includes(searchWechatName.toLowerCase())
+    const matchIdentity = !searchIdentity || user.identity === searchIdentity
+    const matchStatus = !searchStatus || user.status === searchStatus
+    return matchWechatName && matchIdentity && matchStatus
+  })
+  
+  const totalUsers = filteredUsers.length
   const totalPages = Math.ceil(totalUsers / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const currentUsers = allUsers.slice(startIndex, endIndex)
+  const currentUsers = filteredUsers.slice(startIndex, endIndex)
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -46,6 +63,17 @@ export default function UsersPage() {
 
   const handlePageSizeChange = (size) => {
     setPageSize(size)
+    setCurrentPage(1)
+  }
+
+  const handleSearch = () => {
+    setCurrentPage(1)
+  }
+
+  const handleReset = () => {
+    setSearchWechatName('')
+    setSearchIdentity('')
+    setSearchStatus('')
     setCurrentPage(1)
   }
 
@@ -61,14 +89,68 @@ export default function UsersPage() {
           <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
             导出数据
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-            添加用户
-          </button>
+        </div>
+      </div>
+
+      {/* 搜索条件 */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">微信名</label>
+            <input
+              type="text"
+              value={searchWechatName}
+              onChange={(e) => setSearchWechatName(e.target.value)}
+              placeholder="请输入微信名"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">身份</label>
+            <select
+              value={searchIdentity}
+              onChange={(e) => setSearchIdentity(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">全部身份</option>
+              <option value="普通用户">普通用户</option>
+              <option value="VIP用户">VIP用户</option>
+              <option value="企业用户">企业用户</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">活跃状态</label>
+            <select
+              value={searchStatus}
+              onChange={(e) => setSearchStatus(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">全部状态</option>
+              <option value="active">活跃</option>
+              <option value="inactive">非活跃</option>
+              <option value="pending">待审核</option>
+            </select>
+          </div>
+          <div className="flex items-end space-x-2">
+            <button
+              onClick={handleSearch}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              搜索
+            </button>
+            <button
+              onClick={handleReset}
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+            >
+              重置
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -93,7 +175,7 @@ export default function UsersPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">活跃用户</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {allUsers.filter(u => u.status === 'active').length}
+                {filteredUsers.filter(u => u.status === 'active').length}
               </p>
             </div>
           </div>
@@ -123,7 +205,23 @@ export default function UsersPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">总检测数</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {allUsers.reduce((sum, user) => sum + user.reports, 0)}
+                {filteredUsers.reduce((sum, user) => sum + user.reports, 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
+                <span className="text-white text-lg">💬</span>
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">未读消息</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {filteredUsers.reduce((sum, user) => sum + user.unreadMessages, 0)}
               </p>
             </div>
           </div>
@@ -184,6 +282,9 @@ export default function UsersPage() {
                   报告数量
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  未读消息
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   操作
                 </th>
               </tr>
@@ -236,6 +337,15 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.reports}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      user.unreadMessages > 0 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {user.unreadMessages}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button className="text-blue-600 hover:text-blue-900 mr-3">查看</button>

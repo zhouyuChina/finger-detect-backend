@@ -9,11 +9,12 @@ export default function LayoutWrapper({ children }) {
   const adminPaths = [
     '/dashboard',
     '/banners',
-    '/consultations', 
+    '/news', 
     '/users',
     '/archives',
     '/detections',
-    '/messages',
+    '/feedback',
+    '/system-replies',
     '/coupons',
     '/company',
     '/settings'
