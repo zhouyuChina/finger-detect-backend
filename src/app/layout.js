@@ -1,6 +1,4 @@
-'use client'
-import { usePathname } from 'next/navigation'
-import AdminLayout from '@/components/layout/AdminLayout'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import "./globals.css"
 
 export const metadata = {
@@ -9,32 +7,12 @@ export const metadata = {
 }
 
 export default function RootLayout({ children }) {
-  const pathname = usePathname()
-  
-  // 管理页面路径列表
-  const adminPaths = [
-    '/dashboard',
-    '/banners',
-    '/consultations', 
-    '/users',
-    '/archives',
-    '/detections',
-    '/messages',
-    '/coupons',
-    '/company',
-    '/settings'
-  ]
-  
-  const isAdminPage = adminPaths.some(path => pathname?.startsWith(path))
-
   return (
     <html lang="zh-CN">
       <body className="font-sans antialiased">
-        {isAdminPage ? (
-          <AdminLayout>{children}</AdminLayout>
-        ) : (
-          children
-        )}
+        <LayoutWrapper>
+          {children}
+        </LayoutWrapper>
       </body>
     </html>
   )
