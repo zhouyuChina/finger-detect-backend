@@ -7,9 +7,14 @@ export default function AdminLayout({ children }) {
 
   const menuItems = [
     { name: '仪表盘', icon: '📊', href: '/dashboard' },
+    { name: 'Banner管理', icon: '🖼️', href: '/dashboard/banners' },
+    { name: '咨询管理', icon: '💬', href: '/dashboard/consultations' },
     { name: '用户管理', icon: '👥', href: '/dashboard/users' },
+    { name: '档案管理', icon: '📁', href: '/dashboard/archives' },
     { name: '检测记录', icon: '🔍', href: '/dashboard/detections' },
-    { name: '数据分析', icon: '📈', href: '/dashboard/analytics' },
+    { name: '留言管理', icon: '💌', href: '/dashboard/messages' },
+    { name: '优惠券管理', icon: '🎫', href: '/dashboard/coupons' },
+    { name: '企业介绍', icon: '🏢', href: '/dashboard/company' },
     { name: '系统设置', icon: '⚙️', href: '/dashboard/settings' },
   ]
 
@@ -31,7 +36,7 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* 菜单列表 */}
-        <nav className="mt-4">
+        <nav className="mt-4 overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
           {menuItems.map((item) => (
             <Link
               key={item.name}
@@ -45,7 +50,7 @@ export default function AdminLayout({ children }) {
         </nav>
 
         {/* 底部授权信息 */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
           {!collapsed && (
             <div className="text-xs text-gray-500 text-center">
               <p>© 2024 指纹检测系统</p>
