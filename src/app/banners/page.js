@@ -22,7 +22,7 @@ export default function BannersPage() {
     }
   ]
 
-  const bannerContent = (
+  return (
     <div className="space-y-6">
       {/* 页面标题 */}
       <div className="flex justify-between items-center">
@@ -231,6 +231,4 @@ export default function BannersPage() {
       </div>
     </div>
   )
-
-  return <AdminLayout>{bannerContent}</AdminLayout>
 } 

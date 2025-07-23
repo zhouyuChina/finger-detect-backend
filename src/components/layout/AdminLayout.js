@@ -7,15 +7,15 @@ export default function AdminLayout({ children }) {
 
   const menuItems = [
     { name: '仪表盘', icon: '📊', href: '/dashboard' },
-    { name: 'Banner管理', icon: '🖼️', href: '/dashboard/banners' },
-    { name: '咨询管理', icon: '💬', href: '/dashboard/consultations' },
-    { name: '用户管理', icon: '👥', href: '/dashboard/users' },
-    { name: '档案管理', icon: '📁', href: '/dashboard/archives' },
-    { name: '检测记录', icon: '🔍', href: '/dashboard/detections' },
-    { name: '留言管理', icon: '💌', href: '/dashboard/messages' },
-    { name: '优惠券管理', icon: '🎫', href: '/dashboard/coupons' },
-    { name: '企业介绍', icon: '🏢', href: '/dashboard/company' },
-    { name: '系统设置', icon: '⚙️', href: '/dashboard/settings' },
+    { name: 'Banner管理', icon: '🖼️', href: '/banners' },
+    { name: '咨询管理', icon: '💬', href: '/consultations' },
+    { name: '用户管理', icon: '👥', href: '/users' },
+    { name: '档案管理', icon: '📁', href: '/archives' },
+    { name: '检测记录', icon: '🔍', href: '/detections' },
+    { name: '留言管理', icon: '💌', href: '/messages' },
+    { name: '优惠券管理', icon: '🎫', href: '/coupons' },
+    { name: '企业介绍', icon: '🏢', href: '/company' },
+    { name: '系统设置', icon: '⚙️', href: '/settings' },
   ]
 
   return (
