@@ -11,6 +11,7 @@ export default function LayoutWrapper({ children }) {
     '/banners',
     '/news', 
     '/users',
+    '/user-management',
     '/archives',
     '/detections',
     '/feedback',

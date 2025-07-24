@@ -82,7 +82,7 @@ export default function UsersPage() {
       {/* 页面标题 */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">用户管理</h1>
+          <h1 className="text-2xl font-bold text-gray-900">ID管理</h1>
           <p className="text-gray-600">管理微信小程序用户信息和数据</p>
         </div>
         <div className="flex space-x-3">
