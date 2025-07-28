@@ -10,15 +10,18 @@ export default function ArchivesPage() {
   const [showViewModal, setShowViewModal] = useState(false)
   const [editingArchive, setEditingArchive] = useState(null)
   const [viewingArchive, setViewingArchive] = useState(null)
-  const [searchMainUser, setSearchMainUser] = useState('')
+  const [searchUserId, setSearchUserId] = useState('')
   const [searchUserNickname, setSearchUserNickname] = useState('')
   const [searchArchiveName, setSearchArchiveName] = useState('')
   const [searchActivity, setSearchActivity] = useState('')
   const [searchBodyPart, setSearchBodyPart] = useState('')
+  const [allArchives, setAllArchives] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
   
   // 表单状态
   const [formData, setFormData] = useState({
-    mainUser: '',
+    userId: '',
     userNickname: '',
     archiveName: '',
     activity: 'high',
@@ -33,7 +36,7 @@ export default function ArchivesPage() {
       const params = new URLSearchParams({
         page: currentPage,
         pageSize,
-        userId: searchMainUser,
+        userId: searchUserId,
         userNickname: searchUserNickname,
         archiveName: searchArchiveName,
         activity: searchActivity,
@@ -63,7 +66,7 @@ export default function ArchivesPage() {
   // 使用useEffect获取数据
   useEffect(() => {
     fetchArchives()
-  }, [currentPage, pageSize, searchMainUser, searchUserNickname, searchArchiveName, searchActivity, searchBodyPart])
+  }, [currentPage, pageSize, searchUserId, searchUserNickname, searchArchiveName, searchActivity, searchBodyPart])
   
   const totalArchives = allArchives.length
   const totalPages = Math.ceil(totalArchives / pageSize)
@@ -85,7 +88,7 @@ export default function ArchivesPage() {
   }
 
   const handleReset = () => {
-    setSearchMainUser('')
+    setSearchUserId('')
     setSearchUserNickname('')
     setSearchArchiveName('')
     setSearchActivity('')
@@ -97,7 +100,7 @@ export default function ArchivesPage() {
     if (archive) {
       setEditingArchive(archive)
       setFormData({
-        mainUser: archive.mainUser,
+        userId: archive.userId,
         userNickname: archive.userNickname,
         archiveName: archive.archiveName,
         activity: archive.activity,
@@ -107,7 +110,7 @@ export default function ArchivesPage() {
     } else {
       setEditingArchive(null)
       setFormData({
-        mainUser: '',
+        userId: '',
         userNickname: '',
         archiveName: '',
         activity: 'high',
@@ -127,7 +130,7 @@ export default function ArchivesPage() {
     setShowModal(false)
     setEditingArchive(null)
     setFormData({
-      mainUser: '',
+      userId: '',
       userNickname: '',
       archiveName: '',
       activity: 'high',
@@ -275,8 +278,8 @@ export default function ArchivesPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
-              value={searchMainUser}
-              onChange={(e) => setSearchMainUser(e.target.value)}
+              value={searchUserId}
+              onChange={(e) => setSearchUserId(e.target.value)}
               placeholder="请输入所属ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -583,8 +586,8 @@ export default function ArchivesPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">主用户</label>
                   <input
                     type="text"
-                    value={formData.mainUser}
-                    onChange={(e) => handleInputChange('mainUser', e.target.value)}
+                    value={formData.userId}
+                    onChange={(e) => handleInputChange('userId', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="请输入主用户ID"
                   />
@@ -684,7 +687,7 @@ export default function ArchivesPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">主用户</label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                    {viewingArchive.mainUser}
+                    {viewingArchive.userId}
                   </div>
                 </div>
                 
