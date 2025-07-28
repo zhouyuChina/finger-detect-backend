@@ -34,8 +34,30 @@ model User {
   detections  Detection[]
   feedbacks   Feedback[]
   coupons     UserCoupon[]
+  userId      UserId?
   
   @@map("users")
+}
+
+// ID管理表
+model UserId {
+  id            String   @id @default(cuid())
+  userId        String   @unique // 关联用户ID
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idNumber      String   // 身份证号
+  realName      String   // 真实姓名
+  idCardFront   String?  // 身份证正面照片
+  idCardBack    String?  // 身份证背面照片
+  idCardHand    String?  // 手持身份证照片
+  verifyStatus  String   @default("pending") // 认证状态: pending, verified, rejected
+  verifyTime    DateTime? // 认证时间
+  rejectReason  String?  // 拒绝原因
+  verifyAdminId String?  // 审核管理员ID
+  verifyAdmin   Admin?   @relation(fields: [verifyAdminId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("user_ids")
 }
 
 // 管理员表
@@ -51,6 +73,9 @@ model Admin {
   lastLogin DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // 关联关系
+  verifiedIds UserId[]
   
   @@map("admins")
 }
