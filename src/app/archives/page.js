@@ -228,12 +228,12 @@ export default function ArchivesPage() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">主用户</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
               value={searchMainUser}
               onChange={(e) => setSearchMainUser(e.target.value)}
-              placeholder="请输入主用户ID"
+              placeholder="请输入所属ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -392,7 +392,7 @@ export default function ArchivesPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  主用户
+                  所属ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   用户昵称
@@ -447,16 +447,22 @@ export default function ArchivesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
-                      onClick={() => openViewModal(archive)}
-                      className="text-green-600 hover:text-green-900 mr-3"
-                    >
-                      查看
-                    </button>
-                    <button 
-                      onClick={() => openModal(archive)}
+                      onClick={() => console.log('查看图片功能待实现')}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
-                      编辑
+                      查看图片
+                    </button>
+                    <button 
+                      onClick={() => console.log('导出图片功能待实现')}
+                      className="text-green-600 hover:text-green-900 mr-3"
+                    >
+                      导出图片
+                    </button>
+                    <button 
+                      onClick={() => console.log('报告功能待实现')}
+                      className="text-purple-600 hover:text-purple-900 mr-3"
+                    >
+                      报告
                     </button>
                     <button 
                       onClick={() => handleDelete(archive.id)}
