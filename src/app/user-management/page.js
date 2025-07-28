@@ -140,9 +140,6 @@ export default function UserManagementPage() {
           <p className="text-gray-600">管理ID建立的用户信息和数据</p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-            新增用户
-          </button>
           <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
             导出数据
           </button>
@@ -364,16 +361,16 @@ export default function UserManagementPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
-                      onClick={() => handleViewUser(user)}
+                      onClick={() => console.log('建档功能待实现')}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
-                      查看
+                      建档
                     </button>
                     <button 
-                      onClick={() => handleEditUser(user)}
-                      className="text-green-600 hover:text-green-900 mr-3"
+                      onClick={() => console.log('报告功能待实现')}
+                      className="text-purple-600 hover:text-purple-900 mr-3"
                     >
-                      编辑
+                      报告
                     </button>
                     <button 
                       onClick={() => handleDeleteUser(user)}
