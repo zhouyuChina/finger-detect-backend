@@ -95,6 +95,10 @@ model News {
   summary     String?  // 摘要
   coverImage  String?  // 封面图片
   author      String?  // 作者
+  category    String?  // 分类
+  tags        String[] // 标签数组
+  types       String[] // 类型数组 (置顶、重要、系统、通知)
+  status      String   @default("draft") // 状态: draft, unpublished, published, cancelled
   viewCount   Int      @default(0) // 浏览量
   isPublished Boolean  @default(false)
   publishedAt DateTime?

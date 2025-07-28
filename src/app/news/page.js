@@ -1,79 +1,46 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import RichTextContent from '@/components/RichTextContent'
+import { getLocalStorage } from '@/hooks/useLocalStorage'
 
 export default function NewsPage() {
+  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [showModal, setShowModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
-  const [editingNews, setEditingNews] = useState(null)
   const [viewingNews, setViewingNews] = useState(null)
   const [searchTitle, setSearchTitle] = useState('')
   const [searchType, setSearchType] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
   const [allNews, setAllNews] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
   
-  // 表单状态
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '',
-    image: '',
-    types: [],
-    status: 'draft'
-  })
 
-  // 模拟资讯数据
-  const generateNews = () => {
-    const news = []
-    const titles = [
-      '指纹识别技术最新突破',
-      '人工智能在安防领域的应用',
-      '生物识别技术发展趋势',
-      '智能门锁安全性能分析',
-      '移动支付安全技术探讨',
-      '物联网设备安全防护',
-      '区块链技术在身份认证中的应用',
-      '5G时代下的网络安全挑战',
-      '云计算安全架构设计',
-      '数据隐私保护最佳实践'
-    ]
-    const descriptions = [
-      '最新的指纹识别算法在准确性和速度方面都有显著提升...',
-      'AI技术在安防监控、人脸识别等领域的广泛应用...',
-      '生物识别技术正朝着多模态融合的方向发展...',
-      '智能门锁的安全性能评估和防护措施...',
-      '移动支付面临的安全挑战和解决方案...',
-      '物联网设备的安全防护策略和技术手段...',
-      '区块链技术如何改变传统的身份认证方式...',
-      '5G网络带来的安全挑战和应对措施...',
-      '云计算环境下的安全架构设计原则...',
-      '数据隐私保护的法律法规和技术实现...'
-    ]
-    const categories = ['技术资讯', '行业动态', '产品介绍', '安全分析', '政策解读']
-    const allTypes = ['置顶', '重要', '系统', '通知']
-    const statuses = ['draft', 'unpublished', 'published', 'cancelled']
-    
-    for (let i = 1; i <= 25; i++) {
-      const selectedTypes = allTypes.filter((_, index) => (i + index) % 2 === 0)
-      news.push({
-        id: i,
-        title: `${titles[i % titles.length]}${i}`,
-        description: descriptions[i % descriptions.length],
-        category: categories[i % categories.length],
-        image: `https://picsum.photos/300/200?random=${i}`,
-        types: selectedTypes.length > 0 ? selectedTypes : [allTypes[0]],
-        status: statuses[i % statuses.length],
-        readCount: (i * 17) % 10000,
-        createdAt: `2024-${String(Math.floor(i / 30) + 1).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`
-      })
+
+  // 从数据库获取资讯数据
+  const fetchNews = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/news')
+      const result = await response.json()
+      
+      if (response.ok) {
+        setAllNews(result.data.data || [])
+      } else {
+        setError(result.message || '获取数据失败')
+      }
+    } catch (err) {
+      setError('网络错误，请重试')
+    } finally {
+      setIsLoading(false)
     }
-    return news
   }
 
-  // 使用useEffect确保只在客户端生成数据
+  // 使用useEffect获取数据
   useEffect(() => {
-    setAllNews(generateNews())
+    fetchNews()
   }, [])
   
   // 过滤资讯数据
@@ -89,6 +56,11 @@ export default function NewsPage() {
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
   const currentNews = filteredNews.slice(startIndex, endIndex)
+
+  // 统计数据
+  const publishedCount = filteredNews.filter(n => n.status === 'published').length
+  const totalReads = filteredNews.reduce((sum, news) => sum + (news.viewCount || 0), 0)
+  const pinnedCount = filteredNews.filter(n => n.types.includes('置顶')).length
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -110,79 +82,49 @@ export default function NewsPage() {
     setCurrentPage(1)
   }
 
-  const openModal = (news = null) => {
-    if (news) {
-      setEditingNews(news)
-      setFormData({
-        title: news.title,
-        description: news.description,
-        category: news.category,
-        image: news.image,
-        types: news.types,
-        status: news.status
-      })
-    } else {
-      setEditingNews(null)
-      setFormData({
-        title: '',
-        description: '',
-        category: '',
-        image: '',
-        types: [],
-        status: 'draft'
-      })
-    }
-    setShowModal(true)
-  }
+
 
   const openViewModal = (news) => {
     setViewingNews(news)
     setShowViewModal(true)
   }
 
-  const closeModal = () => {
-    setShowModal(false)
-    setEditingNews(null)
-    setFormData({
-      title: '',
-      description: '',
-      category: '',
-      image: '',
-      types: [],
-      status: 'draft'
-    })
-  }
+
 
   const closeViewModal = () => {
     setShowViewModal(false)
     setViewingNews(null)
   }
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
 
-  const handleTypeChange = (type) => {
-    setFormData(prev => ({
-      ...prev,
-      types: prev.types.includes(type)
-        ? prev.types.filter(t => t !== type)
-        : [...prev.types, type]
-    }))
-  }
 
-  const handleSubmit = () => {
-    // 这里应该调用API保存数据
-    console.log('保存资讯:', formData)
-    closeModal()
-  }
+  const handleDelete = async (id) => {
+    if (!confirm('确定要删除这条资讯吗？')) return
+    
+    try {
+      const response = await fetch(`/api/news/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        }
+      })
 
-  const handleDelete = (id) => {
-    if (confirm('确定要删除这条资讯吗？')) {
-      console.log('删除资讯:', id)
+      const result = await response.json()
+
+      if (response.ok) {
+        alert('删除成功')
+        fetchNews() // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          // 认证失败，跳转到首页
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          alert(result.message || '删除失败')
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试')
     }
   }
 
@@ -216,7 +158,7 @@ export default function NewsPage() {
         </div>
         <div className="flex space-x-3">
           <button 
-            onClick={() => openModal()}
+            onClick={() => router.push('/news/add')}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
             新增资讯
@@ -283,6 +225,22 @@ export default function NewsPage() {
         </div>
       </div>
 
+      {/* 错误提示 */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 统计卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
@@ -309,7 +267,7 @@ export default function NewsPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">已发布</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredNews.filter(n => n.status === 'published').length}
+                {publishedCount}
               </p>
             </div>
           </div>
@@ -325,7 +283,7 @@ export default function NewsPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">总阅读量</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredNews.reduce((sum, news) => sum + news.readCount, 0).toLocaleString()}
+                {totalReads.toLocaleString()}
               </p>
             </div>
           </div>
@@ -341,7 +299,7 @@ export default function NewsPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">置顶资讯</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredNews.filter(n => n.types.includes('置顶')).length}
+                {pinnedCount}
               </p>
             </div>
           </div>
@@ -350,7 +308,14 @@ export default function NewsPage() {
 
       {/* 资讯列表 */}
       <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+        {isLoading ? (
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">加载中...</p>
+          </div>
+        ) : (
+          <>
+            <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">资讯列表</h2>
             <div className="flex items-center space-x-4">
@@ -409,30 +374,40 @@ export default function NewsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 max-w-xs truncate" title={news.description}>
-                      {news.description}
+                    <div className="text-sm text-gray-900 max-w-xs truncate" title={news.summary || ''}>
+                      {news.summary || '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {news.createdAt}
+                    {new Date(news.createdAt).toLocaleDateString('zh-CN')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {news.category}
+                    {news.category || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <img 
-                      src={news.image} 
-                      alt={news.title}
-                      className="w-12 h-8 object-cover rounded"
-                    />
+                    {news.coverImage ? (
+                      <img 
+                        src={news.coverImage} 
+                        alt={news.title}
+                        className="w-12 h-8 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-12 h-8 bg-gray-200 rounded flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">无图</span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-1">
-                      {news.types.map((type, index) => (
-                        <span key={index} className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {type}
-                        </span>
-                      ))}
+                      {news.types && news.types.length > 0 ? (
+                        news.types.map((type, index) => (
+                          <span key={index} className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {type}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -441,7 +416,7 @@ export default function NewsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {news.readCount.toLocaleString()}
+                    {(news.viewCount || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
@@ -451,7 +426,7 @@ export default function NewsPage() {
                       查看
                     </button>
                     <button 
-                      onClick={() => openModal(news)}
+                      onClick={() => router.push(`/news/edit/${news.id}`)}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
                       编辑
@@ -515,112 +490,11 @@ export default function NewsPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
 
-      {/* 新增/编辑模态框 */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingNews ? '编辑资讯' : '新增资讯'}
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">标题</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="请输入标题"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="请输入描述"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">类别</label>
-                  <input
-                    type="text"
-                    value={formData.category}
-                    onChange={(e) => handleInputChange('category', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="请输入类别"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">图片URL</label>
-                  <input
-                    type="text"
-                    value={formData.image}
-                    onChange={(e) => handleInputChange('image', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="请输入图片URL"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">类型</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['置顶', '重要', '系统', '通知'].map((type) => (
-                      <label key={type} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.types.includes(type)}
-                          onChange={() => handleTypeChange(type)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">{type}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => handleInputChange('status', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="draft">草稿</option>
-                    <option value="unpublished">未发布</option>
-                    <option value="published">已发布</option>
-                    <option value="cancelled">已作废</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  保存
-                </button>
-              </div>
-            </div>
-          </div>
-                 </div>
-       )}
+
 
        {/* 查看资讯模态框 */}
        {showViewModal && viewingNews && (
@@ -638,9 +512,16 @@ export default function NewsPage() {
                  </div>
                  
                  <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">摘要</label>
                    <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md min-h-[80px]">
-                     {viewingNews.description}
+                     {viewingNews.summary || '-'}
+                   </div>
+                 </div>
+                 
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">内容</label>
+                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md min-h-[200px]">
+                     <RichTextContent content={viewingNews.content} />
                    </div>
                  </div>
                  
@@ -652,13 +533,19 @@ export default function NewsPage() {
                  </div>
                  
                  <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">图片</label>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">封面图片</label>
                    <div className="px-3 py-2">
-                     <img 
-                       src={viewingNews.image} 
-                       alt={viewingNews.title}
-                       className="w-full max-w-md h-auto object-cover rounded"
-                     />
+                     {viewingNews.coverImage ? (
+                       <img 
+                         src={viewingNews.coverImage} 
+                         alt={viewingNews.title}
+                         className="w-full max-w-md h-auto object-cover rounded"
+                       />
+                     ) : (
+                       <div className="w-full max-w-md h-48 bg-gray-200 rounded flex items-center justify-center">
+                         <span className="text-gray-400">暂无图片</span>
+                       </div>
+                     )}
                    </div>
                  </div>
                  
@@ -687,14 +574,14 @@ export default function NewsPage() {
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">创建时间</label>
                    <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                     {viewingNews.createdAt}
+                     {new Date(viewingNews.createdAt).toLocaleString('zh-CN')}
                    </div>
                  </div>
                  
                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">阅读量</label>
                    <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                     {viewingNews.readCount.toLocaleString()}
+                     {(viewingNews.viewCount || 0).toLocaleString()}
                    </div>
                  </div>
                </div>

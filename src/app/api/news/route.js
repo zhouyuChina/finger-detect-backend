@@ -64,32 +64,60 @@ export async function POST(request) {
     if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
     
     const body = await request.json()
-    const { title, content, summary, coverImage, author, isPublished } = body
+    const { 
+      title, 
+      content, 
+      summary, 
+      coverImage, 
+      author, 
+      isPublished,
+      category,
+      tags,
+      status = 'draft',
+      readCount = 0,
+      isTop = false,
+      isImportant = false,
+      isSystem = false,
+      isNotification = false
+    } = body
     
     // 验证必填字段
-    if (!title || !content) {
+    if (!title) {
       return NextResponse.json({
         success: false,
-        message: '标题和内容是必填字段'
+        message: '标题是必填字段'
       }, { status: 400 })
     }
+    
+    // 构建类型数组
+    const types = []
+    if (isTop) types.push('置顶')
+    if (isImportant) types.push('重要')
+    if (isSystem) types.push('系统')
+    if (isNotification) types.push('通知')
     
     // 创建新闻
     const news = await prisma.news.create({
       data: {
         title,
-        content,
-        summary,
-        coverImage,
-        author,
+        content: content || '',
+        summary: summary || '',
+        coverImage: coverImage || '',
+        author: author || '系统',
+        category: category || '默认分类',
+        tags: tags || [],
+        types,
+        status,
+        viewCount: 0,
         isPublished: isPublished || false,
         publishedAt: isPublished ? new Date() : null
       }
     })
     
-    return wrapResponse(news, '新闻创建成功', 201)
+    return wrapResponse(news, '资讯创建成功', 201)
     
   } catch (error) {
+    console.error('创建新闻错误:', error)
     const errorResult = handleDatabaseError(error)
     return NextResponse.json(errorResult, { status: 500 })
   }
