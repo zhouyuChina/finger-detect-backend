@@ -1,26 +1,28 @@
 import { NextResponse } from 'next/server'
-import { prisma, createPagination, createPaginatedResponse, handleDatabaseError } from '../../../lib/db.js'
-import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../../lib/middleware.js'
+import { PrismaClient } from '../../../../src/generated/prisma/index.js'
+import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../src/lib/middleware.js'
+
+const prisma = new PrismaClient()
 
 // 获取反馈列表
 export async function GET(request) {
   try {
-    // 限流检查
-    const rateLimitResult = await rateLimitMiddleware(request, 100, 60)
+    // 速率限制
+    const rateLimitResult = await rateLimitMiddleware(request)
     if (rateLimitResult) return rateLimitResult
     
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
+    if (authResult && authResult.error) return authResult
     
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
-    const limit = parseInt(searchParams.get('limit')) || 10
+    const pageSize = parseInt(searchParams.get('pageSize')) || 10
     const status = searchParams.get('status') || ''
     const type = searchParams.get('type') || ''
     const userId = searchParams.get('userId') || ''
     
-    const { skip, take } = createPagination(page, limit)
+    const skip = (page - 1) * pageSize
     
     // 构建查询条件
     const where = {}
@@ -34,7 +36,7 @@ export async function GET(request) {
     }
     
     if (userId) {
-      where.userId = userId
+      where.userId = { contains: userId, mode: 'insensitive' }
     }
     
     // 查询反馈
@@ -42,7 +44,7 @@ export async function GET(request) {
       prisma.feedback.findMany({
         where,
         skip,
-        take,
+        take: pageSize,
         orderBy: { createdAt: 'desc' },
         include: {
           user: {
@@ -58,20 +60,33 @@ export async function GET(request) {
       prisma.feedback.count({ where })
     ])
     
-    const response = createPaginatedResponse(feedbacks, total, page, limit)
-    return wrapResponse(response, '获取反馈列表成功')
+    return NextResponse.json({
+      success: true,
+      data: {
+        data: feedbacks,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize)
+        }
+      }
+    })
     
   } catch (error) {
-    const errorResult = handleDatabaseError(error)
-    return NextResponse.json(errorResult, { status: 500 })
+    console.error('获取反馈列表失败:', error)
+    return NextResponse.json(
+      { success: false, message: '获取数据失败' },
+      { status: 500 }
+    )
   }
 }
 
 // 创建反馈
 export async function POST(request) {
   try {
-    // 限流检查
-    const rateLimitResult = await rateLimitMiddleware(request, 20, 60) // 用户反馈限制更严格
+    // 速率限制
+    const rateLimitResult = await rateLimitMiddleware(request)
     if (rateLimitResult) return rateLimitResult
     
     const body = await request.json()
@@ -126,10 +141,17 @@ export async function POST(request) {
       }
     })
     
-    return wrapResponse(feedback, '反馈提交成功', 201)
+    return NextResponse.json({
+      success: true,
+      message: '反馈提交成功',
+      data: feedback
+    }, { status: 201 })
     
   } catch (error) {
-    const errorResult = handleDatabaseError(error)
-    return NextResponse.json(errorResult, { status: 500 })
+    console.error('创建反馈失败:', error)
+    return NextResponse.json(
+      { success: false, message: '创建失败' },
+      { status: 500 }
+    )
   }
 } 
