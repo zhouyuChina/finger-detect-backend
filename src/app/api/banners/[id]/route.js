@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
     const authResult = await adminAuthMiddleware(request)
     if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
     
-    const { id } = params
+    const { id } = await params
     
     const banner = await prisma.banner.findUnique({
       where: { id }
@@ -45,7 +45,7 @@ export async function PUT(request, { params }) {
     const authResult = await adminAuthMiddleware(request)
     if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
     
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { title, imageUrl, linkUrl, sort, isActive, startTime, endTime } = body
     
@@ -94,7 +94,7 @@ export async function DELETE(request, { params }) {
     const authResult = await adminAuthMiddleware(request)
     if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
     
-    const { id } = params
+    const { id } = await params
     
     // 检查轮播图是否存在
     const existingBanner = await prisma.banner.findUnique({

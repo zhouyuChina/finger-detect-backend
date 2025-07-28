@@ -6,20 +6,32 @@ let redis = null
 export async function createRedisClient() {
   if (redis) return redis
   
+  // 检查是否启用Redis
+  if (process.env.REDIS_ENABLED === 'false') {
+    return null
+  }
+  
   try {
     redis = createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379'
     })
     
     redis.on('error', (err) => {
-      console.error('Redis连接错误:', err)
+      // 只在开发环境下显示详细错误
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Redis连接错误:', err)
+      }
     })
     
     await redis.connect()
-    console.log('Redis连接成功')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Redis连接成功')
+    }
     return redis
   } catch (error) {
-    console.error('Redis连接失败:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Redis连接失败:', error)
+    }
     return null
   }
 }

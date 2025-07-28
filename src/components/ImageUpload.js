@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef } from 'react'
-import SafeImage from './SafeImage'
+import SimpleImage from './SimpleImage'
 
 export default function ImageUpload({ value, onChange, placeholder = "请选择图片" }) {
   const [isUploading, setIsUploading] = useState(false)
@@ -97,7 +97,7 @@ export default function ImageUpload({ value, onChange, placeholder = "请选择�
                  ) : value ? (
            <div className="space-y-2">
              <div className="relative w-full h-32 mx-auto">
-               <SafeImage
+               <SimpleImage
                  src={value}
                  alt="预览"
                  fill

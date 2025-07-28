@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/layout/AdminLayout'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
-import SafeImage from '@/components/SafeImage'
+import SimpleImage from '@/components/SimpleImage'
 import SafeDate from '@/components/SafeDate'
 
 export default function BannersPage() {
@@ -11,6 +11,12 @@ export default function BannersPage() {
   const [banners, setBanners] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [config, setConfig] = useState({
+    banner_limit: '5',
+    banner_interval: '3',
+    banner_autoplay: true
+  })
+  const [isConfigLoading, setIsConfigLoading] = useState(false)
 
   // 获取Banner列表
   const fetchBanners = async () => {
@@ -27,6 +33,52 @@ export default function BannersPage() {
       setError('网络错误，请重试')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // 获取Banner配置
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch('/api/banners/config')
+      const result = await response.json()
+      
+      if (response.ok) {
+        setConfig({
+          banner_limit: result.data.banner_limit || '5',
+          banner_interval: result.data.banner_interval || '3',
+          banner_autoplay: result.data.banner_autoplay === 'true'
+        })
+      }
+    } catch (err) {
+      console.error('获取配置失败:', err)
+    }
+  }
+
+  // 保存Banner配置
+  const saveConfig = async () => {
+    setIsConfigLoading(true)
+    try {
+      const token = getLocalStorage('token')
+      const response = await fetch('/api/banners/config', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(config)
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert('配置保存成功')
+      } else {
+        alert(result.message || '保存失败')
+      }
+    } catch (err) {
+      alert('网络错误，请重试')
+    } finally {
+      setIsConfigLoading(false)
     }
   }
 
@@ -84,6 +136,7 @@ export default function BannersPage() {
 
   useEffect(() => {
     fetchBanners()
+    fetchConfig()
   }, [])
 
   if (isLoading) {
@@ -117,6 +170,67 @@ export default function BannersPage() {
         </div>
       )}
 
+      {/* Banner配置 */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Banner配置</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Banner数量限制
+            </label>
+            <input
+              type="number"
+              value={config.banner_limit}
+              onChange={(e) => setConfig(prev => ({ ...prev, banner_limit: e.target.value }))}
+              min="1"
+              max="10"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 mt-1">最多显示10个Banner</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              滚动间隔时间（秒）
+            </label>
+            <input
+              type="number"
+              value={config.banner_interval}
+              onChange={(e) => setConfig(prev => ({ ...prev, banner_interval: e.target.value }))}
+              min="1"
+              max="10"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 mt-1">1-10秒之间</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              自动播放
+            </label>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={config.banner_autoplay}
+                onChange={(e) => setConfig(prev => ({ ...prev, banner_autoplay: e.target.checked }))}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="ml-2 text-sm text-gray-700">启用自动轮播</label>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 flex justify-end">
+          <button 
+            onClick={saveConfig}
+            disabled={isConfigLoading}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isConfigLoading ? '保存中...' : '保存配置'}
+          </button>
+        </div>
+      </div>
+      
       {/* Banner列表 */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
@@ -166,7 +280,7 @@ export default function BannersPage() {
                   <tr key={banner.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="w-20 h-12 bg-gray-200 rounded-md overflow-hidden relative">
-                        <SafeImage
+                        <SimpleImage
                           src={banner.imageUrl}
                           alt={banner.title}
                           fill

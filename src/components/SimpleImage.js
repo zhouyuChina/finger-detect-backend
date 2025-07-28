@@ -1,10 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 
-export default function SafeImage({ src, alt, className, fill = false, ...props }) {
+export default function SimpleImage({ src, alt, className, fill = false, ...props }) {
   const [isClient, setIsClient] = useState(false)
   const [imageSrc, setImageSrc] = useState(src)
+  const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
@@ -12,6 +12,7 @@ export default function SafeImage({ src, alt, className, fill = false, ...props 
 
   useEffect(() => {
     setImageSrc(src)
+    setHasError(false)
   }, [src])
 
   // 服务端渲染时不显示图片
@@ -24,18 +25,26 @@ export default function SafeImage({ src, alt, className, fill = false, ...props 
     )
   }
 
+  if (hasError) {
+    return (
+      <div 
+        className={`bg-gray-200 flex items-center justify-center ${className}`}
+        style={fill ? { position: 'absolute', inset: 0 } : {}}
+      >
+        <span className="text-gray-400 text-xs">图片加载失败</span>
+      </div>
+    )
+  }
+
   return (
-    <Image
+    <img
       src={imageSrc}
       alt={alt}
       className={className}
-      fill={fill}
-      unoptimized
-      width={fill ? undefined : 400}
-      height={fill ? undefined : 300}
+      style={fill ? { position: 'absolute', inset: 0, objectFit: 'cover' } : {}}
       onError={(e) => {
         console.error('Image load error:', imageSrc)
-        e.target.style.display = 'none'
+        setHasError(true)
       }}
       {...props}
     />

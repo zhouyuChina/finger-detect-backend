@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import AdminLayout from '@/components/layout/AdminLayout'
 import ImageUpload from '@/components/ImageUpload'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
-import SafeImage from '@/components/SafeImage'
+import SimpleImage from '@/components/SimpleImage'
 
 export default function EditBannerPage() {
   const router = useRouter()
@@ -243,7 +243,7 @@ export default function EditBannerPage() {
               <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
                 <div className="max-w-md mx-auto">
                   <div className="relative w-full h-32">
-                    <SafeImage
+                    <SimpleImage
                       src={formData.imageUrl}
                       alt={formData.title}
                       fill
