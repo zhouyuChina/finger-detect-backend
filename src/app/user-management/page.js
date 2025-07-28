@@ -1,7 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { getLocalStorage } from '@/hooks/useLocalStorage'
 
 export default function UserManagementPage() {
+  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchUsername, setSearchUsername] = useState('')
@@ -10,48 +13,31 @@ export default function UserManagementPage() {
   const [allUsers, setAllUsers] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
   
-  // 模拟用户数据 - ID建立的用户
-  const generateUsers = () => {
-    const users = []
-    const names = ['小明', '小红', '小李', '小王', '小张', '小赵', '小钱', '小孙', '小周', '小吴']
-    const phones = ['13800138001', '13800138002', '13800138003', '13800138004', '13800138005']
-    const statuses = ['active', 'inactive', 'pending', 'banned']
-    const levels = ['普通用户', 'VIP用户', '高级用户', '企业用户']
-    const cities = ['北京', '上海', '广州', '深圳', '杭州', '南京', '武汉', '成都', '西安', '重庆']
-    const genders = ['男', '女']
-    
-    for (let i = 1; i <= 50; i++) {
-      users.push({
-        id: i,
-        username: `${names[i % names.length]}${i}`,
-        phone: `${phones[i % phones.length].slice(0, -2)}${String(i).padStart(2, '0')}`,
-        status: statuses[i % statuses.length],
-        level: levels[i % levels.length],
-        city: `${cities[i % cities.length]}市`,
-        registerDate: `2024-${String(Math.floor(i / 30) + 1).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`,
-        lastLogin: `2024-${String(Math.floor(i / 30) + 1).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
-        email: `user${i}@example.com`,
-        realName: `${names[i % names.length]}${i}`,
-        idCard: `11010119900101${String(i).padStart(4, '0')}`,
-        address: `${cities[i % cities.length]}市某区某街道${i}号`,
-        remark: i % 3 === 0 ? `用户备注信息${i}` : '',
-        // 新增字段
-        age: 20 + (i % 50),
-        gender: genders[i % genders.length],
-        userId: `ID${String(i).padStart(3, '0')}`, // 所属ID
-        archives: (i * 5) % 20, // 建档数量
-        photos: (i * 7) % 50, // 拍照数量
-        reports: (i * 11) % 15 // 报告数量
-      })
+  // 从数据库获取用户数据
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/user-management')
+      const result = await response.json()
+      
+      if (response.ok) {
+        setAllUsers(result.data.data || [])
+      } else {
+        setError(result.message || '获取数据失败')
+      }
+    } catch (err) {
+      setError('网络错误，请重试')
+    } finally {
+      setIsLoading(false)
     }
-    return users
   }
 
-  // 使用useEffect确保只在客户端生成数据
+  // 使用useEffect获取数据
   useEffect(() => {
-    setAllUsers(generateUsers())
+    fetchUsers()
   }, [])
   
   // 过滤用户数据
@@ -98,10 +84,33 @@ export default function UserManagementPage() {
     console.log('编辑用户:', user)
   }
 
-  const handleDeleteUser = (user) => {
-    // 删除用户逻辑
-    if (confirm(`确定要删除用户 ${user.username} 吗？`)) {
-      console.log('删除用户:', user)
+  const handleDeleteUser = async (user) => {
+    if (!confirm(`确定要删除用户 ${user.username} 吗？`)) return
+    
+    try {
+      const response = await fetch(`/api/user-management/${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        }
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert('删除成功')
+        fetchUsers() // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          // 认证失败，跳转到首页
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          alert(result.message || '删除失败')
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试')
     }
   }
 
@@ -195,6 +204,22 @@ export default function UserManagementPage() {
         </div>
       </div>
 
+      {/* 错误提示 */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 统计卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
@@ -246,22 +271,29 @@ export default function UserManagementPage() {
 
       {/* 用户列表 */}
       <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">用户列表</h2>
-            <div className="flex items-center space-x-4">
-              <select
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-              >
-                <option value={10}>10条/页</option>
-                <option value={20}>20条/页</option>
-                <option value={50}>50条/页</option>
-              </select>
-            </div>
+        {isLoading ? (
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">加载中...</p>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-gray-900">用户列表</h2>
+                <div className="flex items-center space-x-4">
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value={10}>10条/页</option>
+                    <option value={20}>20条/页</option>
+                    <option value={50}>50条/页</option>
+                  </select>
+                </div>
+              </div>
+            </div>
         
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -303,13 +335,8 @@ export default function UserManagementPage() {
               {currentUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                        <div className="text-sm text-gray-500">{user.realName}</div>
-                      </div>
-                    </div>
+                    <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                    <div className="text-sm text-gray-500">{user.realName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.userId}
@@ -407,7 +434,9 @@ export default function UserManagementPage() {
             </div>
           </div>
         </div>
-      </div>
+            </>
+          )}
+        </div>
 
       {/* 用户详情模态框 */}
       {showModal && selectedUser && (

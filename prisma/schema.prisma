@@ -17,15 +17,27 @@ datasource db {
 // 用户表
 model User {
   id          String   @id @default(cuid())
-  openid      String   @unique // 微信openid
+  openid      String?  @unique // 微信openid
   unionid     String?  @unique // 微信unionid
+  username    String?  @unique // 用户名
   nickname    String?  // 昵称
+  realName    String?  // 真实姓名
   avatar      String?  // 头像
   phone       String?  // 手机号
-  gender      Int?     // 性别 0-未知 1-男 2-女
+  email       String?  // 邮箱
+  gender      String?  // 性别
+  age         Int?     // 年龄
   city        String?  // 城市
   province    String?  // 省份
   country     String?  // 国家
+  address     String?  // 地址
+  status      String   @default("active") // 状态: active, inactive, pending, banned
+  userId      String?  // 所属ID
+  archives    Int      @default(0) // 建档数量
+  photos      Int      @default(0) // 拍照数量
+  reports     Int      @default(0) // 报告数量
+  lastLogin   DateTime? // 最后登录时间
+  remark      String?  // 备注
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   isActive    Boolean  @default(true)
@@ -34,7 +46,7 @@ model User {
   detections  Detection[]
   feedbacks   Feedback[]
   coupons     UserCoupon[]
-  userId      UserId?
+  userIdRecord UserId?
   
   @@map("users")
 }
