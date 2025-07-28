@@ -361,10 +361,10 @@ export default function UserManagementPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
-                      onClick={() => console.log('建档功能待实现')}
+                      onClick={() => console.log('档案功能待实现')}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
-                      建档
+                      档案
                     </button>
                     <button 
                       onClick={() => console.log('报告功能待实现')}
