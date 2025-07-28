@@ -43,7 +43,6 @@ model User {
   isActive    Boolean  @default(true)
   
   // 关联关系
-  detections  Detection[]
   feedbacks   Feedback[]
   coupons     UserCoupon[]
   userIdRecord UserId?
@@ -105,13 +104,16 @@ model Admin {
 // 检测记录表
 model Detection {
   id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String   // 所属ID
+  userNickname String  // 用户昵称
+  archiveName String   // 档案名称
+  bodyPart    String   @default("finger") // 检测部位: finger, palm, face, iris, voice
   imageUrl    String   // 检测图片URL
   result      String   // 检测结果 JSON格式
   confidence  Float    // 置信度
   status      String   @default("pending") // pending, processing, completed, failed
   errorMsg    String?  // 错误信息
+  detectionTime DateTime @default(now()) // 检测时间
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
