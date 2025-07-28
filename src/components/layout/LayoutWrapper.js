@@ -13,7 +13,7 @@ export default function LayoutWrapper({ children }) {
     '/dashboard',
     '/banners',
     '/news', 
-    '/users',
+    '/user-ids',
     '/user-management',
     '/archives',
     '/detections',

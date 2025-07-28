@@ -7,7 +7,6 @@ export default function UserManagementPage() {
   const [searchUsername, setSearchUsername] = useState('')
   const [searchPhone, setSearchPhone] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
-  const [searchLevel, setSearchLevel] = useState('')
   const [allUsers, setAllUsers] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
@@ -20,6 +19,7 @@ export default function UserManagementPage() {
     const statuses = ['active', 'inactive', 'pending', 'banned']
     const levels = ['普通用户', 'VIP用户', '高级用户', '企业用户']
     const cities = ['北京', '上海', '广州', '深圳', '杭州', '南京', '武汉', '成都', '西安', '重庆']
+    const genders = ['男', '女']
     
     for (let i = 1; i <= 50; i++) {
       users.push({
@@ -31,16 +31,19 @@ export default function UserManagementPage() {
         city: `${cities[i % cities.length]}市`,
         registerDate: `2024-${String(Math.floor(i / 30) + 1).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`,
         lastLogin: `2024-${String(Math.floor(i / 30) + 1).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`,
-        totalSpend: (i * 100 + Math.random() * 1000).toFixed(2),
-        orderCount: (i * 2) % 20,
-        detectionCount: (i * 3) % 30,
-        referralCount: (i * 1) % 10,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
         email: `user${i}@example.com`,
         realName: `${names[i % names.length]}${i}`,
         idCard: `11010119900101${String(i).padStart(4, '0')}`,
         address: `${cities[i % cities.length]}市某区某街道${i}号`,
-        remark: i % 3 === 0 ? `用户备注信息${i}` : ''
+        remark: i % 3 === 0 ? `用户备注信息${i}` : '',
+        // 新增字段
+        age: 20 + (i % 50),
+        gender: genders[i % genders.length],
+        userId: `ID${String(i).padStart(3, '0')}`, // 所属ID
+        archives: (i * 5) % 20, // 建档数量
+        photos: (i * 7) % 50, // 拍照数量
+        reports: (i * 11) % 15 // 报告数量
       })
     }
     return users
@@ -54,10 +57,9 @@ export default function UserManagementPage() {
   // 过滤用户数据
   const filteredUsers = allUsers.filter(user => {
     const matchUsername = !searchUsername || user.username.toLowerCase().includes(searchUsername.toLowerCase())
-    const matchPhone = !searchPhone || user.phone.includes(searchPhone)
+    const matchUserId = !searchPhone || user.userId.includes(searchPhone)
     const matchStatus = !searchStatus || user.status === searchStatus
-    const matchLevel = !searchLevel || user.level === searchLevel
-    return matchUsername && matchPhone && matchStatus && matchLevel
+    return matchUsername && matchUserId && matchStatus
   })
   
   const totalUsers = filteredUsers.length
@@ -83,7 +85,6 @@ export default function UserManagementPage() {
     setSearchUsername('')
     setSearchPhone('')
     setSearchStatus('')
-    setSearchLevel('')
     setCurrentPage(1)
   }
 
@@ -119,20 +120,7 @@ export default function UserManagementPage() {
     )
   }
 
-  const getLevelBadge = (level) => {
-    const levelMap = {
-      '普通用户': { class: 'bg-gray-100 text-gray-800' },
-      'VIP用户': { class: 'bg-yellow-100 text-yellow-800' },
-      '高级用户': { class: 'bg-blue-100 text-blue-800' },
-      '企业用户': { class: 'bg-purple-100 text-purple-800' }
-    }
-    const levelInfo = levelMap[level] || levelMap['普通用户']
-    return (
-      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${levelInfo.class}`}>
-        {level}
-      </span>
-    )
-  }
+
 
   return (
     <div className="space-y-6">
@@ -155,29 +143,29 @@ export default function UserManagementPage() {
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
             <input
               type="text"
               value={searchUsername}
               onChange={(e) => setSearchUsername(e.target.value)}
-              placeholder="请输入用户名"
+              placeholder="请输入用户名称"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">手机号</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
               value={searchPhone}
               onChange={(e) => setSearchPhone(e.target.value)}
-              placeholder="请输入手机号"
+              placeholder="请输入所属ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">用户状态</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">活跃状态</label>
             <select
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
@@ -188,20 +176,6 @@ export default function UserManagementPage() {
               <option value="inactive">非活跃</option>
               <option value="pending">待审核</option>
               <option value="banned">已禁用</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">用户等级</label>
-            <select
-              value={searchLevel}
-              onChange={(e) => setSearchLevel(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">全部等级</option>
-              <option value="普通用户">普通用户</option>
-              <option value="VIP用户">VIP用户</option>
-              <option value="高级用户">高级用户</option>
-              <option value="企业用户">企业用户</option>
             </select>
           </div>
           <div className="flex items-end space-x-2">
@@ -222,7 +196,7 @@ export default function UserManagementPage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -256,46 +230,14 @@ export default function UserManagementPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-lg">💰</span>
-              </div>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">总消费</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                ¥{filteredUsers.reduce((sum, user) => sum + parseFloat(user.totalSpend), 0).toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-lg">🔍</span>
+                <span className="text-white text-lg">📊</span>
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">总检测数</p>
+              <p className="text-sm font-medium text-gray-500">总建档数</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredUsers.reduce((sum, user) => sum + user.detectionCount, 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-lg">📈</span>
-              </div>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">推荐用户</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {filteredUsers.reduce((sum, user) => sum + user.referralCount, 0)}
+                {filteredUsers.reduce((sum, user) => sum + user.archives, 0)}
               </p>
             </div>
           </div>
@@ -326,25 +268,31 @@ export default function UserManagementPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  用户信息
+                  用户名称
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  联系方式
+                  所属ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  状态
+                  活跃状态
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  等级
+                  年龄
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  消费金额
+                  性别
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  检测次数
+                  地址
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  注册时间
+                  建档数量
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  拍照数量
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  报告数量
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   操作
@@ -363,24 +311,29 @@ export default function UserManagementPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.phone}</div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.userId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(user.status)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getLevelBadge(user.level)}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.age}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ¥{user.totalSpend}
+                    {user.gender}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.detectionCount}
+                    {user.address}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.registerDate}
+                    {user.archives}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.photos}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.reports}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
@@ -475,7 +428,7 @@ export default function UserManagementPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">用户名</label>
+                  <label className="block text-sm font-medium text-gray-700">用户名称</label>
                   <p className="mt-1 text-sm text-gray-900">{selectedUser.username}</p>
                 </div>
                 <div>
@@ -483,28 +436,36 @@ export default function UserManagementPage() {
                   <p className="mt-1 text-sm text-gray-900">{selectedUser.realName}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">手机号</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.phone}</p>
+                  <label className="block text-sm font-medium text-gray-700">所属ID</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedUser.userId}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">邮箱</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+                  <label className="block text-sm font-medium text-gray-700">年龄</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedUser.age}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">身份证号</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.idCard}</p>
+                  <label className="block text-sm font-medium text-gray-700">性别</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedUser.gender}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">地址</label>
                   <p className="mt-1 text-sm text-gray-900">{selectedUser.address}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">用户状态</label>
+                  <label className="block text-sm font-medium text-gray-700">活跃状态</label>
                   <div className="mt-1">{getStatusBadge(selectedUser.status)}</div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">用户等级</label>
-                  <div className="mt-1">{getLevelBadge(selectedUser.level)}</div>
+                  <label className="block text-sm font-medium text-gray-700">建档数量</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedUser.archives}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">拍照数量</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedUser.photos}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">报告数量</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedUser.reports}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">注册时间</label>
@@ -513,22 +474,6 @@ export default function UserManagementPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">最后登录</label>
                   <p className="mt-1 text-sm text-gray-900">{selectedUser.lastLogin}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">总消费金额</label>
-                  <p className="mt-1 text-sm text-gray-900">¥{selectedUser.totalSpend}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">订单数量</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.orderCount}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">检测次数</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.detectionCount}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">推荐用户数</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.referralCount}</p>
                 </div>
                 {selectedUser.remark && (
                   <div className="md:col-span-2">
