@@ -1,0 +1,11 @@
+-- AlterTable
+ALTER TABLE "user_ids" ADD COLUMN     "address" TEXT,
+ADD COLUMN     "age" INTEGER,
+ADD COLUMN     "archives" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "gender" TEXT,
+ADD COLUMN     "identity" TEXT NOT NULL DEFAULT '普通用户',
+ADD COLUMN     "photos" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "reports" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'pending',
+ADD COLUMN     "subUsers" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "unreadMessages" INTEGER NOT NULL DEFAULT 0;

@@ -14,7 +14,7 @@ export default function AdminLayout({ children }) {
     { name: '仪表盘', icon: '📊', href: '/dashboard' },
     { name: 'Banner管理', icon: '🖼️', href: '/banners' },
     { name: '资讯管理', icon: '📰', href: '/news' },
-    { name: 'ID管理', icon: '🆔', href: '/users' },
+    { name: 'ID管理', icon: '🆔', href: '/user-ids' },
     { name: '用户管理', icon: '👥', href: '/user-management' },
     { name: '档案管理', icon: '📁', href: '/archives' },
     { name: '检测记录', icon: '🔍', href: '/detections' },

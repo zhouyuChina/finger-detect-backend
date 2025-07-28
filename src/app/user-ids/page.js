@@ -44,7 +44,7 @@ export default function UserIdsPage() {
   const filteredUserIds = allUserIds.filter(userId => {
     const matchWechatName = !searchWechatName || 
       (userId.user?.nickname && userId.user.nickname.toLowerCase().includes(searchWechatName.toLowerCase()))
-    const matchStatus = !searchStatus || userId.verifyStatus === searchStatus
+    const matchStatus = !searchStatus || userId.status === searchStatus
     const matchRealName = !searchRealName || 
       (userId.realName && userId.realName.toLowerCase().includes(searchRealName.toLowerCase()))
     return matchWechatName && matchStatus && matchRealName
@@ -57,9 +57,9 @@ export default function UserIdsPage() {
   const currentUserIds = filteredUserIds.slice(startIndex, endIndex)
 
   // 统计数据
-  const pendingCount = filteredUserIds.filter(u => u.verifyStatus === 'pending').length
-  const verifiedCount = filteredUserIds.filter(u => u.verifyStatus === 'verified').length
-  const rejectedCount = filteredUserIds.filter(u => u.verifyStatus === 'rejected').length
+  const activeCount = filteredUserIds.filter(u => u.status === 'active').length
+  const pendingCount = filteredUserIds.filter(u => u.status === 'pending').length
+  const inactiveCount = filteredUserIds.filter(u => u.status === 'inactive').length
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -110,58 +110,7 @@ export default function UserIdsPage() {
     }
   }
 
-  const handleVerify = async (id, status, rejectReason = '') => {
-    const action = status === 'verified' ? '通过' : '拒绝'
-    if (!confirm(`确定要${action}这条ID记录吗？`)) return
-    
-    try {
-      const response = await fetch(`/api/user-ids/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
-        },
-        body: JSON.stringify({
-          verifyStatus: status,
-          rejectReason: status === 'rejected' ? rejectReason : undefined
-        })
-      })
 
-      const result = await response.json()
-
-      if (response.ok) {
-        alert(`${action}成功`)
-        fetchUserIds() // 重新获取数据
-      } else {
-        if (response.status === 401) {
-          alert('登录已过期，请重新登录')
-          router.push('/')
-        } else {
-          alert(result.message || `${action}失败`)
-        }
-      }
-    } catch (err) {
-      alert('网络错误，请重试')
-    }
-  }
-
-  const getStatusText = (status) => {
-    const statusMap = {
-      pending: '待审核',
-      verified: '已通过',
-      rejected: '已拒绝'
-    }
-    return statusMap[status] || status
-  }
-
-  const getStatusColor = (status) => {
-    const colorMap = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      verified: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800'
-    }
-    return colorMap[status] || 'bg-gray-100 text-gray-800'
-  }
 
   return (
     <div className="space-y-6">
@@ -203,16 +152,16 @@ export default function UserIdsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">认证状态</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">活跃状态</label>
             <select
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">全部状态</option>
+              <option value="active">活跃</option>
+              <option value="inactive">非活跃</option>
               <option value="pending">待审核</option>
-              <option value="verified">已通过</option>
-              <option value="rejected">已拒绝</option>
             </select>
           </div>
           <div className="flex items-end space-x-2">
@@ -267,6 +216,20 @@ export default function UserIdsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                <span className="text-white text-lg">✅</span>
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">活跃用户</p>
+              <p className="text-2xl font-semibold text-gray-900">{activeCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
                 <span className="text-white text-lg">⏳</span>
               </div>
@@ -281,27 +244,13 @@ export default function UserIdsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-lg">✅</span>
-              </div>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">已通过</p>
-              <p className="text-2xl font-semibold text-gray-900">{verifiedCount}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
                 <span className="text-white text-lg">❌</span>
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">已拒绝</p>
-              <p className="text-2xl font-semibold text-gray-900">{rejectedCount}</p>
+              <p className="text-sm font-medium text-gray-500">非活跃</p>
+              <p className="text-2xl font-semibold text-gray-900">{inactiveCount}</p>
             </div>
           </div>
         </div>
@@ -341,25 +290,34 @@ export default function UserIdsPage() {
                       微信名
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      真实姓名
+                      身份
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      身份证号
+                      活跃状态
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      认证状态
+                      年龄
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      身份证照片
+                      性别
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      提交时间
+                      地址
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      审核时间
+                      二级用户
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      审核人
+                      建档数量
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      拍照数量
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      报告数量
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      未读消息
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       操作
@@ -369,62 +327,60 @@ export default function UserIdsPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {currentUserIds.map((userId) => (
                     <tr key={userId.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          {userId.user?.avatar && (
-                            <SimpleImage
-                              src={userId.user.avatar}
-                              alt={userId.user.nickname || '用户头像'}
-                              className="w-8 h-8 rounded-full mr-3"
-                            />
-                          )}
-                          <div className="text-sm font-medium text-gray-900">
-                            {userId.user?.nickname || '未知用户'}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.realName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.idNumber}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{userId.user?.nickname || '未知用户'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(userId.verifyStatus)}`}>
-                          {getStatusText(userId.verifyStatus)}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          userId.identity === 'VIP用户' 
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : userId.identity === '企业用户'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {userId.identity}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex space-x-1">
-                          {userId.idCardFront && (
-                            <SimpleImage
-                              src={userId.idCardFront}
-                              alt="身份证正面"
-                              className="w-12 h-8 object-cover rounded"
-                            />
-                          )}
-                          {userId.idCardBack && (
-                            <SimpleImage
-                              src={userId.idCardBack}
-                              alt="身份证背面"
-                              className="w-12 h-8 object-cover rounded"
-                            />
-                          )}
-                          {!userId.idCardFront && !userId.idCardBack && (
-                            <div className="w-12 h-8 bg-gray-200 rounded flex items-center justify-center">
-                              <span className="text-gray-400 text-xs">无图</span>
-                            </div>
-                          )}
-                        </div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          userId.status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : userId.status === 'inactive'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {userId.status === 'active' ? '活跃' : userId.status === 'inactive' ? '非活跃' : '待审核'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <SafeDate date={userId.createdAt} />
+                        {userId.age}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.verifyTime ? <SafeDate date={userId.verifyTime} /> : '-'}
+                        {userId.gender}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.verifyAdmin?.name || '-'}
+                        {userId.address}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {userId.subUsers}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {userId.archives}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {userId.photos}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {userId.reports}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          userId.unreadMessages > 0 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {userId.unreadMessages}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button 
@@ -433,27 +389,12 @@ export default function UserIdsPage() {
                         >
                           查看
                         </button>
-                        {userId.verifyStatus === 'pending' && (
-                          <>
-                            <button 
-                              onClick={() => handleVerify(userId.id, 'verified')}
-                              className="text-green-600 hover:text-green-900 mr-3"
-                            >
-                              通过
-                            </button>
-                            <button 
-                              onClick={() => {
-                                const reason = prompt('请输入拒绝原因：')
-                                if (reason !== null) {
-                                  handleVerify(userId.id, 'rejected', reason)
-                                }
-                              }}
-                              className="text-red-600 hover:text-red-900 mr-3"
-                            >
-                              拒绝
-                            </button>
-                          </>
-                        )}
+                        <button 
+                          onClick={() => router.push(`/user-ids/edit/${userId.id}`)}
+                          className="text-green-600 hover:text-green-900 mr-3"
+                        >
+                          编辑
+                        </button>
                         <button 
                           onClick={() => handleDelete(userId.id)}
                           className="text-red-600 hover:text-red-900"

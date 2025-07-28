@@ -27,6 +27,10 @@ async function seedUserIds() {
       '110101199009099012',
       '110101199010100123'
     ]
+    const cities = ['北京', '上海', '广州', '深圳', '杭州', '南京', '武汉', '成都', '西安', '重庆']
+    const statuses = ['active', 'inactive', 'pending']
+    const genders = ['男', '女']
+    const userTypes = ['普通用户', 'VIP用户', '企业用户']
     const verifyStatuses = ['pending', 'verified', 'rejected']
     const rejectReasons = [
       '身份证照片不清晰',
@@ -41,6 +45,16 @@ async function seedUserIds() {
       const user = users[i]
       const realName = realNames[i % realNames.length]
       const idNumber = idNumbers[i % idNumbers.length]
+      const age = 20 + (i % 50)
+      const gender = genders[i % genders.length]
+      const address = `${cities[i % cities.length]}市`
+      const identity = userTypes[i % userTypes.length]
+      const status = statuses[i % statuses.length]
+      const subUsers = (i * 3) % 10
+      const archives = (i * 5) % 20
+      const photos = (i * 7) % 50
+      const reports = (i * 11) % 15
+      const unreadMessages = (i * 13) % 20
       const verifyStatus = verifyStatuses[i % verifyStatuses.length]
       
       // 检查是否已存在ID记录
@@ -58,6 +72,16 @@ async function seedUserIds() {
         userId: user.id,
         idNumber: idNumber,
         realName: realName,
+        age: age,
+        gender: gender,
+        address: address,
+        identity: identity,
+        status: status,
+        subUsers: subUsers,
+        archives: archives,
+        photos: photos,
+        reports: reports,
+        unreadMessages: unreadMessages,
         idCardFront: `/uploads/id-cards/front-${i + 1}.jpg`,
         idCardBack: `/uploads/id-cards/back-${i + 1}.jpg`,
         idCardHand: `/uploads/id-cards/hand-${i + 1}.jpg`,

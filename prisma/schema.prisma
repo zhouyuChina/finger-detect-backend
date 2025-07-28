@@ -46,6 +46,16 @@ model UserId {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   idNumber      String   // 身份证号
   realName      String   // 真实姓名
+  age           Int?     // 年龄
+  gender        String?  // 性别
+  address       String?  // 地址
+  identity      String   @default("普通用户") // 身份类型: 普通用户, VIP用户, 企业用户
+  status        String   @default("pending") // 活跃状态: active, inactive, pending
+  subUsers      Int      @default(0) // 二级用户数量
+  archives      Int      @default(0) // 建档数量
+  photos        Int      @default(0) // 拍照数量
+  reports       Int      @default(0) // 报告数量
+  unreadMessages Int     @default(0) // 未读消息数量
   idCardFront   String?  // 身份证正面照片
   idCardBack    String?  // 身份证背面照片
   idCardHand    String?  // 手持身份证照片

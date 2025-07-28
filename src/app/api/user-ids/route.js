@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@/generated/prisma'
-import { rateLimitMiddleware, adminAuthMiddleware } from '@/lib/middleware'
+import { PrismaClient } from '../../../../src/generated/prisma/index.js'
+import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../src/lib/middleware.js'
 
 const prisma = new PrismaClient()
 
