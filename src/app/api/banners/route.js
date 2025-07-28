@@ -1,0 +1,85 @@
+import { NextResponse } from 'next/server'
+import { prisma, createPagination, createPaginatedResponse, handleDatabaseError } from '../../../lib/db.js'
+import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../../lib/middleware.js'
+
+// 获取轮播图列表
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page')) || 1
+    const limit = parseInt(searchParams.get('limit')) || 10
+    const isActive = searchParams.get('isActive')
+    
+    const { skip, take } = createPagination(page, limit)
+    
+    // 构建查询条件
+    const where = {}
+    if (isActive !== null && isActive !== undefined) {
+      where.isActive = isActive === 'true'
+    }
+    
+    // 查询轮播图
+    const [banners, total] = await Promise.all([
+      prisma.banner.findMany({
+        where,
+        skip,
+        take,
+        orderBy: [
+          { sort: 'asc' },
+          { createdAt: 'desc' }
+        ]
+      }),
+      prisma.banner.count({ where })
+    ])
+    
+    const response = createPaginatedResponse(banners, total, page, limit)
+    return wrapResponse(response, '获取轮播图列表成功')
+    
+  } catch (error) {
+    const errorResult = handleDatabaseError(error)
+    return NextResponse.json(errorResult, { status: 500 })
+  }
+}
+
+// 创建轮播图
+export async function POST(request) {
+  try {
+    // 限流检查
+    const rateLimitResult = await rateLimitMiddleware(request, 50, 60)
+    if (rateLimitResult) return rateLimitResult
+    
+    // 管理员认证
+    const authResult = await adminAuthMiddleware(request)
+    if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
+    
+    const body = await request.json()
+    const { title, imageUrl, linkUrl, sort, isActive, startTime, endTime } = body
+    
+    // 验证必填字段
+    if (!title || !imageUrl) {
+      return NextResponse.json({
+        success: false,
+        message: '标题和图片URL是必填字段'
+      }, { status: 400 })
+    }
+    
+    // 创建轮播图
+    const banner = await prisma.banner.create({
+      data: {
+        title,
+        imageUrl,
+        linkUrl,
+        sort: sort || 0,
+        isActive: isActive !== undefined ? isActive : true,
+        startTime: startTime ? new Date(startTime) : null,
+        endTime: endTime ? new Date(endTime) : null
+      }
+    })
+    
+    return wrapResponse(banner, '轮播图创建成功', 201)
+    
+  } catch (error) {
+    const errorResult = handleDatabaseError(error)
+    return NextResponse.json(errorResult, { status: 500 })
+  }
+} 

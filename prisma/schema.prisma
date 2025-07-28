@@ -13,3 +13,208 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// 用户表
+model User {
+  id          String   @id @default(cuid())
+  openid      String   @unique // 微信openid
+  unionid     String?  @unique // 微信unionid
+  nickname    String?  // 昵称
+  avatar      String?  // 头像
+  phone       String?  // 手机号
+  gender      Int?     // 性别 0-未知 1-男 2-女
+  city        String?  // 城市
+  province    String?  // 省份
+  country     String?  // 国家
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  
+  // 关联关系
+  detections  Detection[]
+  feedbacks   Feedback[]
+  coupons     UserCoupon[]
+  
+  @@map("users")
+}
+
+// 管理员表
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // 加密后的密码
+  name      String   // 真实姓名
+  email     String?  @unique
+  phone     String?
+  role      String   @default("admin") // admin, super_admin
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("admins")
+}
+
+// 检测记录表
+model Detection {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imageUrl    String   // 检测图片URL
+  result      String   // 检测结果 JSON格式
+  confidence  Float    // 置信度
+  status      String   @default("pending") // pending, processing, completed, failed
+  errorMsg    String?  // 错误信息
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("detections")
+}
+
+// 轮播图表
+model Banner {
+  id          String   @id @default(cuid())
+  title       String   // 标题
+  imageUrl    String   // 图片URL
+  linkUrl     String?  // 链接URL
+  sort        Int      @default(0) // 排序
+  isActive    Boolean  @default(true)
+  startTime   DateTime? // 开始时间
+  endTime     DateTime? // 结束时间
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("banners")
+}
+
+// 新闻资讯表
+model News {
+  id          String   @id @default(cuid())
+  title       String   // 标题
+  content     String   // 内容
+  summary     String?  // 摘要
+  coverImage  String?  // 封面图片
+  author      String?  // 作者
+  viewCount   Int      @default(0) // 浏览量
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("news")
+}
+
+// 反馈表
+model Feedback {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // 反馈类型: bug, suggestion, complaint
+  title       String   // 标题
+  content     String   // 内容
+  images      String[] // 图片URL数组
+  status      String   @default("pending") // pending, processing, resolved, rejected
+  reply       String?  // 回复内容
+  repliedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("feedbacks")
+}
+
+// 系统回复模板表
+model SystemReply {
+  id          String   @id @default(cuid())
+  name        String   // 模板名称
+  type        String   // 类型: feedback, notification
+  content     String   // 内容
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("system_replies")
+}
+
+// 优惠券表
+model Coupon {
+  id          String   @id @default(cuid())
+  name        String   // 优惠券名称
+  code        String   @unique // 优惠券代码
+  type        String   // 类型: discount, free
+  value       Float    // 面值
+  minAmount   Float?   // 最低消费金额
+  maxDiscount Float?   // 最大优惠金额
+  totalCount  Int      // 总数量
+  usedCount   Int      @default(0) // 已使用数量
+  startTime   DateTime // 开始时间
+  endTime     DateTime // 结束时间
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // 关联关系
+  userCoupons UserCoupon[]
+  
+  @@map("coupons")
+}
+
+// 用户优惠券关联表
+model UserCoupon {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  isUsed    Boolean  @default(false)
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, couponId])
+  @@map("user_coupons")
+}
+
+// 公司信息表
+model Company {
+  id          String   @id @default(cuid())
+  name        String   // 公司名称
+  logo        String?  // 公司logo
+  description String?  // 公司描述
+  address     String?  // 地址
+  phone       String?  // 电话
+  email       String?  // 邮箱
+  website     String?  // 网站
+  wechat      String?  // 微信号
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("companies")
+}
+
+// 系统配置表
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique // 配置键
+  value       String   // 配置值
+  description String?  // 描述
+  type        String   @default("string") // string, number, boolean, json
+  isPublic    Boolean  @default(false) // 是否公开
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("system_configs")
+}
+
+// 操作日志表
+model OperationLog {
+  id          String   @id @default(cuid())
+  adminId     String?  // 管理员ID
+  action      String   // 操作类型
+  resource    String   // 操作资源
+  resourceId  String?  // 资源ID
+  details     String?  // 操作详情
+  ip          String?  // IP地址
+  userAgent   String?  // 用户代理
+  createdAt   DateTime @default(now())
+  
+  @@map("operation_logs")
+}
