@@ -33,10 +33,12 @@ export default function AdminLayout({ children }) {
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    if (typeof window !== 'undefined') {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
   }, []);
 
   return (
@@ -135,8 +137,10 @@ export default function AdminLayout({ children }) {
                     onClick={() => {
                       // 这里可以添加退出登录的逻辑
                       // 比如清除localStorage、cookies等
-                      localStorage.removeItem('token');
-                      localStorage.removeItem('user');
+                      if (typeof window !== 'undefined') {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                      }
                       // 跳转到登录页
                       router.push('/');
                     }}
