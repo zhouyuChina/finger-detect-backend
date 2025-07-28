@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function ArchivesPage() {
+  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [showModal, setShowModal] = useState(false)
@@ -24,63 +26,50 @@ export default function ArchivesPage() {
     bodyPart: 'finger'
   })
 
-  // 模拟档案数据
-  const generateArchives = () => {
-    const archives = []
-    const mainUsers = ['user001', 'user002', 'user003', 'user004', 'user005', 'user006', 'user007', 'user008', 'user009', 'user010']
-    const nicknames = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十', '郑十一', '王十二']
-    const archiveNames = [
-      '指纹档案A',
-      '生物识别档案B',
-      '身份认证档案C',
-      '安全检测档案D',
-      '个人档案E',
-      '企业档案F',
-      'VIP档案G',
-      '测试档案H',
-      '演示档案I',
-      '临时档案J'
-    ]
-    const activities = ['high', 'medium', 'low', 'inactive']
-    const bodyParts = ['finger', 'palm', 'face', 'iris', 'voice']
-    
-    for (let i = 1; i <= 30; i++) {
-      archives.push({
-        id: i,
-        mainUser: mainUsers[i % mainUsers.length],
-        userNickname: `${nicknames[i % nicknames.length]}${i}`,
-        archiveName: `${archiveNames[i % archiveNames.length]}${i}`,
-        activity: activities[i % activities.length],
-        photoCount: ((i * 7) % 100) + 1, // 使用确定性算法替代Math.random()
-        bodyPart: bodyParts[i % bodyParts.length],
-        detectionTime: `2024-${String(Math.floor(i / 30) + 1).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')} ${String((i * 3) % 24).padStart(2, '0')}:${String((i * 5) % 60).padStart(2, '0')}` // 使用确定性算法
+  // 从数据库获取档案数据
+  const fetchArchives = async () => {
+    try {
+      setIsLoading(true)
+      const params = new URLSearchParams({
+        page: currentPage,
+        pageSize,
+        userId: searchMainUser,
+        userNickname: searchUserNickname,
+        archiveName: searchArchiveName,
+        activity: searchActivity,
+        bodyPart: searchBodyPart
       })
+      
+      const response = await fetch(`/api/archives?${params}`)
+      const result = await response.json()
+      
+      if (response.ok) {
+        setAllArchives(result.data.data || [])
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          setError(result.message || '获取数据失败')
+        }
+      }
+    } catch (err) {
+      setError('网络错误，请重试')
+    } finally {
+      setIsLoading(false)
     }
-    return archives
   }
 
-  const [allArchives, setAllArchives] = useState([])
-  
-  // 使用useEffect确保只在客户端生成数据
+  // 使用useEffect获取数据
   useEffect(() => {
-    setAllArchives(generateArchives())
-  }, [])
+    fetchArchives()
+  }, [currentPage, pageSize, searchMainUser, searchUserNickname, searchArchiveName, searchActivity, searchBodyPart])
   
-  // 过滤档案数据
-  const filteredArchives = allArchives.filter(archive => {
-    const matchMainUser = !searchMainUser || archive.mainUser.toLowerCase().includes(searchMainUser.toLowerCase())
-    const matchUserNickname = !searchUserNickname || archive.userNickname.toLowerCase().includes(searchUserNickname.toLowerCase())
-    const matchArchiveName = !searchArchiveName || archive.archiveName.toLowerCase().includes(searchArchiveName.toLowerCase())
-    const matchActivity = !searchActivity || archive.activity === searchActivity
-    const matchBodyPart = !searchBodyPart || archive.bodyPart === searchBodyPart
-    return matchMainUser && matchUserNickname && matchArchiveName && matchActivity && matchBodyPart
-  })
-  
-  const totalArchives = filteredArchives.length
+  const totalArchives = allArchives.length
   const totalPages = Math.ceil(totalArchives / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const currentArchives = filteredArchives.slice(startIndex, endIndex)
+  const currentArchives = allArchives.slice(startIndex, endIndex)
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -159,15 +148,62 @@ export default function ArchivesPage() {
     }))
   }
 
-  const handleSubmit = () => {
-    // 这里应该调用API保存数据
-    console.log('保存档案:', formData)
-    closeModal()
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch('/api/archives', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert('保存成功')
+        closeModal()
+        fetchArchives() // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          alert(result.message || '保存失败')
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试')
+    }
   }
 
-  const handleDelete = (id) => {
-    if (confirm('确定要删除这个档案吗？')) {
-      console.log('删除档案:', id)
+  const handleDelete = async (id) => {
+    if (!confirm('确定要删除这条档案记录吗？')) return
+    
+    try {
+      const response = await fetch(`/api/archives/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        }
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert('删除成功')
+        fetchArchives() // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          alert(result.message || '删除失败')
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试')
     }
   }
 
@@ -205,12 +241,20 @@ export default function ArchivesPage() {
   const getBodyPartColor = (bodyPart) => {
     const colorMap = {
       finger: 'bg-blue-100 text-blue-800',
-      palm: 'bg-green-100 text-green-800',
-      face: 'bg-purple-100 text-purple-800',
-      iris: 'bg-yellow-100 text-yellow-800',
-      voice: 'bg-orange-100 text-orange-800'
+      palm: 'bg-purple-100 text-purple-800',
+      face: 'bg-pink-100 text-pink-800',
+      iris: 'bg-indigo-100 text-indigo-800',
+      voice: 'bg-teal-100 text-teal-800'
     }
     return colorMap[bodyPart] || 'bg-gray-100 text-gray-800'
+  }
+
+  // 获取localStorage的辅助函数
+  const getLocalStorage = (key) => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(key)
+    }
+    return null
   }
 
   return (
@@ -329,7 +373,7 @@ export default function ArchivesPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">高活跃档案</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredArchives.filter(a => a.activity === 'high').length}
+                {allArchives.filter(a => a.activity === 'high').length}
               </p>
             </div>
           </div>
@@ -345,7 +389,7 @@ export default function ArchivesPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">总拍照数</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredArchives.reduce((sum, archive) => sum + archive.photoCount, 0).toLocaleString()}
+                {allArchives.reduce((sum, archive) => sum + archive.photoCount, 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -361,7 +405,7 @@ export default function ArchivesPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">活跃用户</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {new Set(filteredArchives.filter(a => a.activity !== 'inactive').map(a => a.mainUser)).size}
+                {new Set(allArchives.filter(a => a.activity !== 'inactive').map(a => a.userId)).size}
               </p>
             </div>
           </div>
@@ -421,7 +465,7 @@ export default function ArchivesPage() {
               {currentArchives.map((archive) => (
                 <tr key={archive.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{archive.mainUser}</div>
+                    <div className="text-sm font-medium text-gray-900">{archive.userId}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{archive.userNickname}</div>
@@ -443,7 +487,7 @@ export default function ArchivesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {archive.detectionTime}
+                    {new Date(archive.detectionTime).toLocaleString('zh-CN')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
