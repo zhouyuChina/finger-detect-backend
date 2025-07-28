@@ -11,7 +11,6 @@ export default function UserIdsPage() {
   const [pageSize, setPageSize] = useState(10)
   const [searchWechatName, setSearchWechatName] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
-  const [searchRealName, setSearchRealName] = useState('')
   const [allUserIds, setAllUserIds] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -45,9 +44,7 @@ export default function UserIdsPage() {
     const matchWechatName = !searchWechatName || 
       (userId.user?.nickname && userId.user.nickname.toLowerCase().includes(searchWechatName.toLowerCase()))
     const matchStatus = !searchStatus || userId.status === searchStatus
-    const matchRealName = !searchRealName || 
-      (userId.realName && userId.realName.toLowerCase().includes(searchRealName.toLowerCase()))
-    return matchWechatName && matchStatus && matchRealName
+    return matchWechatName && matchStatus
   })
   
   const totalUserIds = filteredUserIds.length
@@ -58,7 +55,6 @@ export default function UserIdsPage() {
 
   // 统计数据
   const activeCount = filteredUserIds.filter(u => u.status === 'active').length
-  const pendingCount = filteredUserIds.filter(u => u.status === 'pending').length
   const inactiveCount = filteredUserIds.filter(u => u.status === 'inactive').length
 
   const handlePageChange = (page) => {
@@ -77,7 +73,6 @@ export default function UserIdsPage() {
   const handleReset = () => {
     setSearchWechatName('')
     setSearchStatus('')
-    setSearchRealName('')
     setCurrentPage(1)
   }
 
@@ -130,7 +125,7 @@ export default function UserIdsPage() {
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">微信名</label>
             <input
@@ -138,16 +133,6 @@ export default function UserIdsPage() {
               value={searchWechatName}
               onChange={(e) => setSearchWechatName(e.target.value)}
               placeholder="请输入微信名"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">真实姓名</label>
-            <input
-              type="text"
-              value={searchRealName}
-              onChange={(e) => setSearchRealName(e.target.value)}
-              placeholder="请输入真实姓名"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -198,7 +183,7 @@ export default function UserIdsPage() {
       )}
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -230,26 +215,12 @@ export default function UserIdsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-lg">⏳</span>
-              </div>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">待审核</p>
-              <p className="text-2xl font-semibold text-gray-900">{pendingCount}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
                 <span className="text-white text-lg">❌</span>
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">非活跃</p>
+              <p className="text-sm font-medium text-gray-500">非活跃用户</p>
               <p className="text-2xl font-semibold text-gray-900">{inactiveCount}</p>
             </div>
           </div>
@@ -311,10 +282,10 @@ export default function UserIdsPage() {
                       建档数量
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      拍照数量
+                      报告数量
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      报告数量
+                      拍照数量
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       未读消息
@@ -368,10 +339,10 @@ export default function UserIdsPage() {
                         {userId.archives}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.photos}
+                        {userId.reports}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.reports}
+                        {userId.photos}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -384,16 +355,22 @@ export default function UserIdsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button 
-                          onClick={() => router.push(`/user-ids/view/${userId.id}`)}
+                          onClick={() => console.log('用户功能待实现')}
                           className="text-blue-600 hover:text-blue-900 mr-3"
                         >
-                          查看
+                          用户
                         </button>
                         <button 
-                          onClick={() => router.push(`/user-ids/edit/${userId.id}`)}
+                          onClick={() => console.log('档案功能待实现')}
                           className="text-green-600 hover:text-green-900 mr-3"
                         >
-                          编辑
+                          档案
+                        </button>
+                        <button 
+                          onClick={() => console.log('报告功能待实现')}
+                          className="text-purple-600 hover:text-purple-900 mr-3"
+                        >
+                          报告
                         </button>
                         <button 
                           onClick={() => handleDelete(userId.id)}
