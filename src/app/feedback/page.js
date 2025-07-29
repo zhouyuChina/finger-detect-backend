@@ -13,6 +13,8 @@ export default function FeedbackPage() {
   const [searchStatus, setSearchStatus] = useState('');
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [replyForm, setReplyForm] = useState({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +86,15 @@ export default function FeedbackPage() {
   const handleView = (feedback) => {
     setSelectedFeedback(feedback);
     setIsViewModalOpen(true);
+  };
+
+  const handleReply = (feedback) => {
+    setSelectedFeedback(feedback);
+    setReplyForm({
+      status: feedback.status === 'pending' ? 'processing' : feedback.status,
+      reply: feedback.reply || ''
+    });
+    setIsReplyModalOpen(true);
   };
 
   const handleEdit = (feedback) => {
@@ -363,10 +374,10 @@ export default function FeedbackPage() {
                         查看
                       </button>
                       <button
-                        onClick={() => handleEdit(feedback)}
+                        onClick={() => handleReply(feedback)}
                         className="text-green-600 hover:text-green-900 mr-3"
                       >
-                        编辑
+                        回复
                       </button>
                       <button
                         onClick={() => handleDelete(feedback.id)}

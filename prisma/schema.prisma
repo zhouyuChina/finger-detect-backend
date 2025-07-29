@@ -191,13 +191,18 @@ model Feedback {
   @@map("feedbacks")
 }
 
-// 系统回复模板表
+// 系统消息表
 model SystemReply {
   id          String   @id @default(cuid())
-  name        String   // 模板名称
-  type        String   // 类型: feedback, notification
-  content     String   // 内容
+  title       String   // 消息标题
+  type        String   // 类型: system_notice, activity_announcement, feature_update, maintenance_notice, security_alert
+  targetUsers String   @default("all") // 目标用户: all, vip, enterprise, normal, new
+  content     String   // 消息内容
+  status      String   @default("draft") // 状态: draft, published, expired, cancelled
+  readCount   Int      @default(0) // 已读数量
+  totalCount  Int      @default(0) // 总发送数量
   isActive    Boolean  @default(true)
+  publishedAt DateTime? // 发布时间
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

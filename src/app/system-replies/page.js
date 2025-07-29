@@ -1,56 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-// 生成模拟数据
-const generateSystemRepliesData = () => {
-  const types = ['系统通知', '活动公告', '功能更新', '维护通知', '安全提醒'];
-  const identities = ['全部用户', 'VIP用户', '企业用户', '普通用户', '新用户'];
-  const statuses = ['草稿', '已发布', '已过期', '已作废'];
-  const titles = [
-    '系统维护通知',
-    '新功能上线公告',
-    '春节活动预告',
-    '安全更新提醒',
-    '用户体验优化通知',
-    '服务器升级公告',
-    '功能使用指南',
-    '问题修复通知',
-    '版本更新说明',
-    '服务条款更新'
-  ];
-
-  const data = [];
-  for (let i = 1; i <= 35; i++) {
-    const type = types[Math.floor(Math.random() * types.length)];
-    const identity = identities[Math.floor(Math.random() * identities.length)];
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const title = titles[Math.floor(Math.random() * titles.length)];
-    const readPercentage = Math.floor(Math.random() * 100);
-    
-    // 生成随机时间（最近30天内）
-    const now = new Date();
-    const randomDays = Math.floor(Math.random() * 30);
-    const publishTime = new Date(now.getTime() - randomDays * 24 * 60 * 60 * 1000);
-
-    data.push({
-      id: i,
-      title: `${title}${i}`,
-      type,
-      identity,
-      publishTime: publishTime.toLocaleString('zh-CN'),
-      status,
-      readPercentage
-    });
-  }
-  return data;
-};
+import { useRouter } from 'next/navigation';
 
 export default function SystemRepliesPage() {
+  const router = useRouter();
   const [systemRepliesData, setSystemRepliesData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [searchTitle, setSearchTitle] = useState('');
   const [searchStatus, setSearchStatus] = useState('');
   const [searchIdentity, setSearchIdentity] = useState('');
@@ -62,42 +19,75 @@ export default function SystemRepliesPage() {
   const [addForm, setAddForm] = useState({
     title: '',
     type: '',
-    identity: '',
+    targetUsers: 'all',
     content: '',
-    status: '草稿'
+    status: 'draft'
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
+  // 从数据库获取系统消息数据
+  const fetchSystemReplies = async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage,
+        pageSize,
+        title: searchTitle,
+        status: searchStatus,
+        targetUsers: searchIdentity
+      });
+      
+      const response = await fetch(`/api/system-replies?${params}`);
+      const result = await response.json();
+      
+      if (response.ok) {
+        setSystemRepliesData(result.data.data || []);
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          setError(result.message || '获取数据失败');
+        }
+      }
+    } catch (err) {
+      setError('网络错误，请重试');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 使用useEffect获取数据
   useEffect(() => {
-    const data = generateSystemRepliesData();
-    setSystemRepliesData(data);
-    setFilteredData(data);
-  }, []);
+    fetchSystemReplies();
+  }, [currentPage, pageSize, searchTitle, searchStatus, searchIdentity]);
 
-  useEffect(() => {
-    let filtered = systemRepliesData;
-
-    if (searchTitle) {
-      filtered = filtered.filter(item => 
-        item.title.toLowerCase().includes(searchTitle.toLowerCase())
-      );
-    }
-
-    if (searchStatus) {
-      filtered = filtered.filter(item => item.status === searchStatus);
-    }
-
-    if (searchIdentity) {
-      filtered = filtered.filter(item => item.identity === searchIdentity);
-    }
-
-    setFilteredData(filtered);
-    setCurrentPage(1);
-  }, [searchTitle, searchStatus, searchIdentity, systemRepliesData]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const totalSystemReplies = systemRepliesData.length;
+  const totalPages = Math.ceil(totalSystemReplies / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const currentData = filteredData.slice(startIndex, endIndex);
+  const currentData = systemRepliesData.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+  };
+
+  const handleReset = () => {
+    setSearchTitle('');
+    setSearchStatus('');
+    setSearchIdentity('');
+    setCurrentPage(1);
+  };
 
   const handleView = (reply) => {
     setSelectedReply(reply);
@@ -105,124 +95,186 @@ export default function SystemRepliesPage() {
   };
 
   const handleEdit = (reply) => {
+    setSelectedReply(reply);
     setEditForm({
-      id: reply.id,
       title: reply.title,
       type: reply.type,
-      identity: reply.identity,
-      content: `这是${reply.title}的详细内容...`,
+      targetUsers: reply.targetUsers,
+      content: reply.content,
       status: reply.status
     });
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (confirm('确定要删除这条系统回复吗？')) {
-      setSystemRepliesData(prev => prev.filter(item => item.id !== id));
+  const handleDelete = async (id) => {
+    if (!confirm('确定要删除这条系统消息吗？')) return;
+    
+    try {
+      const response = await fetch(`/api/system-replies/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('删除成功');
+        fetchSystemReplies(); // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          alert(result.message || '删除失败');
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试');
     }
   };
 
-  const handleSaveEdit = () => {
-    setSystemRepliesData(prev => 
-      prev.map(item => 
-        item.id === editForm.id ? { ...item, ...editForm } : item
-      )
-    );
-    setIsEditModalOpen(false);
-    setEditForm({});
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`/api/system-replies/${selectedReply.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify(editForm)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('保存成功');
+        setIsEditModalOpen(false);
+        fetchSystemReplies(); // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          alert(result.message || '保存失败');
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试');
+    }
   };
 
   const handleAdd = () => {
-    setIsAddModalOpen(true);
-  };
-
-  const handleSaveAdd = () => {
-    const newReply = {
-      id: systemRepliesData.length + 1,
-      title: addForm.title,
-      type: addForm.type,
-      identity: addForm.identity,
-      publishTime: new Date().toLocaleString('zh-CN'),
-      status: addForm.status,
-      readPercentage: 0
-    };
-    setSystemRepliesData(prev => [newReply, ...prev]);
-    setIsAddModalOpen(false);
     setAddForm({
       title: '',
       type: '',
-      identity: '',
+      targetUsers: 'all',
       content: '',
-      status: '草稿'
+      status: 'draft'
     });
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveAdd = async () => {
+    try {
+      const response = await fetch('/api/system-replies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify(addForm)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('添加成功');
+        setIsAddModalOpen(false);
+        fetchSystemReplies(); // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          alert(result.message || '添加失败');
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试');
+    }
   };
 
   const getStatusBadge = (status) => {
-    const statusColors = {
-      '草稿': 'bg-gray-100 text-gray-800',
-      '已发布': 'bg-green-100 text-green-800',
-      '已过期': 'bg-orange-100 text-orange-800',
-      '已作废': 'bg-red-100 text-red-800'
+    const statusMap = {
+      draft: { text: '草稿', color: 'bg-gray-100 text-gray-800' },
+      published: { text: '已发布', color: 'bg-green-100 text-green-800' },
+      expired: { text: '已过期', color: 'bg-red-100 text-red-800' },
+      cancelled: { text: '已作废', color: 'bg-yellow-100 text-yellow-800' }
     };
+    const statusInfo = statusMap[status] || { text: status, color: 'bg-gray-100 text-gray-800' };
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-        {status}
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
+        {statusInfo.text}
       </span>
     );
   };
 
   const getTypeBadge = (type) => {
-    const typeColors = {
-      '系统通知': 'bg-blue-100 text-blue-800',
-      '活动公告': 'bg-purple-100 text-purple-800',
-      '功能更新': 'bg-green-100 text-green-800',
-      '维护通知': 'bg-yellow-100 text-yellow-800',
-      '安全提醒': 'bg-red-100 text-red-800'
+    const typeMap = {
+      system_notice: { text: '系统通知', color: 'bg-blue-100 text-blue-800' },
+      activity_announcement: { text: '活动公告', color: 'bg-purple-100 text-purple-800' },
+      feature_update: { text: '功能更新', color: 'bg-green-100 text-green-800' },
+      maintenance_notice: { text: '维护通知', color: 'bg-orange-100 text-orange-800' },
+      security_alert: { text: '安全提醒', color: 'bg-red-100 text-red-800' }
     };
+    const typeInfo = typeMap[type] || { text: type, color: 'bg-gray-100 text-gray-800' };
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${typeColors[type] || 'bg-gray-100 text-gray-800'}`}>
-        {type}
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${typeInfo.color}`}>
+        {typeInfo.text}
       </span>
     );
   };
 
   const getIdentityBadge = (identity) => {
-    const identityColors = {
-      '全部用户': 'bg-blue-100 text-blue-800',
-      'VIP用户': 'bg-purple-100 text-purple-800',
-      '企业用户': 'bg-green-100 text-green-800',
-      '普通用户': 'bg-gray-100 text-gray-800',
-      '新用户': 'bg-orange-100 text-orange-800'
+    const identityMap = {
+      all: { text: '全部用户', color: 'bg-blue-100 text-blue-800' },
+      vip: { text: 'VIP用户', color: 'bg-purple-100 text-purple-800' },
+      enterprise: { text: '企业用户', color: 'bg-green-100 text-green-800' },
+      normal: { text: '普通用户', color: 'bg-gray-100 text-gray-800' },
+      new: { text: '新用户', color: 'bg-yellow-100 text-yellow-800' }
     };
+    const identityInfo = identityMap[identity] || { text: identity, color: 'bg-gray-100 text-gray-800' };
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${identityColors[identity] || 'bg-gray-100 text-gray-800'}`}>
-        {identity}
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${identityInfo.color}`}>
+        {identityInfo.text}
       </span>
     );
   };
 
-  // 统计数据
-  const totalReplies = systemRepliesData.length;
-  const draftReplies = systemRepliesData.filter(item => item.status === '草稿').length;
-  const publishedReplies = systemRepliesData.filter(item => item.status === '已发布').length;
-  const expiredReplies = systemRepliesData.filter(item => item.status === '已过期').length;
+  // 获取localStorage的辅助函数
+  const getLocalStorage = (key) => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">系统回复管理</h1>
-          <p className="text-gray-600">管理系统回复和公告信息</p>
+          <h1 className="text-2xl font-bold text-gray-900">系统消息管理</h1>
+          <p className="text-gray-600">管理系统消息和公告信息</p>
         </div>
-        <div className="flex space-x-3">
-          <button 
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            onClick={handleAdd}
-          >
-            新增回复
-          </button>
-        </div>
+        <button
+          onClick={handleAdd}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+        >
+          新增消息
+        </button>
       </div>
 
       {/* 统计卡片 */}
@@ -233,8 +285,8 @@ export default function SystemRepliesPage() {
               <span className="text-blue-600 text-sm font-bold">📢</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">总回复数</p>
-              <p className="text-2xl font-bold text-gray-900">{totalReplies}</p>
+              <p className="text-sm font-medium text-gray-600">总消息数</p>
+              <p className="text-2xl font-bold text-gray-900">{totalSystemReplies}</p>
             </div>
           </div>
         </div>
@@ -245,7 +297,7 @@ export default function SystemRepliesPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">草稿</p>
-              <p className="text-2xl font-bold text-gray-900">{draftReplies}</p>
+              <p className="text-2xl font-bold text-gray-900">{systemRepliesData.filter(item => item.status === 'draft').length}</p>
             </div>
           </div>
         </div>
@@ -256,7 +308,7 @@ export default function SystemRepliesPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">已发布</p>
-              <p className="text-2xl font-bold text-gray-900">{publishedReplies}</p>
+              <p className="text-2xl font-bold text-gray-900">{systemRepliesData.filter(item => item.status === 'published').length}</p>
             </div>
           </div>
         </div>
@@ -267,7 +319,7 @@ export default function SystemRepliesPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">已过期</p>
-              <p className="text-2xl font-bold text-gray-900">{expiredReplies}</p>
+              <p className="text-2xl font-bold text-gray-900">{systemRepliesData.filter(item => item.status === 'expired').length}</p>
             </div>
           </div>
         </div>
@@ -295,10 +347,10 @@ export default function SystemRepliesPage() {
               onChange={(e) => setSearchStatus(e.target.value)}
             >
               <option value="">全部状态</option>
-              <option value="草稿">草稿</option>
-              <option value="已发布">已发布</option>
-              <option value="已过期">已过期</option>
-              <option value="已作废">已作废</option>
+              <option value="draft">草稿</option>
+              <option value="published">已发布</option>
+              <option value="expired">已过期</option>
+              <option value="cancelled">已作废</option>
             </select>
           </div>
           <div>
@@ -309,11 +361,11 @@ export default function SystemRepliesPage() {
               onChange={(e) => setSearchIdentity(e.target.value)}
             >
               <option value="">全部身份</option>
-              <option value="全部用户">全部用户</option>
-              <option value="VIP用户">VIP用户</option>
-              <option value="企业用户">企业用户</option>
-              <option value="普通用户">普通用户</option>
-              <option value="新用户">新用户</option>
+              <option value="all">全部用户</option>
+              <option value="vip">VIP用户</option>
+              <option value="enterprise">企业用户</option>
+              <option value="normal">普通用户</option>
+              <option value="new">新用户</option>
             </select>
           </div>
         </div>
@@ -338,50 +390,54 @@ export default function SystemRepliesPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentData.map((reply) => (
-                <tr key={reply.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate" title={reply.title}>
-                    {reply.title}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getTypeBadge(reply.type)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getIdentityBadge(reply.identity)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{reply.publishTime}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(reply.status)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${reply.readPercentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-gray-900">{reply.readPercentage}%</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
+              {isLoading ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">加载中...</td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-red-600">{error}</td>
+                </tr>
+              ) : currentData.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">暂无系统消息</td>
+                </tr>
+              ) : (
+                currentData.map((reply) => (
+                  <tr key={reply.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{reply.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getTypeBadge(reply.type)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getIdentityBadge(reply.targetUsers)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {reply.publishedAt ? new Date(reply.publishedAt).toLocaleString('zh-CN') : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(reply.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {reply.totalCount > 0 ? `${Math.round((reply.readCount / reply.totalCount) * 100)}%` : '0%'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        className="text-blue-600 hover:text-blue-900"
                         onClick={() => handleView(reply)}
+                        className="text-blue-600 hover:text-blue-900 mr-3"
                       >
                         查看
                       </button>
                       <button
-                        className="text-green-600 hover:text-green-900"
                         onClick={() => handleEdit(reply)}
+                        className="text-green-600 hover:text-green-900 mr-3"
                       >
                         编辑
                       </button>
                       <button
-                        className="text-red-600 hover:text-red-900"
                         onClick={() => handleDelete(reply.id)}
+                        className="text-red-600 hover:text-red-900"
                       >
                         删除
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -390,7 +446,7 @@ export default function SystemRepliesPage() {
         {totalPages > 1 && (
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <p className="text-sm text-gray-700">
-              显示 {startIndex + 1} 到 {Math.min(endIndex, filteredData.length)} 条，共 {filteredData.length} 条
+              显示 {startIndex + 1} 到 {Math.min(endIndex, totalSystemReplies)} 条，共 {totalSystemReplies} 条
             </p>
             <div className="flex space-x-2">
               <button
@@ -442,7 +498,7 @@ export default function SystemRepliesPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">身份</label>
-                      <div className="mt-1">{getIdentityBadge(selectedReply.identity)}</div>
+                      <div className="mt-1">{getIdentityBadge(selectedReply.targetUsers)}</div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">发布状态</label>
@@ -511,26 +567,26 @@ export default function SystemRepliesPage() {
                       onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
                     >
                       <option value="">请选择类型</option>
-                      <option value="系统通知">系统通知</option>
-                      <option value="活动公告">活动公告</option>
-                      <option value="功能更新">功能更新</option>
-                      <option value="维护通知">维护通知</option>
-                      <option value="安全提醒">安全提醒</option>
+                      <option value="system_notice">系统通知</option>
+                      <option value="activity_announcement">活动公告</option>
+                      <option value="feature_update">功能更新</option>
+                      <option value="maintenance_notice">维护通知</option>
+                      <option value="security_alert">安全提醒</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">身份</label>
                     <select
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={editForm.identity || ''}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, identity: e.target.value }))}
+                      value={editForm.targetUsers || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, targetUsers: e.target.value }))}
                     >
                       <option value="">请选择身份</option>
-                      <option value="全部用户">全部用户</option>
-                      <option value="VIP用户">VIP用户</option>
-                      <option value="企业用户">企业用户</option>
-                      <option value="普通用户">普通用户</option>
-                      <option value="新用户">新用户</option>
+                      <option value="all">全部用户</option>
+                      <option value="vip">VIP用户</option>
+                      <option value="enterprise">企业用户</option>
+                      <option value="normal">普通用户</option>
+                      <option value="new">新用户</option>
                     </select>
                   </div>
                   <div>
@@ -541,10 +597,10 @@ export default function SystemRepliesPage() {
                       onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
                     >
                       <option value="">请选择状态</option>
-                      <option value="草稿">草稿</option>
-                      <option value="已发布">已发布</option>
-                      <option value="已过期">已过期</option>
-                      <option value="已作废">已作废</option>
+                      <option value="draft">草稿</option>
+                      <option value="published">已发布</option>
+                      <option value="expired">已过期</option>
+                      <option value="cancelled">已作废</option>
                     </select>
                   </div>
                 </div>
@@ -612,26 +668,26 @@ export default function SystemRepliesPage() {
                       onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
                     >
                       <option value="">请选择类型</option>
-                      <option value="系统通知">系统通知</option>
-                      <option value="活动公告">活动公告</option>
-                      <option value="功能更新">功能更新</option>
-                      <option value="维护通知">维护通知</option>
-                      <option value="安全提醒">安全提醒</option>
+                      <option value="system_notice">系统通知</option>
+                      <option value="activity_announcement">活动公告</option>
+                      <option value="feature_update">功能更新</option>
+                      <option value="maintenance_notice">维护通知</option>
+                      <option value="security_alert">安全提醒</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">身份</label>
                     <select
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={addForm.identity}
-                      onChange={(e) => setAddForm(prev => ({ ...prev, identity: e.target.value }))}
+                      value={addForm.targetUsers}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, targetUsers: e.target.value }))}
                     >
                       <option value="">请选择身份</option>
-                      <option value="全部用户">全部用户</option>
-                      <option value="VIP用户">VIP用户</option>
-                      <option value="企业用户">企业用户</option>
-                      <option value="普通用户">普通用户</option>
-                      <option value="新用户">新用户</option>
+                      <option value="all">全部用户</option>
+                      <option value="vip">VIP用户</option>
+                      <option value="enterprise">企业用户</option>
+                      <option value="normal">普通用户</option>
+                      <option value="new">新用户</option>
                     </select>
                   </div>
                   <div>
@@ -641,10 +697,10 @@ export default function SystemRepliesPage() {
                       value={addForm.status}
                       onChange={(e) => setAddForm(prev => ({ ...prev, status: e.target.value }))}
                     >
-                      <option value="草稿">草稿</option>
-                      <option value="已发布">已发布</option>
-                      <option value="已过期">已过期</option>
-                      <option value="已作废">已作废</option>
+                      <option value="draft">草稿</option>
+                      <option value="published">已发布</option>
+                      <option value="expired">已过期</option>
+                      <option value="cancelled">已作废</option>
                     </select>
                   </div>
                 </div>

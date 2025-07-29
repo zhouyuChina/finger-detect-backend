@@ -19,7 +19,7 @@ export default function AdminLayout({ children }) {
     { name: '档案管理', icon: '📁', href: '/archives' },
     { name: '检测记录', icon: '🔍', href: '/detections' },
     { name: '留言管理', icon: '💌', href: '/feedback' },
-    { name: '系统回复', icon: '📢', href: '/system-replies' },
+    { name: '系统消息', icon: '📢', href: '/system-replies' },
     { name: '优惠券管理', icon: '🎫', href: '/coupons' },
     { name: '企业介绍', icon: '🏢', href: '/company' },
     { name: '系统设置', icon: '⚙️', href: '/settings' },
