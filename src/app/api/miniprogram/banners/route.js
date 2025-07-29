@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { miniprogramAuthMiddleware, createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
+import { createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
 
-// 获取Banner列表（小程序专用）
+// 获取Banner列表（小程序专用）- 公开接口，无需认证
 async function getBanners(request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -81,5 +81,5 @@ async function getBanners(request) {
   }
 }
 
-// 使用中间件包装处理函数
-export const GET = miniprogramAuthMiddleware(getBanners) 
+// 直接导出处理函数，无需认证
+export const GET = getBanners 
