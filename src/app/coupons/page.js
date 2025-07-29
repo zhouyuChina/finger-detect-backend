@@ -1,68 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-// 生成模拟数据
-const generateCouponsData = () => {
-  const channels = ['微信小程序', 'APP', '官网', '线下门店', '合作伙伴'];
-  const identities = ['全部用户', 'VIP用户', '企业用户', '普通用户', '新用户'];
-  const statuses = ['未开始', '进行中', '已结束', '已暂停'];
-  const couponNames = [
-    '新用户专享券',
-    'VIP会员优惠券',
-    '春节特惠券',
-    '满减优惠券',
-    '折扣优惠券',
-    '生日特惠券',
-    '节日优惠券',
-    '推荐好友券',
-    '复购优惠券',
-    '限时特惠券'
-  ];
-
-  const data = [];
-  for (let i = 1; i <= 35; i++) {
-    const channel = channels[Math.floor(Math.random() * channels.length)];
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const couponName = couponNames[Math.floor(Math.random() * couponNames.length)];
-    const couponCount = Math.floor(Math.random() * 1000) + 100;
-    const discount = Math.floor(Math.random() * 50) + 10;
-    
-    // 随机选择1-3个身份
-    const selectedIdentities = [];
-    const numIdentities = Math.floor(Math.random() * 3) + 1;
-    const shuffledIdentities = [...identities].sort(() => 0.5 - Math.random());
-    for (let j = 0; j < numIdentities; j++) {
-      selectedIdentities.push(shuffledIdentities[j]);
-    }
-    
-    // 生成随机时间（最近30天内开始，未来30天内结束）
-    const now = new Date();
-    const startDays = Math.floor(Math.random() * 30);
-    const durationDays = Math.floor(Math.random() * 60) + 7;
-    const startTime = new Date(now.getTime() - startDays * 24 * 60 * 60 * 1000);
-    const endTime = new Date(startTime.getTime() + durationDays * 24 * 60 * 60 * 1000);
-
-    data.push({
-      id: i,
-      name: `${couponName}${i}`,
-      channel,
-      couponCount,
-      discount,
-      startTime: startTime.toLocaleString('zh-CN'),
-      endTime: endTime.toLocaleString('zh-CN'),
-      identities: selectedIdentities,
-      status
-    });
-  }
-  return data;
-};
+import { useRouter } from 'next/navigation';
 
 export default function CouponsPage() {
+  const router = useRouter();
   const [couponsData, setCouponsData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [searchName, setSearchName] = useState('');
   const [searchChannel, setSearchChannel] = useState('');
   const [searchStatus, setSearchStatus] = useState('');
@@ -73,48 +18,84 @@ export default function CouponsPage() {
   const [editForm, setEditForm] = useState({});
   const [addForm, setAddForm] = useState({
     name: '',
-    channel: '',
-    couponCount: '',
-    discount: '',
+    code: '',
+    type: 'discount',
+    value: '',
+    minAmount: '',
+    maxDiscount: '',
+    totalCount: '',
     startTime: '',
     endTime: '',
-    identities: [],
-    status: '未开始'
+    channel: 'all',
+    targetUsers: 'all',
+    status: 'pending',
+    description: ''
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
+  // 从数据库获取优惠券数据
+  const fetchCoupons = async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage,
+        pageSize,
+        name: searchName,
+        channel: searchChannel,
+        status: searchStatus
+      });
+      
+      const response = await fetch(`/api/coupons?${params}`);
+      const result = await response.json();
+      
+      if (response.ok) {
+        setCouponsData(result.data.data || []);
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          setError(result.message || '获取数据失败');
+        }
+      }
+    } catch (err) {
+      setError('网络错误，请重试');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 使用useEffect获取数据
   useEffect(() => {
-    const data = generateCouponsData();
-    setCouponsData(data);
-    setFilteredData(data);
-  }, []);
+    fetchCoupons();
+  }, [currentPage, pageSize, searchName, searchChannel, searchStatus]);
 
-  useEffect(() => {
-    let filtered = couponsData;
-
-    if (searchName) {
-      filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(searchName.toLowerCase())
-      );
-    }
-
-    if (searchChannel) {
-      filtered = filtered.filter(item => 
-        item.channel.toLowerCase().includes(searchChannel.toLowerCase())
-      );
-    }
-
-    if (searchStatus) {
-      filtered = filtered.filter(item => item.status === searchStatus);
-    }
-
-    setFilteredData(filtered);
-    setCurrentPage(1);
-  }, [searchName, searchChannel, searchStatus, couponsData]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const totalCoupons = couponsData.length;
+  const totalPages = Math.ceil(totalCoupons / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const currentData = filteredData.slice(startIndex, endIndex);
+  const currentData = couponsData.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+  };
+
+  const handleReset = () => {
+    setSearchName('');
+    setSearchChannel('');
+    setSearchStatus('');
+    setCurrentPage(1);
+  };
 
   const handleView = (coupon) => {
     setSelectedCoupon(coupon);
@@ -122,130 +103,202 @@ export default function CouponsPage() {
   };
 
   const handleEdit = (coupon) => {
+    setSelectedCoupon(coupon);
     setEditForm({
-      id: coupon.id,
       name: coupon.name,
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value,
+      minAmount: coupon.minAmount,
+      maxDiscount: coupon.maxDiscount,
+      totalCount: coupon.totalCount,
+      startTime: coupon.startTime ? new Date(coupon.startTime).toISOString().slice(0, 16) : '',
+      endTime: coupon.endTime ? new Date(coupon.endTime).toISOString().slice(0, 16) : '',
       channel: coupon.channel,
-      couponCount: coupon.couponCount,
-      discount: coupon.discount,
-      startTime: coupon.startTime,
-      endTime: coupon.endTime,
-      identities: coupon.identities,
-      status: coupon.status
+      targetUsers: coupon.targetUsers,
+      status: coupon.status,
+      description: coupon.description || ''
     });
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (confirm('确定要删除这张优惠券吗？')) {
-      setCouponsData(prev => prev.filter(item => item.id !== id));
+  const handleDelete = async (id) => {
+    if (!confirm('确定要删除这条优惠券吗？')) return;
+    
+    try {
+      const response = await fetch(`/api/coupons/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('删除成功');
+        fetchCoupons(); // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          alert(result.message || '删除失败');
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试');
     }
   };
 
-  const handleSaveEdit = () => {
-    setCouponsData(prev => 
-      prev.map(item => 
-        item.id === editForm.id ? { ...item, ...editForm } : item
-      )
-    );
-    setIsEditModalOpen(false);
-    setEditForm({});
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`/api/coupons/${selectedCoupon.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify(editForm)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('保存成功');
+        setIsEditModalOpen(false);
+        fetchCoupons(); // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          alert(result.message || '保存失败');
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试');
+    }
   };
 
   const handleAdd = () => {
+    setAddForm({
+      name: '',
+      code: '',
+      type: 'discount',
+      value: '',
+      minAmount: '',
+      maxDiscount: '',
+      totalCount: '',
+      startTime: '',
+      endTime: '',
+      channel: 'all',
+      targetUsers: 'all',
+      status: 'pending',
+      description: ''
+    });
     setIsAddModalOpen(true);
   };
 
-  const handleSaveAdd = () => {
-    const newCoupon = {
-      id: couponsData.length + 1,
-      name: addForm.name,
-      channel: addForm.channel,
-      couponCount: parseInt(addForm.couponCount),
-      discount: parseInt(addForm.discount),
-      startTime: addForm.startTime,
-      endTime: addForm.endTime,
-      identities: addForm.identities,
-      status: addForm.status
-    };
-    setCouponsData(prev => [newCoupon, ...prev]);
-    setIsAddModalOpen(false);
-    setAddForm({
-      name: '',
-      channel: '',
-      couponCount: '',
-      discount: '',
-      startTime: '',
-      endTime: '',
-      identities: [],
-      status: '未开始'
-    });
-  };
+  const handleSaveAdd = async () => {
+    try {
+      const response = await fetch('/api/coupons', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify(addForm)
+      });
 
-  const handleIdentityChange = (identity, isChecked, formType = 'add') => {
-    if (formType === 'add') {
-      setAddForm(prev => ({
-        ...prev,
-        identities: isChecked 
-          ? [...prev.identities, identity]
-          : prev.identities.filter(id => id !== identity)
-      }));
-    } else {
-      setEditForm(prev => ({
-        ...prev,
-        identities: isChecked 
-          ? [...prev.identities, identity]
-          : prev.identities.filter(id => id !== identity)
-      }));
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('添加成功');
+        setIsAddModalOpen(false);
+        fetchCoupons(); // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          alert(result.message || '添加失败');
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试');
     }
   };
 
   const getStatusBadge = (status) => {
-    const statusColors = {
-      '未开始': 'bg-gray-100 text-gray-800',
-      '进行中': 'bg-green-100 text-green-800',
-      '已结束': 'bg-red-100 text-red-800',
-      '已暂停': 'bg-yellow-100 text-yellow-800'
+    const statusMap = {
+      pending: { text: '未开始', color: 'bg-gray-100 text-gray-800' },
+      active: { text: '进行中', color: 'bg-green-100 text-green-800' },
+      expired: { text: '已结束', color: 'bg-red-100 text-red-800' },
+      paused: { text: '已暂停', color: 'bg-yellow-100 text-yellow-800' },
+      cancelled: { text: '已取消', color: 'bg-red-100 text-red-800' }
     };
+    const statusInfo = statusMap[status] || { text: status, color: 'bg-gray-100 text-gray-800' };
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-        {status}
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
+        {statusInfo.text}
       </span>
     );
   };
 
   const getChannelBadge = (channel) => {
-    const channelColors = {
-      '微信小程序': 'bg-green-100 text-green-800',
-      'APP': 'bg-blue-100 text-blue-800',
-      '官网': 'bg-purple-100 text-purple-800',
-      '线下门店': 'bg-orange-100 text-orange-800',
-      '合作伙伴': 'bg-pink-100 text-pink-800'
+    const channelMap = {
+      all: { text: '全部渠道', color: 'bg-blue-100 text-blue-800' },
+      wechat: { text: '微信小程序', color: 'bg-green-100 text-green-800' },
+      app: { text: 'APP', color: 'bg-purple-100 text-purple-800' },
+      website: { text: '官网', color: 'bg-indigo-100 text-indigo-800' },
+      offline: { text: '线下门店', color: 'bg-orange-100 text-orange-800' },
+      partner: { text: '合作伙伴', color: 'bg-pink-100 text-pink-800' }
     };
+    const channelInfo = channelMap[channel] || { text: channel, color: 'bg-gray-100 text-gray-800' };
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${channelColors[channel] || 'bg-gray-100 text-gray-800'}`}>
-        {channel}
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${channelInfo.color}`}>
+        {channelInfo.text}
       </span>
     );
   };
 
-  const getIdentitiesBadge = (identities) => {
+  const getTargetUsersBadge = (targetUsers) => {
+    const targetUsersMap = {
+      all: { text: '全部用户', color: 'bg-blue-100 text-blue-800' },
+      vip: { text: 'VIP用户', color: 'bg-purple-100 text-purple-800' },
+      enterprise: { text: '企业用户', color: 'bg-green-100 text-green-800' },
+      normal: { text: '普通用户', color: 'bg-gray-100 text-gray-800' },
+      new: { text: '新用户', color: 'bg-yellow-100 text-yellow-800' }
+    };
+    const targetUsersInfo = targetUsersMap[targetUsers] || { text: targetUsers, color: 'bg-gray-100 text-gray-800' };
     return (
-      <div className="flex flex-wrap gap-1">
-        {identities.map((identity, index) => (
-          <span key={index} className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-            {identity}
-          </span>
-        ))}
-      </div>
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${targetUsersInfo.color}`}>
+        {targetUsersInfo.text}
+      </span>
     );
   };
 
-  // 统计数据
-  const totalCoupons = couponsData.length;
-  const activeCoupons = couponsData.filter(item => item.status === '进行中').length;
-  const expiredCoupons = couponsData.filter(item => item.status === '已结束').length;
-  const totalCouponCount = couponsData.reduce((sum, item) => sum + item.couponCount, 0);
+  const getTypeBadge = (type) => {
+    const typeMap = {
+      discount: { text: '满减券', color: 'bg-blue-100 text-blue-800' },
+      free: { text: '免费券', color: 'bg-green-100 text-green-800' }
+    };
+    const typeInfo = typeMap[type] || { text: type, color: 'bg-gray-100 text-gray-800' };
+    return (
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${typeInfo.color}`}>
+        {typeInfo.text}
+      </span>
+    );
+  };
+
+  // 获取localStorage的辅助函数
+  const getLocalStorage = (key) => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -285,7 +338,7 @@ export default function CouponsPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">进行中</p>
-              <p className="text-2xl font-bold text-gray-900">{activeCoupons}</p>
+              <p className="text-2xl font-bold text-gray-900">{couponsData.filter(item => item.status === 'active').length}</p>
             </div>
           </div>
         </div>
@@ -296,7 +349,7 @@ export default function CouponsPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">已结束</p>
-              <p className="text-2xl font-bold text-gray-900">{expiredCoupons}</p>
+              <p className="text-2xl font-bold text-gray-900">{couponsData.filter(item => item.status === 'expired').length}</p>
             </div>
           </div>
         </div>
@@ -307,7 +360,7 @@ export default function CouponsPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">总张数</p>
-              <p className="text-2xl font-bold text-gray-900">{totalCouponCount.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">{couponsData.reduce((sum, item) => sum + item.totalCount, 0)}</p>
             </div>
           </div>
         </div>
@@ -329,13 +382,18 @@ export default function CouponsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">渠道</label>
-            <input
-              type="text"
+            <select
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="请输入渠道"
               value={searchChannel}
               onChange={(e) => setSearchChannel(e.target.value)}
-            />
+            >
+              <option value="">全部渠道</option>
+              <option value="wechat">微信小程序</option>
+              <option value="app">APP</option>
+              <option value="website">官网</option>
+              <option value="offline">线下门店</option>
+              <option value="partner">合作伙伴</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
@@ -345,10 +403,11 @@ export default function CouponsPage() {
               onChange={(e) => setSearchStatus(e.target.value)}
             >
               <option value="">全部状态</option>
-              <option value="未开始">未开始</option>
-              <option value="进行中">进行中</option>
-              <option value="已结束">已结束</option>
-              <option value="已暂停">已暂停</option>
+              <option value="pending">未开始</option>
+              <option value="active">进行中</option>
+              <option value="expired">已结束</option>
+              <option value="paused">已暂停</option>
+              <option value="cancelled">已取消</option>
             </select>
           </div>
         </div>
@@ -364,6 +423,7 @@ export default function CouponsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">优惠券名称</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">渠道</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">优惠券张数</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">折扣数</th>
@@ -375,42 +435,57 @@ export default function CouponsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentData.map((coupon) => (
-                <tr key={coupon.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate" title={coupon.name}>
-                    {coupon.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getChannelBadge(coupon.channel)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.couponCount.toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.discount}%</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.startTime}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.endTime}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getIdentitiesBadge(coupon.identities)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(coupon.status)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
+              {isLoading ? (
+                <tr>
+                  <td colSpan="9" className="px-6 py-4 text-center text-gray-500">加载中...</td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="9" className="px-6 py-4 text-center text-red-600">{error}</td>
+                </tr>
+              ) : currentData.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="px-6 py-4 text-center text-gray-500">暂无优惠券</td>
+                </tr>
+              ) : (
+                currentData.map((coupon) => (
+                  <tr key={coupon.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{coupon.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getTypeBadge(coupon.type)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getChannelBadge(coupon.channel)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.totalCount.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{coupon.value}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(coupon.startTime).toLocaleString('zh-CN')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(coupon.endTime).toLocaleString('zh-CN')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getTargetUsersBadge(coupon.targetUsers)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(coupon.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        className="text-blue-600 hover:text-blue-900"
                         onClick={() => handleView(coupon)}
+                        className="text-blue-600 hover:text-blue-900 mr-3"
                       >
                         查看
                       </button>
                       <button
-                        className="text-green-600 hover:text-green-900"
                         onClick={() => handleEdit(coupon)}
+                        className="text-green-600 hover:text-green-900 mr-3"
                       >
                         编辑
                       </button>
                       <button
-                        className="text-red-600 hover:text-red-900"
                         onClick={() => handleDelete(coupon.id)}
+                        className="text-red-600 hover:text-red-900"
                       >
                         删除
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -419,7 +494,7 @@ export default function CouponsPage() {
         {totalPages > 1 && (
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <p className="text-sm text-gray-700">
-              显示 {startIndex + 1} 到 {Math.min(endIndex, filteredData.length)} 条，共 {filteredData.length} 条
+              显示 {startIndex + 1} 到 {Math.min(endIndex, totalCoupons)} 条，共 {totalCoupons} 条
             </p>
             <div className="flex space-x-2">
               <button
@@ -471,11 +546,11 @@ export default function CouponsPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">优惠券张数</label>
-                      <p className="text-sm text-gray-600 mt-1">{selectedCoupon.couponCount.toLocaleString()}</p>
+                      <p className="text-sm text-gray-600 mt-1">{selectedCoupon.totalCount.toLocaleString()}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">折扣数</label>
-                      <p className="text-sm text-gray-600 mt-1">{selectedCoupon.discount}%</p>
+                      <label className="block text-sm font-medium text-gray-700">折扣数(%)</label>
+                      <p className="text-sm text-gray-600 mt-1">{selectedCoupon.value}%</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">开始时间</label>
@@ -492,7 +567,15 @@ export default function CouponsPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">发放对象</label>
-                    <div className="mt-1">{getIdentitiesBadge(selectedCoupon.identities)}</div>
+                    <div className="mt-1">{getTargetUsersBadge(selectedCoupon.targetUsers)}</div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">类型</label>
+                    <div className="mt-1">{getTypeBadge(selectedCoupon.type)}</div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">描述</label>
+                    <p className="text-sm text-gray-600 mt-1">{selectedCoupon.description}</p>
                   </div>
                 </div>
               )}
@@ -527,36 +610,59 @@ export default function CouponsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">渠道</label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={editForm.channel || ''}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, channel: e.target.value }))}
-                    >
-                      <option value="">请选择渠道</option>
-                      <option value="微信小程序">微信小程序</option>
-                      <option value="APP">APP</option>
-                      <option value="官网">官网</option>
-                      <option value="线下门店">线下门店</option>
-                      <option value="合作伙伴">合作伙伴</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">优惠券张数</label>
+                    <label className="block text-sm font-medium text-gray-700">优惠券编码</label>
                     <input
-                      type="number"
+                      type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={editForm.couponCount || ''}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, couponCount: e.target.value }))}
+                      value={editForm.code || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, code: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">折扣数(%)</label>
+                    <label className="block text-sm font-medium text-gray-700">类型</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editForm.type || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
+                    >
+                      <option value="discount">满减券</option>
+                      <option value="free">免费券</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">折扣值</label>
                     <input
                       type="number"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={editForm.discount || ''}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, discount: e.target.value }))}
+                      value={editForm.value || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, value: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">最低消费金额</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editForm.minAmount || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, minAmount: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">最大折扣金额</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editForm.maxDiscount || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, maxDiscount: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">总张数</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editForm.totalCount || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, totalCount: e.target.value }))}
                     />
                   </div>
                   <div>
@@ -578,34 +684,56 @@ export default function CouponsPage() {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700">渠道</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editForm.channel || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, channel: e.target.value }))}
+                    >
+                      <option value="all">全部渠道</option>
+                      <option value="wechat">微信小程序</option>
+                      <option value="app">APP</option>
+                      <option value="website">官网</option>
+                      <option value="offline">线下门店</option>
+                      <option value="partner">合作伙伴</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">发放对象</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editForm.targetUsers || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, targetUsers: e.target.value }))}
+                    >
+                      <option value="all">全部用户</option>
+                      <option value="vip">VIP用户</option>
+                      <option value="enterprise">企业用户</option>
+                      <option value="normal">普通用户</option>
+                      <option value="new">新用户</option>
+                    </select>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700">状态</label>
                     <select
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={editForm.status || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
                     >
-                      <option value="">请选择状态</option>
-                      <option value="未开始">未开始</option>
-                      <option value="进行中">进行中</option>
-                      <option value="已结束">已结束</option>
-                      <option value="已暂停">已暂停</option>
+                      <option value="pending">未开始</option>
+                      <option value="active">进行中</option>
+                      <option value="expired">已结束</option>
+                      <option value="paused">已暂停</option>
+                      <option value="cancelled">已取消</option>
                     </select>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">发放对象</label>
-                  <div className="mt-2 space-y-2">
-                    {['全部用户', 'VIP用户', '企业用户', '普通用户', '新用户'].map((identity) => (
-                      <label key={identity} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          checked={editForm.identities?.includes(identity) || false}
-                          onChange={(e) => handleIdentityChange(identity, e.target.checked, 'edit')}
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{identity}</span>
-                      </label>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">描述</label>
+                    <textarea
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                      value={editForm.description || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
@@ -655,38 +783,64 @@ export default function CouponsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">渠道</label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={addForm.channel}
-                      onChange={(e) => setAddForm(prev => ({ ...prev, channel: e.target.value }))}
-                    >
-                      <option value="">请选择渠道</option>
-                      <option value="微信小程序">微信小程序</option>
-                      <option value="APP">APP</option>
-                      <option value="官网">官网</option>
-                      <option value="线下门店">线下门店</option>
-                      <option value="合作伙伴">合作伙伴</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">优惠券张数</label>
+                    <label className="block text-sm font-medium text-gray-700">优惠券编码</label>
                     <input
-                      type="number"
+                      type="text"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={addForm.couponCount}
-                      onChange={(e) => setAddForm(prev => ({ ...prev, couponCount: e.target.value }))}
-                      placeholder="请输入张数"
+                      value={addForm.code}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, code: e.target.value }))}
+                      placeholder="请输入优惠券编码"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">折扣数(%)</label>
+                    <label className="block text-sm font-medium text-gray-700">类型</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={addForm.type}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
+                    >
+                      <option value="discount">满减券</option>
+                      <option value="free">免费券</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">折扣值</label>
                     <input
                       type="number"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={addForm.discount}
-                      onChange={(e) => setAddForm(prev => ({ ...prev, discount: e.target.value }))}
-                      placeholder="请输入折扣"
+                      value={addForm.value}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, value: e.target.value }))}
+                      placeholder="请输入折扣值"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">最低消费金额</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={addForm.minAmount}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, minAmount: e.target.value }))}
+                      placeholder="请输入最低消费金额"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">最大折扣金额</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={addForm.maxDiscount}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, maxDiscount: e.target.value }))}
+                      placeholder="请输入最大折扣金额"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">总张数</label>
+                    <input
+                      type="number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={addForm.totalCount}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, totalCount: e.target.value }))}
+                      placeholder="请输入总张数"
                     />
                   </div>
                   <div>
@@ -708,33 +862,57 @@ export default function CouponsPage() {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700">渠道</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={addForm.channel}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, channel: e.target.value }))}
+                    >
+                      <option value="all">全部渠道</option>
+                      <option value="wechat">微信小程序</option>
+                      <option value="app">APP</option>
+                      <option value="website">官网</option>
+                      <option value="offline">线下门店</option>
+                      <option value="partner">合作伙伴</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">发放对象</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={addForm.targetUsers}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, targetUsers: e.target.value }))}
+                    >
+                      <option value="all">全部用户</option>
+                      <option value="vip">VIP用户</option>
+                      <option value="enterprise">企业用户</option>
+                      <option value="normal">普通用户</option>
+                      <option value="new">新用户</option>
+                    </select>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700">状态</label>
                     <select
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={addForm.status}
                       onChange={(e) => setAddForm(prev => ({ ...prev, status: e.target.value }))}
                     >
-                      <option value="未开始">未开始</option>
-                      <option value="进行中">进行中</option>
-                      <option value="已结束">已结束</option>
-                      <option value="已暂停">已暂停</option>
+                      <option value="pending">未开始</option>
+                      <option value="active">进行中</option>
+                      <option value="expired">已结束</option>
+                      <option value="paused">已暂停</option>
+                      <option value="cancelled">已取消</option>
                     </select>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">发放对象</label>
-                  <div className="mt-2 space-y-2">
-                    {['全部用户', 'VIP用户', '企业用户', '普通用户', '新用户'].map((identity) => (
-                      <label key={identity} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          checked={addForm.identities.includes(identity)}
-                          onChange={(e) => handleIdentityChange(identity, e.target.checked, 'add')}
-                        />
-                        <span className="ml-2 text-sm text-gray-700">{identity}</span>
-                      </label>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">描述</label>
+                    <textarea
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                      value={addForm.description}
+                      onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="请输入优惠券描述"
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">

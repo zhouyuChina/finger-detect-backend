@@ -222,6 +222,10 @@ model Coupon {
   usedCount   Int      @default(0) // 已使用数量
   startTime   DateTime // 开始时间
   endTime     DateTime // 结束时间
+  channel     String   @default("all") // 发放渠道: all, wechat, app, website, offline, partner
+  targetUsers String   @default("all") // 目标用户: all, vip, enterprise, normal, new
+  status      String   @default("pending") // 状态: pending, active, expired, paused, cancelled
+  description String?  // 优惠券描述
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
