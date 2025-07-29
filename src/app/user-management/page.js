@@ -36,19 +36,25 @@ export default function UserManagementPage() {
     }
   }
 
-  // 使用useEffect获取数据并处理URL参数
+  // 使用useEffect获取数据
   useEffect(() => {
-    const wechatName = searchParams.get('wechatName')
-    if (wechatName) {
-      setSearchPhone(wechatName)
-    }
     fetchUsers()
+  }, [])
+
+  // 处理URL参数
+  useEffect(() => {
+    const searchUserId = searchParams.get('searchUserId')
+    if (searchUserId) {
+      setSearchPhone(searchUserId)
+      // 自动触发搜索
+      setCurrentPage(1)
+    }
   }, [searchParams])
   
   // 过滤用户数据
   const filteredUsers = allUsers.filter(user => {
-    const matchUsername = !searchUsername || (user.username && user.username.toLowerCase().includes(searchUsername.toLowerCase()))
-    const matchUserId = !searchPhone || (user.userId && user.userId.includes(searchPhone))
+    const matchUsername = !searchUsername || user.username.toLowerCase().includes(searchUsername.toLowerCase())
+    const matchUserId = !searchPhone || user.userId.includes(searchPhone)
     const matchStatus = !searchStatus || user.status === searchStatus
     return matchUsername && matchUserId && matchStatus
   })
@@ -537,4 +543,4 @@ export default function UserManagementPage() {
       )}
     </div>
   )
-}
+} 

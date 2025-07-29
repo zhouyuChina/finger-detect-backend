@@ -355,7 +355,14 @@ export default function UserIdsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button 
-                          onClick={() => router.push(`/user-management?wechatName=${encodeURIComponent(userId.user?.nickname || '')}`)}
+                          onClick={() => {
+                            const wechatName = userId.user?.nickname || ''
+                            if (wechatName) {
+                              router.push(`/user-management?searchUserId=${encodeURIComponent(wechatName)}`)
+                            } else {
+                              alert('该用户没有微信名信息')
+                            }
+                          }}
                           className="text-blue-600 hover:text-blue-900 mr-3"
                         >
                           用户
@@ -436,4 +443,4 @@ export default function UserIdsPage() {
       </div>
     </div>
   )
-}
+} 
