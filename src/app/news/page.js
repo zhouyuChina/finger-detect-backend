@@ -45,8 +45,8 @@ export default function NewsPage() {
   
   // 过滤资讯数据
   const filteredNews = allNews.filter(news => {
-    const matchTitle = !searchTitle || news.title.toLowerCase().includes(searchTitle.toLowerCase())
-    const matchType = !searchType || news.types.includes(searchType)
+    const matchTitle = !searchTitle || (news.title && news.title.toLowerCase().includes(searchTitle.toLowerCase()))
+    const matchType = !searchType || (news.types && news.types.includes(searchType))
     const matchStatus = !searchStatus || news.status === searchStatus
     return matchTitle && matchType && matchStatus
   })
@@ -58,9 +58,9 @@ export default function NewsPage() {
   const currentNews = filteredNews.slice(startIndex, endIndex)
 
   // 统计数据
-  const publishedCount = filteredNews.filter(n => n.status === 'published').length
-  const totalReads = filteredNews.reduce((sum, news) => sum + (news.viewCount || 0), 0)
-  const pinnedCount = filteredNews.filter(n => n.types.includes('置顶')).length
+  const publishedCount = filteredNews.filter(n => n && n.status === 'published').length
+  const totalReads = filteredNews.reduce((sum, news) => sum + (news?.viewCount || 0), 0)
+  const pinnedCount = filteredNews.filter(n => n && n.types && n.types.includes('置顶')).length
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -600,4 +600,4 @@ export default function NewsPage() {
        )}
      </div>
    )
- } 
+ }

@@ -355,7 +355,7 @@ export default function UserIdsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button 
-                          onClick={() => console.log('用户功能待实现')}
+                          onClick={() => router.push(`/user-management?wechatName=${encodeURIComponent(userId.user?.nickname || '')}`)}
                           className="text-blue-600 hover:text-blue-900 mr-3"
                         >
                           用户
@@ -436,4 +436,4 @@ export default function UserIdsPage() {
       </div>
     </div>
   )
-} 
+}

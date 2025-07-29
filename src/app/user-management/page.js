@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
 
 export default function UserManagementPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchUsername, setSearchUsername] = useState('')
@@ -35,15 +36,19 @@ export default function UserManagementPage() {
     }
   }
 
-  // 使用useEffect获取数据
+  // 使用useEffect获取数据并处理URL参数
   useEffect(() => {
+    const wechatName = searchParams.get('wechatName')
+    if (wechatName) {
+      setSearchPhone(wechatName)
+    }
     fetchUsers()
-  }, [])
+  }, [searchParams])
   
   // 过滤用户数据
   const filteredUsers = allUsers.filter(user => {
-    const matchUsername = !searchUsername || user.username.toLowerCase().includes(searchUsername.toLowerCase())
-    const matchUserId = !searchPhone || user.userId.includes(searchPhone)
+    const matchUsername = !searchUsername || (user.username && user.username.toLowerCase().includes(searchUsername.toLowerCase()))
+    const matchUserId = !searchPhone || (user.userId && user.userId.includes(searchPhone))
     const matchStatus = !searchStatus || user.status === searchStatus
     return matchUsername && matchUserId && matchStatus
   })
@@ -532,4 +537,4 @@ export default function UserManagementPage() {
       )}
     </div>
   )
-} 
+}
