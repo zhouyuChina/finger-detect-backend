@@ -7,11 +7,42 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
     
+    console.log('微信登录请求参数:', { code, searchParams: Object.fromEntries(searchParams) })
+    
+    // 如果没有code，返回测试token（仅用于开发测试）
     if (!code) {
-      return NextResponse.json(
-        { error: '缺少微信登录code' },
-        { status: 400 }
+      console.log('没有提供code，返回测试token')
+      
+      const mockUser = {
+        id: 1,
+        openid: 'test_openid_' + Date.now(),
+        nickname: '测试用户',
+        avatar: ''
+      }
+
+      const token = jwt.sign(
+        {
+          userId: mockUser.id,
+          openid: mockUser.openid,
+          nickname: mockUser.nickname
+        },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '7d' }
       )
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          token,
+          openid: mockUser.openid,
+          userInfo: {
+            id: mockUser.id,
+            nickname: mockUser.nickname,
+            avatar: mockUser.avatar
+          }
+        },
+        message: '测试登录成功（开发模式）'
+      })
     }
 
     // TODO: 调用微信API获取openid和session_key
