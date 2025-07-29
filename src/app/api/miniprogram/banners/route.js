@@ -30,6 +30,19 @@ async function getBanners(request) {
     //   }
     // })
 
+    // TODO: 从数据库获取Banner配置
+    // const configs = await prisma.systemConfig.findMany({
+    //   where: {
+    //     key: {
+    //       in: ['banner_interval', 'banner_autoplay']
+    //     }
+    //   }
+    // })
+    // const configObject = {}
+    // configs.forEach(config => {
+    //   configObject[config.key] = config.value
+    // })
+
     // 模拟数据
     const mockBanners = [
       {
@@ -48,7 +61,19 @@ async function getBanners(request) {
       }
     ]
 
-    return createSuccessResponse(mockBanners, '获取Banner列表成功')
+    // 模拟配置数据
+    const mockConfig = {
+      banner_interval: '3',
+      banner_autoplay: 'true'
+    }
+
+    return createSuccessResponse({
+      banners: mockBanners,
+      config: {
+        interval: parseInt(mockConfig.banner_interval) * 1000, // 转换为毫秒
+        autoplay: mockConfig.banner_autoplay === 'true'
+      }
+    }, '获取Banner列表成功')
 
   } catch (error) {
     console.error('获取Banner列表错误:', error)
