@@ -43,19 +43,19 @@ async function getBanners(request) {
     //   configObject[config.key] = config.value
     // })
 
-    // 模拟数据
+    // 模拟数据 - 使用真实存在的图片
     const mockBanners = [
       {
         id: 1,
         title: '欢迎使用指纹检测',
-        imageUrl: '/uploads/banner1.jpg',
+        imageUrl: '/uploads/1753695692581_bx6dkiv1bbn.png',
         linkUrl: '/pages/index/index',
         sort: 1
       },
       {
         id: 2,
         title: '专业检测服务',
-        imageUrl: '/uploads/banner2.jpg',
+        imageUrl: '/uploads/1753694778560_amo65patk7e.png',
         linkUrl: '/pages/service/service',
         sort: 2
       }
