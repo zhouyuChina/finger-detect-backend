@@ -516,7 +516,14 @@ export default function ArchivesPage() {
                       导出图片
                     </button>
                     <button 
-                      onClick={() => console.log('报告功能待实现')}
+                      onClick={() => {
+                        const archiveName = archive.archiveName || ''
+                        if (archiveName) {
+                          router.push(`/detections?searchUserId=${encodeURIComponent(archiveName)}`)
+                        } else {
+                          alert('该档案没有档案名称信息')
+                        }
+                      }}
                       className="text-purple-600 hover:text-purple-900 mr-3"
                     >
                       报告
