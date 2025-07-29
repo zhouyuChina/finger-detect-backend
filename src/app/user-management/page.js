@@ -44,9 +44,7 @@ export default function UserManagementPage() {
   // 处理URL参数
   useEffect(() => {
     const searchUserId = searchParams.get('searchUserId')
-    console.log('URL参数 searchUserId:', searchUserId)
     if (searchUserId) {
-      console.log('设置搜索条件:', searchUserId)
       setSearchPhone(searchUserId)
       // 自动触发搜索
       setCurrentPage(1)
@@ -58,27 +56,8 @@ export default function UserManagementPage() {
     const matchUsername = !searchUsername || (user.username && user.username.toLowerCase().includes(searchUsername.toLowerCase()))
     const matchUserId = !searchPhone || (user.userId && user.userId.includes(searchPhone)) || (user.nickname && user.nickname.includes(searchPhone))
     const matchStatus = !searchStatus || user.status === searchStatus
-    
-    // 详细调试每个用户的匹配情况
-    if (searchPhone) {
-      console.log(`用户 ${user.nickname || user.username}:`, {
-        nickname: user.nickname,
-        username: user.username,
-        userId: user.userId,
-        matchUsername,
-        matchUserId,
-        matchStatus,
-        finalMatch: matchUsername && matchUserId && matchStatus
-      })
-    }
-    
     return matchUsername && matchUserId && matchStatus
   })
-
-  // 调试信息
-  console.log('当前搜索条件:', { searchUsername, searchPhone, searchStatus })
-  console.log('总用户数:', allUsers.length)
-  console.log('过滤后用户数:', filteredUsers.length)
   
   const totalUsers = filteredUsers.length
   const totalPages = Math.ceil(totalUsers / pageSize)
@@ -201,8 +180,6 @@ export default function UserManagementPage() {
               placeholder="请输入所属ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
-            {searchPhone && <p className="text-xs text-gray-500 mt-1">当前搜索: {searchPhone}</p>}
-            <p className="text-xs text-gray-400 mt-1">Input value: &quot;{searchPhone}&quot;</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">活跃状态</label>
