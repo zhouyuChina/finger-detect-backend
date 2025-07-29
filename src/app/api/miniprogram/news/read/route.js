@@ -91,11 +91,18 @@ async function getReadStatus(request) {
     // })
 
     // 模拟数据 - 返回每个资讯的阅读状态
-    const mockReadStatuses = articleIdList.map(articleId => ({
-      articleId: articleId,
-      isRead: Math.random() > 0.5, // 随机模拟已读/未读状态
-      readAt: Math.random() > 0.5 ? new Date().toISOString() : null
-    }))
+    // 使用基于用户ID和文章ID的确定性算法，确保同一用户对同一文章的状态保持一致
+    const mockReadStatuses = articleIdList.map(articleId => {
+      // 使用用户ID和文章ID生成一个确定性的哈希值
+      const hash = (userId * 1000 + articleId) % 10
+      const isRead = hash < 6 // 60%的概率为已读，确保状态稳定
+      
+      return {
+        articleId: articleId,
+        isRead: isRead,
+        readAt: isRead ? new Date(Date.now() - Math.random() * 86400000).toISOString() : null // 已读的文章有随机阅读时间
+      }
+    })
 
     return createSuccessResponse(mockReadStatuses, '获取阅读状态成功')
 
