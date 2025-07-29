@@ -53,8 +53,8 @@ export default function UserManagementPage() {
   
   // 过滤用户数据
   const filteredUsers = allUsers.filter(user => {
-    const matchUsername = !searchUsername || user.username.toLowerCase().includes(searchUsername.toLowerCase())
-    const matchUserId = !searchPhone || user.userId.includes(searchPhone)
+    const matchUsername = !searchUsername || (user.username && user.username.toLowerCase().includes(searchUsername.toLowerCase()))
+    const matchUserId = !searchPhone || (user.userId && user.userId.includes(searchPhone))
     const matchStatus = !searchStatus || user.status === searchStatus
     return matchUsername && matchUserId && matchStatus
   })
