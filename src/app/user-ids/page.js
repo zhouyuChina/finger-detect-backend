@@ -243,7 +243,7 @@ export default function UserIdsPage() {
                   <select
                     value={pageSize}
                     onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-900"
                   >
                     <option value={10}>10条/页</option>
                     <option value={20}>20条/页</option>
@@ -416,7 +416,7 @@ export default function UserIdsPage() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-900"
                   >
                     上一页
                   </button>
@@ -445,7 +445,7 @@ export default function UserIdsPage() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-900"
                   >
                     下一页
                   </button>
