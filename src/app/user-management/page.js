@@ -60,6 +60,11 @@ export default function UserManagementPage() {
     const matchStatus = !searchStatus || user.status === searchStatus
     return matchUsername && matchUserId && matchStatus
   })
+
+  // 调试信息
+  console.log('当前搜索条件:', { searchUsername, searchPhone, searchStatus })
+  console.log('总用户数:', allUsers.length)
+  console.log('过滤后用户数:', filteredUsers.length)
   
   const totalUsers = filteredUsers.length
   const totalPages = Math.ceil(totalUsers / pageSize)
@@ -177,12 +182,13 @@ export default function UserManagementPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
-              value={searchPhone}
+              value={searchPhone || ''}
               onChange={(e) => setSearchPhone(e.target.value)}
               placeholder="请输入所属ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {searchPhone && <p className="text-xs text-gray-500 mt-1">当前搜索: {searchPhone}</p>}
+            <p className="text-xs text-gray-400 mt-1">Input value: &quot;{searchPhone}&quot;</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">活跃状态</label>
