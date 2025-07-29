@@ -291,7 +291,7 @@ export default function ArchivesPage() {
               value={searchUserId}
               onChange={(e) => setSearchUserId(e.target.value)}
               placeholder="请输入所属ID"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -301,7 +301,7 @@ export default function ArchivesPage() {
               value={searchUserNickname}
               onChange={(e) => setSearchUserNickname(e.target.value)}
               placeholder="请输入用户昵称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -311,7 +311,7 @@ export default function ArchivesPage() {
               value={searchArchiveName}
               onChange={(e) => setSearchArchiveName(e.target.value)}
               placeholder="请输入档案名称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -319,7 +319,7 @@ export default function ArchivesPage() {
             <select
               value={searchActivity}
               onChange={(e) => setSearchActivity(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
               <option value="">全部活跃度</option>
               <option value="high">高活跃</option>
@@ -333,7 +333,7 @@ export default function ArchivesPage() {
             <select
               value={searchBodyPart}
               onChange={(e) => setSearchBodyPart(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
               <option value="">全部部位</option>
               <option value="finger">指纹</option>
@@ -598,7 +598,7 @@ export default function ArchivesPage() {
                     type="text"
                     value={formData.userId}
                     onChange={(e) => handleInputChange('userId', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     placeholder="请输入主用户ID"
                   />
                 </div>
@@ -609,7 +609,7 @@ export default function ArchivesPage() {
                     type="text"
                     value={formData.userNickname}
                     onChange={(e) => handleInputChange('userNickname', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     placeholder="请输入用户昵称"
                   />
                 </div>
@@ -620,7 +620,7 @@ export default function ArchivesPage() {
                     type="text"
                     value={formData.archiveName}
                     onChange={(e) => handleInputChange('archiveName', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     placeholder="请输入档案名称"
                   />
                 </div>
@@ -630,7 +630,7 @@ export default function ArchivesPage() {
                   <select
                     value={formData.activity}
                     onChange={(e) => handleInputChange('activity', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
                     <option value="high">高活跃</option>
                     <option value="medium">中活跃</option>
@@ -645,7 +645,7 @@ export default function ArchivesPage() {
                     type="number"
                     value={formData.photoCount}
                     onChange={(e) => handleInputChange('photoCount', parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     placeholder="请输入拍照数量"
                     min="0"
                   />
@@ -656,7 +656,7 @@ export default function ArchivesPage() {
                   <select
                     value={formData.bodyPart}
                     onChange={(e) => handleInputChange('bodyPart', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
                     <option value="finger">指纹</option>
                     <option value="palm">掌纹</option>

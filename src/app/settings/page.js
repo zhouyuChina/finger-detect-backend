@@ -257,7 +257,7 @@ export default function SettingsPage() {
                       name="currentPassword"
                       value={passwordForm.currentPassword}
                       onChange={handlePasswordChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       placeholder="请输入当前密码"
                     />
                   </div>
@@ -270,7 +270,7 @@ export default function SettingsPage() {
                       name="newPassword"
                       value={passwordForm.newPassword}
                       onChange={handlePasswordChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       placeholder="请输入新密码"
                     />
                   </div>
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                       name="confirmPassword"
                       value={passwordForm.confirmPassword}
                       onChange={handlePasswordChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       placeholder="请再次输入新密码"
                     />
                   </div>
@@ -319,7 +319,7 @@ export default function SettingsPage() {
                         name="username"
                         value={adminForm.username}
                         onChange={handleAdminChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         placeholder="请输入用户名"
                       />
                     </div>
@@ -332,7 +332,7 @@ export default function SettingsPage() {
                         name="email"
                         value={adminForm.email}
                         onChange={handleAdminChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         placeholder="请输入邮箱"
                       />
                     </div>
@@ -345,7 +345,7 @@ export default function SettingsPage() {
                         name="password"
                         value={adminForm.password}
                         onChange={handleAdminChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         placeholder="请输入密码"
                       />
                     </div>
@@ -358,7 +358,7 @@ export default function SettingsPage() {
                         name="confirmPassword"
                         value={adminForm.confirmPassword}
                         onChange={handleAdminChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         placeholder="请再次输入密码"
                       />
                     </div>
@@ -370,7 +370,7 @@ export default function SettingsPage() {
                         name="role"
                         value={adminForm.role}
                         onChange={handleAdminChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       >
                         <option value="admin">管理员</option>
                         <option value="super_admin">超级管理员</option>
@@ -431,7 +431,7 @@ export default function SettingsPage() {
                         name="siteName"
                         value={systemForm.siteName}
                         onChange={handleSystemChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       />
                     </div>
                     <div>
@@ -443,7 +443,7 @@ export default function SettingsPage() {
                         value={systemForm.siteDescription}
                         onChange={handleSystemChange}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       />
                     </div>
                     <div>
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                         name="maxUploadSize"
                         value={systemForm.maxUploadSize}
                         onChange={handleSystemChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       />
                     </div>
                     <div>
@@ -467,7 +467,7 @@ export default function SettingsPage() {
                         name="sessionTimeout"
                         value={systemForm.sessionTimeout}
                         onChange={handleSystemChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       />
                     </div>
                   </div>

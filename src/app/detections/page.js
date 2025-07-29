@@ -169,7 +169,7 @@ export default function DetectionsPage() {
               value={searchUserId}
               onChange={(e) => setSearchUserId(e.target.value)}
               placeholder="请输入所属ID"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -179,7 +179,7 @@ export default function DetectionsPage() {
               value={searchUserNickname}
               onChange={(e) => setSearchUserNickname(e.target.value)}
               placeholder="请输入用户昵称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -189,7 +189,7 @@ export default function DetectionsPage() {
               value={searchArchiveName}
               onChange={(e) => setSearchArchiveName(e.target.value)}
               placeholder="请输入档案名称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -197,7 +197,7 @@ export default function DetectionsPage() {
             <select
               value={searchBodyPart}
               onChange={(e) => setSearchBodyPart(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
               <option value="">全部部位</option>
               <option value="finger">指纹</option>

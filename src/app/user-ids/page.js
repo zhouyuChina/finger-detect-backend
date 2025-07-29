@@ -133,7 +133,7 @@ export default function UserIdsPage() {
               value={searchWechatName}
               onChange={(e) => setSearchWechatName(e.target.value)}
               placeholder="请输入微信名"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -141,7 +141,7 @@ export default function UserIdsPage() {
             <select
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
               <option value="">全部状态</option>
               <option value="active">活跃</option>

@@ -374,7 +374,7 @@ export default function CouponsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">优惠券名称</label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="请输入优惠券名称"
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
@@ -383,7 +383,7 @@ export default function CouponsPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">渠道</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               value={searchChannel}
               onChange={(e) => setSearchChannel(e.target.value)}
             >
@@ -398,7 +398,7 @@ export default function CouponsPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
             >
@@ -604,7 +604,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">优惠券名称</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.name || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
                     />
@@ -613,7 +613,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">优惠券编码</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.code || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, code: e.target.value }))}
                     />
@@ -621,7 +621,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">类型</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.type || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
                     >
@@ -633,7 +633,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">折扣值</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.value || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, value: e.target.value }))}
                     />
@@ -642,7 +642,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">最低消费金额</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.minAmount || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, minAmount: e.target.value }))}
                     />
@@ -651,7 +651,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">最大折扣金额</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.maxDiscount || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, maxDiscount: e.target.value }))}
                     />
@@ -660,7 +660,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">总张数</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.totalCount || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, totalCount: e.target.value }))}
                     />
@@ -669,7 +669,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">开始时间</label>
                     <input
                       type="datetime-local"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.startTime || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, startTime: e.target.value }))}
                     />
@@ -678,7 +678,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">过期时间</label>
                     <input
                       type="datetime-local"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.endTime || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, endTime: e.target.value }))}
                     />
@@ -686,7 +686,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">渠道</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.channel || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, channel: e.target.value }))}
                     >
@@ -701,7 +701,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">发放对象</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.targetUsers || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, targetUsers: e.target.value }))}
                     >
@@ -715,7 +715,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">状态</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.status || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
                     >
@@ -729,7 +729,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">描述</label>
                     <textarea
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       rows="3"
                       value={editForm.description || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
@@ -776,7 +776,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">优惠券名称</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.name}
                       onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="请输入优惠券名称"
@@ -786,7 +786,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">优惠券编码</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.code}
                       onChange={(e) => setAddForm(prev => ({ ...prev, code: e.target.value }))}
                       placeholder="请输入优惠券编码"
@@ -795,7 +795,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">类型</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.type}
                       onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
                     >
@@ -807,7 +807,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">折扣值</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.value}
                       onChange={(e) => setAddForm(prev => ({ ...prev, value: e.target.value }))}
                       placeholder="请输入折扣值"
@@ -817,7 +817,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">最低消费金额</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.minAmount}
                       onChange={(e) => setAddForm(prev => ({ ...prev, minAmount: e.target.value }))}
                       placeholder="请输入最低消费金额"
@@ -827,7 +827,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">最大折扣金额</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.maxDiscount}
                       onChange={(e) => setAddForm(prev => ({ ...prev, maxDiscount: e.target.value }))}
                       placeholder="请输入最大折扣金额"
@@ -837,7 +837,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">总张数</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.totalCount}
                       onChange={(e) => setAddForm(prev => ({ ...prev, totalCount: e.target.value }))}
                       placeholder="请输入总张数"
@@ -847,7 +847,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">开始时间</label>
                     <input
                       type="datetime-local"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.startTime}
                       onChange={(e) => setAddForm(prev => ({ ...prev, startTime: e.target.value }))}
                     />
@@ -856,7 +856,7 @@ export default function CouponsPage() {
                     <label className="block text-sm font-medium text-gray-700">过期时间</label>
                     <input
                       type="datetime-local"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.endTime}
                       onChange={(e) => setAddForm(prev => ({ ...prev, endTime: e.target.value }))}
                     />
@@ -864,7 +864,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">渠道</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.channel}
                       onChange={(e) => setAddForm(prev => ({ ...prev, channel: e.target.value }))}
                     >
@@ -879,7 +879,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">发放对象</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.targetUsers}
                       onChange={(e) => setAddForm(prev => ({ ...prev, targetUsers: e.target.value }))}
                     >
@@ -893,7 +893,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">状态</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.status}
                       onChange={(e) => setAddForm(prev => ({ ...prev, status: e.target.value }))}
                     >
@@ -907,7 +907,7 @@ export default function CouponsPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">描述</label>
                     <textarea
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       rows="3"
                       value={addForm.description}
                       onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}

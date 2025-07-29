@@ -96,7 +96,7 @@ export default function AddBannerPage() {
                 value={formData.title}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="请输入Banner标题"
               />
             </div>
@@ -111,7 +111,7 @@ export default function AddBannerPage() {
                 value={formData.sort}
                 onChange={handleInputChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="0"
               />
             </div>
@@ -140,7 +140,7 @@ export default function AddBannerPage() {
               name="linkUrl"
               value={formData.linkUrl}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               placeholder="https://example.com"
             />
             <p className="text-xs text-gray-500 mt-1">点击Banner时跳转的链接（可选）</p>
@@ -157,7 +157,7 @@ export default function AddBannerPage() {
                 name="startTime"
                 value={formData.startTime}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
             </div>
 
@@ -170,7 +170,7 @@ export default function AddBannerPage() {
                 name="endTime"
                 value={formData.endTime}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
             </div>
           </div>

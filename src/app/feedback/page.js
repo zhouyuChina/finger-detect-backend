@@ -268,7 +268,7 @@ export default function FeedbackPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">微信名</label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="请输入微信名"
               value={searchUsername}
               onChange={(e) => setSearchUsername(e.target.value)}
@@ -277,7 +277,7 @@ export default function FeedbackPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">反馈类型</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
             >
@@ -290,7 +290,7 @@ export default function FeedbackPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">反馈状态</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
             >
@@ -508,7 +508,7 @@ export default function FeedbackPage() {
                   <label className="block text-sm font-medium text-gray-700">用户</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     value={selectedFeedback.user?.nickname || selectedFeedback.userId}
                     disabled
                   />
@@ -517,7 +517,7 @@ export default function FeedbackPage() {
                   <label className="block text-sm font-medium text-gray-700">反馈类型</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     value={getTypeBadge(selectedFeedback.type).props.children}
                     disabled
                   />
@@ -526,7 +526,7 @@ export default function FeedbackPage() {
                   <label className="block text-sm font-medium text-gray-700">反馈标题</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     value={selectedFeedback.title}
                     disabled
                   />
@@ -534,7 +534,7 @@ export default function FeedbackPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">反馈内容</label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     rows={3}
                     value={selectedFeedback.content}
                     disabled
@@ -543,7 +543,7 @@ export default function FeedbackPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">反馈状态</label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     value={editForm.status || ''}
                     onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
                   >
@@ -557,7 +557,7 @@ export default function FeedbackPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">回复内容</label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     rows={4}
                     value={editForm.reply || ''}
                     onChange={(e) => setEditForm(prev => ({ ...prev, reply: e.target.value }))}

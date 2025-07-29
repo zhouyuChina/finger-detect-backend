@@ -333,7 +333,7 @@ export default function SystemRepliesPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">标题</label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="请输入标题"
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
@@ -342,7 +342,7 @@ export default function SystemRepliesPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
             >
@@ -356,7 +356,7 @@ export default function SystemRepliesPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">身份</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               value={searchIdentity}
               onChange={(e) => setSearchIdentity(e.target.value)}
             >
@@ -554,7 +554,7 @@ export default function SystemRepliesPage() {
                     <label className="block text-sm font-medium text-gray-700">标题</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.title || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
                     />
@@ -562,7 +562,7 @@ export default function SystemRepliesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">类型</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.type || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
                     >
@@ -577,7 +577,7 @@ export default function SystemRepliesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">身份</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.targetUsers || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, targetUsers: e.target.value }))}
                     >
@@ -592,7 +592,7 @@ export default function SystemRepliesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">状态</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={editForm.status || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
                     >
@@ -607,7 +607,7 @@ export default function SystemRepliesPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">内容</label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     rows={5}
                     value={editForm.content || ''}
                     onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
@@ -654,7 +654,7 @@ export default function SystemRepliesPage() {
                     <label className="block text-sm font-medium text-gray-700">标题</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.title}
                       onChange={(e) => setAddForm(prev => ({ ...prev, title: e.target.value }))}
                       placeholder="请输入标题"
@@ -663,7 +663,7 @@ export default function SystemRepliesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">类型</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.type}
                       onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
                     >
@@ -678,7 +678,7 @@ export default function SystemRepliesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">身份</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.targetUsers}
                       onChange={(e) => setAddForm(prev => ({ ...prev, targetUsers: e.target.value }))}
                     >
@@ -693,7 +693,7 @@ export default function SystemRepliesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">状态</label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       value={addForm.status}
                       onChange={(e) => setAddForm(prev => ({ ...prev, status: e.target.value }))}
                     >
@@ -707,7 +707,7 @@ export default function SystemRepliesPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">内容</label>
                   <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     rows={5}
                     value={addForm.content}
                     onChange={(e) => setAddForm(prev => ({ ...prev, content: e.target.value }))}

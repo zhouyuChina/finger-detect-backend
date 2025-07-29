@@ -177,7 +177,7 @@ export default function NewsPage() {
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
               placeholder="请输入标题"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
@@ -185,7 +185,7 @@ export default function NewsPage() {
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
               <option value="">全部类型</option>
               <option value="置顶">置顶</option>
@@ -199,7 +199,7 @@ export default function NewsPage() {
             <select
               value={searchStatus}
               onChange={(e) => setSearchStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
               <option value="">全部状态</option>
               <option value="draft">草稿</option>

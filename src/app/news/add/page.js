@@ -129,7 +129,7 @@ export default function AddNewsPage() {
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="请输入资讯标题"
               />
             </div>
@@ -142,7 +142,7 @@ export default function AddNewsPage() {
                 type="text"
                 value={formData.author}
                 onChange={(e) => handleInputChange('author', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="请输入作者"
               />
             </div>
@@ -155,7 +155,7 @@ export default function AddNewsPage() {
                 type="text"
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="请输入分类"
               />
             </div>
@@ -168,7 +168,7 @@ export default function AddNewsPage() {
                 type="text"
                 value={formData.tags}
                 onChange={(e) => handleInputChange('tags', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="请输入标签，用逗号分隔"
               />
               <p className="text-xs text-gray-500 mt-1">多个标签用逗号分隔，如：技术,安全,AI</p>
@@ -188,7 +188,7 @@ export default function AddNewsPage() {
                 value={formData.summary}
                 onChange={(e) => handleInputChange('summary', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="请输入资讯摘要"
               />
             </div>
@@ -229,7 +229,7 @@ export default function AddNewsPage() {
               <select
                 value={formData.status}
                 onChange={(e) => handleInputChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
                 <option value="draft">草稿</option>
                 <option value="unpublished">未发布</option>

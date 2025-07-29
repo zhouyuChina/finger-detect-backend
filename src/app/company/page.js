@@ -159,7 +159,7 @@ export default function CompanyPage() {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               value={companyData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="请输入公司名称"
@@ -173,7 +173,7 @@ export default function CompanyPage() {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               value={companyData.logo || ''}
               onChange={(e) => handleInputChange('logo', e.target.value)}
               placeholder="请输入Logo URL"
@@ -187,7 +187,7 @@ export default function CompanyPage() {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               value={companyData.address || ''}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder="请输入公司地址"
@@ -201,7 +201,7 @@ export default function CompanyPage() {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               value={companyData.phone || ''}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               placeholder="请输入联系电话"
@@ -215,7 +215,7 @@ export default function CompanyPage() {
             </label>
             <input
               type="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               value={companyData.email || ''}
               onChange={(e) => handleInputChange('email', e.target.value)}
               placeholder="请输入邮箱地址"
@@ -229,7 +229,7 @@ export default function CompanyPage() {
             </label>
             <input
               type="url"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               value={companyData.website || ''}
               onChange={(e) => handleInputChange('website', e.target.value)}
               placeholder="请输入官方网站URL"
@@ -243,7 +243,7 @@ export default function CompanyPage() {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               value={companyData.wechat || ''}
               onChange={(e) => handleInputChange('wechat', e.target.value)}
               placeholder="请输入微信号"
