@@ -135,6 +135,36 @@ export default function FeedbackPage() {
     }
   };
 
+  const handleSaveReply = async () => {
+    try {
+      const response = await fetch(`/api/feedbacks/${selectedFeedback.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify(replyForm)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('回复成功');
+        setIsReplyModalOpen(false);
+        fetchFeedbacks(); // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录');
+          router.push('/');
+        } else {
+          alert(result.message || '回复失败');
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试');
+    }
+  };
+
   const handleSaveEdit = async () => {
     try {
       const response = await fetch(`/api/feedbacks/${selectedFeedback.id}`, {
@@ -484,6 +514,101 @@ export default function FeedbackPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 回复模态框 */}
+      {isReplyModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">回复反馈</h3>
+                <button
+                  onClick={() => setIsReplyModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">用户</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    value={selectedFeedback.user?.nickname || selectedFeedback.userId}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">反馈类型</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    value={getTypeBadge(selectedFeedback.type).props.children}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">反馈标题</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    value={selectedFeedback.title}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">反馈内容</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    rows={3}
+                    value={selectedFeedback.content}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">反馈状态</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    value={replyForm.status || ''}
+                    onChange={(e) => setReplyForm(prev => ({ ...prev, status: e.target.value }))}
+                  >
+                    <option value="">请选择反馈状态</option>
+                    <option value="pending">待处理</option>
+                    <option value="processing">处理中</option>
+                    <option value="resolved">已回复</option>
+                    <option value="rejected">已关闭</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">回复内容</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    rows={4}
+                    value={replyForm.reply || ''}
+                    onChange={(e) => setReplyForm(prev => ({ ...prev, reply: e.target.value }))}
+                    placeholder="请输入回复内容..."
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  onClick={() => setIsReplyModalOpen(false)}
+                >
+                  取消
+                </button>
+                <button
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                  onClick={handleSaveReply}
+                >
+                  保存回复
+                </button>
+              </div>
             </div>
           </div>
         </div>
