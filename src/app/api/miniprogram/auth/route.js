@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
 
 // 微信小程序登录接口
 export async function POST(request) {
@@ -29,18 +30,34 @@ export async function POST(request) {
     //   user = await prisma.user.create({ data: { openid: mockResponse.openid } })
     // }
 
+    // 模拟用户数据
+    const mockUser = {
+      id: 1,
+      openid: mockResponse.openid,
+      nickname: '微信用户',
+      avatar: ''
+    }
+
     // 生成JWT token
-    const token = 'mock_jwt_token_' + Date.now()
+    const token = jwt.sign(
+      {
+        userId: mockUser.id,
+        openid: mockUser.openid,
+        nickname: mockUser.nickname
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' } // token有效期7天
+    )
 
     return NextResponse.json({
       success: true,
       data: {
         token,
-        openid: mockResponse.openid,
+        openid: mockUser.openid,
         userInfo: {
-          id: 1,
-          nickname: '微信用户',
-          avatar: ''
+          id: mockUser.id,
+          nickname: mockUser.nickname,
+          avatar: mockUser.avatar
         }
       }
     })

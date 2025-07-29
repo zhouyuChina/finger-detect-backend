@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
 
 // 微信小程序认证中间件
 export function miniprogramAuthMiddleware(handler) {
@@ -15,26 +16,32 @@ export function miniprogramAuthMiddleware(handler) {
 
       const token = authHeader.substring(7)
       
-      // TODO: 验证JWT token
-      // const decoded = jwt.verify(token, process.env.JWT_SECRET)
-      // request.user = decoded
-      
-      // 模拟验证
-      if (!token || token === 'invalid_token') {
+      if (!token) {
         return NextResponse.json(
-          { error: 'token无效', code: 401 },
+          { error: 'token不能为空', code: 401 },
           { status: 401 }
         )
       }
 
-      // 将用户信息添加到request对象
-      request.user = {
-        id: 1,
-        openid: 'mock_openid',
-        nickname: '微信用户'
-      }
+      try {
+        // 验证JWT token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
+        
+        // 将解码后的用户信息添加到request对象
+        request.user = {
+          id: decoded.userId,
+          openid: decoded.openid,
+          nickname: decoded.nickname
+        }
 
-      return handler(request)
+        return handler(request)
+      } catch (jwtError) {
+        console.error('JWT验证失败:', jwtError)
+        return NextResponse.json(
+          { error: 'token无效或已过期', code: 401 },
+          { status: 401 }
+        )
+      }
     } catch (error) {
       console.error('认证中间件错误:', error)
       return NextResponse.json(
