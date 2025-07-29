@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function ArchivesPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [showModal, setShowModal] = useState(false)
@@ -67,6 +68,15 @@ export default function ArchivesPage() {
   useEffect(() => {
     fetchArchives()
   }, [currentPage, pageSize, searchUserId, searchUserNickname, searchArchiveName, searchActivity, searchBodyPart])
+
+  // 处理URL参数
+  useEffect(() => {
+    const searchUserIdParam = searchParams.get('searchUserId')
+    if (searchUserIdParam) {
+      setSearchUserNickname(searchUserIdParam)
+      setCurrentPage(1)
+    }
+  }, [searchParams])
   
   const totalArchives = allArchives.length
   const totalPages = Math.ceil(totalArchives / pageSize)

@@ -368,13 +368,27 @@ export default function UserIdsPage() {
                           用户
                         </button>
                         <button 
-                          onClick={() => console.log('档案功能待实现')}
+                          onClick={() => {
+                            const wechatName = userId.user?.nickname || ''
+                            if (wechatName) {
+                              router.push(`/archives?searchUserId=${encodeURIComponent(wechatName)}`)
+                            } else {
+                              alert('该用户没有微信名信息')
+                            }
+                          }}
                           className="text-green-600 hover:text-green-900 mr-3"
                         >
                           档案
                         </button>
                         <button 
-                          onClick={() => console.log('报告功能待实现')}
+                          onClick={() => {
+                            const wechatName = userId.user?.nickname || ''
+                            if (wechatName) {
+                              router.push(`/detections?searchUserId=${encodeURIComponent(wechatName)}`)
+                            } else {
+                              alert('该用户没有微信名信息')
+                            }
+                          }}
                           className="text-purple-600 hover:text-purple-900 mr-3"
                         >
                           报告

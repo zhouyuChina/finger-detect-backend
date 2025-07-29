@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function DetectionsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchUserId, setSearchUserId] = useState('')
@@ -51,6 +52,15 @@ export default function DetectionsPage() {
   useEffect(() => {
     fetchDetections()
   }, [currentPage, pageSize, searchUserId, searchUserNickname, searchArchiveName, searchBodyPart])
+
+  // 处理URL参数
+  useEffect(() => {
+    const searchUserIdParam = searchParams.get('searchUserId')
+    if (searchUserIdParam) {
+      setSearchUserNickname(searchUserIdParam)
+      setCurrentPage(1)
+    }
+  }, [searchParams])
   
   const totalDetections = allDetections.length
   const totalPages = Math.ceil(totalDetections / pageSize)
