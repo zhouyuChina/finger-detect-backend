@@ -196,7 +196,6 @@ export default function UserManagementPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
-              defaultValue={searchPhone || ''}
               value={searchPhone || ''}
               onChange={(e) => setSearchPhone(e.target.value)}
               placeholder="请输入所属ID"
