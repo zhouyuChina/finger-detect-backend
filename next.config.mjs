@@ -14,10 +14,18 @@ const nextConfig = {
         hostname: 'localhost',
         port: '3001',
         pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.vercel.app',
+        pathname: '/uploads/**',
       }
     ],
   },
-  serverExternalPackages: ['@prisma/client']
+  serverExternalPackages: ['@prisma/client'],
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client']
+  }
 };
 
 export default nextConfig;
