@@ -15,7 +15,10 @@
     "db:init": "node scripts/init-db.js",
     "db:view": "node scripts/view-db.js",
     "setup": "npm run db:generate && npm run db:migrate && npm run db:init",
-    "vercel-build": "node scripts/deploy.js && next build"
+    "vercel-build": "node scripts/deploy.js && next build",
+    "baota:deploy": "chmod +x scripts/baota-deploy.sh && ./scripts/baota-deploy.sh",
+    "baota:init-db": "node scripts/init-production-db.js",
+    "baota:setup": "npm run db:generate && npm run db:deploy && npm run baota:init-db"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
