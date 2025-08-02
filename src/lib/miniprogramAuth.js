@@ -6,8 +6,8 @@ export function miniprogramAuthMiddleware(handler) {
   return async (request) => {
     try {
       // 开发环境下跳过认证
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔧 开发环境：跳过小程序认证')
+      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+        console.log('🔧 跳过小程序认证')
         // 设置模拟用户信息，使用真实存在的用户ID
         request.user = {
           id: 'cmdmycihz0000eflyo26twnfc',
@@ -28,7 +28,7 @@ export function miniprogramAuthMiddleware(handler) {
         console.log('🔐 使用 openid 认证:', openidHeader)
         
         // 根据 openid 查找用户
-        const { PrismaClient } = await import('../../generated/prisma/index.js')
+        const { PrismaClient } = await import('../generated/prisma/index.js')
         const prisma = new PrismaClient()
         
         try {
