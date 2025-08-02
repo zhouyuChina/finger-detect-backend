@@ -43,11 +43,20 @@ async function syncWechatUserInfo(request) {
 
     console.log('✅ 获取到微信用户信息:', wechatUserInfo.nickname)
 
+    // 处理昵称：如果微信返回的是"微信用户"，使用带序号的昵称
+    let finalNickname = wechatUserInfo.nickname
+    if (finalNickname === '微信用户' || !finalNickname) {
+      // 获取当前用户总数，用于生成序号
+      const userCount = await prisma.user.count()
+      const userIndex = userCount
+      finalNickname = `微信用户${userIndex}`
+    }
+
     // 更新用户信息
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        nickname: wechatUserInfo.nickname || '微信用户',
+        nickname: finalNickname,
         avatar: wechatUserInfo.headimgurl,
         gender: wechatUserInfo.sex?.toString(),
         country: wechatUserInfo.country,

@@ -166,11 +166,13 @@ export async function POST(request) {
       // 新用户，创建记录
       isNewUser = true
 
-          // 处理昵称：如果是"微信用户"，生成随机昵称
+          // 处理昵称：如果是"微信用户"，生成带序号的昵称
     let finalNickname = userInfo.nickName
     if (finalNickname === '微信用户' || !finalNickname) {
-      const randomNum = Math.floor(Math.random() * 10000)
-      finalNickname = `用户${randomNum}`
+      // 获取当前用户总数，用于生成序号
+      const userCount = await prisma.user.count()
+      const userIndex = userCount + 1
+      finalNickname = `微信用户${userIndex}`
     }
 
     // 尝试通过 UnionID 获取更详细的用户信息
