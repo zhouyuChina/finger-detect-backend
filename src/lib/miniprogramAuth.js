@@ -5,16 +5,16 @@ import jwt from 'jsonwebtoken'
 export function miniprogramAuthMiddleware(handler) {
   return async (request) => {
     try {
-      // 开发环境下也使用真实的 openid 查找用户
+      // 开发环境下临时跳过认证（用于测试）
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔧 开发环境：使用 openid 查找用户')
+        console.log('🔧 开发环境：临时跳过认证')
         
         // 从请求头获取 openid
         const openidHeader = request.headers.get('x-openid')
         
         if (openidHeader) {
+          // 如果提供了 openid，尝试查找用户
           try {
-            // 根据 openid 查找用户
             const { PrismaClient } = await import('../generated/prisma/index.js')
             const prisma = new PrismaClient()
             
@@ -30,11 +30,21 @@ export function miniprogramAuthMiddleware(handler) {
               }
               console.log('✅ 找到用户:', user.nickname)
             } else {
-              console.log('❌ 用户不存在，openid:', openidHeader)
-              return NextResponse.json(
-                { error: '用户不存在，请先注册', code: 404 },
-                { status: 404 }
-              )
+              // 用户不存在，使用第一个用户作为默认用户
+              const firstUser = await prisma.user.findFirst()
+              if (firstUser) {
+                request.user = {
+                  id: firstUser.id,
+                  openid: firstUser.openid,
+                  nickname: firstUser.nickname
+                }
+                console.log('🔧 使用默认用户:', firstUser.nickname)
+              } else {
+                return NextResponse.json(
+                  { error: '数据库中没有用户，请先注册', code: 404 },
+                  { status: 404 }
+                )
+              }
             }
             
             await prisma.$disconnect()
@@ -46,11 +56,34 @@ export function miniprogramAuthMiddleware(handler) {
             )
           }
         } else {
-          // 没有提供 openid，返回错误
-          return NextResponse.json(
-            { error: '请提供 openid', code: 401 },
-            { status: 401 }
-          )
+          // 没有提供 openid，使用第一个用户作为默认用户
+          try {
+            const { PrismaClient } = await import('../generated/prisma/index.js')
+            const prisma = new PrismaClient()
+            
+            const firstUser = await prisma.user.findFirst()
+            if (firstUser) {
+              request.user = {
+                id: firstUser.id,
+                openid: firstUser.openid,
+                nickname: firstUser.nickname
+              }
+              console.log('🔧 使用默认用户:', firstUser.nickname)
+            } else {
+              return NextResponse.json(
+                { error: '数据库中没有用户，请先注册', code: 404 },
+                { status: 404 }
+              )
+            }
+            
+            await prisma.$disconnect()
+          } catch (error) {
+            console.error('查找默认用户失败:', error)
+            return NextResponse.json(
+              { error: '数据库查询失败', code: 500 },
+              { status: 500 }
+            )
+          }
         }
         
         return handler(request)
