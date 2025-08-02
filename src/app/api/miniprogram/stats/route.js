@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '../../../../generated/prisma/index.js'
 import { miniprogramAuthMiddleware, createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
-
-const prisma = new PrismaClient()
 
 // 获取用户统计信息
 async function getUserStats(request) {
+  let prisma = null
   try {
     console.log('📊 Stats 接口被调用，用户ID:', request.user.id)
     
     const userId = request.user.id
+
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
 
     // 获取用户信息以获取关联的 userId
     const user = await prisma.user.findUnique({
@@ -78,7 +80,14 @@ async function getUserStats(request) {
     console.error('错误堆栈:', error.stack)
     return createErrorResponse('获取用户统计信息失败')
   } finally {
-    await prisma.$disconnect()
+    // 确保 Prisma 连接被正确关闭
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('关闭 Prisma 连接失败:', error)
+      }
+    }
   }
 }
 

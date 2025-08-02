@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '../../../../generated/prisma/index.js'
 import { miniprogramAuthMiddleware, createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
-
-const prisma = new PrismaClient()
 
 // 获取用户基本信息
 async function getUserProfile(request) {
+  let prisma = null
   try {
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
     console.log('🔍 Profile 接口被调用')
     console.log('📋 request.user:', request.user)
     console.log('📋 用户ID:', request.user?.id)
@@ -63,7 +64,14 @@ async function getUserProfile(request) {
     console.error('错误堆栈:', error.stack)
     return createErrorResponse('获取用户信息失败')
   } finally {
-    await prisma.$disconnect()
+    // 确保 Prisma 连接被正确关闭
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('关闭 Prisma 连接失败:', error)
+      }
+    }
   }
 }
 
