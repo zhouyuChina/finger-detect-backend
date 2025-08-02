@@ -86,13 +86,13 @@ export async function POST(request) {
       }
       console.log('🔧 开发环境使用模拟数据:', wechatData.openid)
     } else if (!process.env.WECHAT_APP_ID || !process.env.WECHAT_APP_SECRET) {
-      // 微信配置缺失时，使用模拟数据（适用于任何环境）
+      // 微信配置缺失时，使用固定的测试数据（适用于任何环境）
       wechatData = {
-        openid: `mock_openid_${Date.now()}`,
-        unionid: `mock_unionid_${Date.now()}`,
+        openid: 'test_openid_123456',
+        unionid: 'test_unionid_123456',
         sessionKey: 'mock_session_key'
       }
-      console.log('🔧 微信配置缺失，使用模拟数据:', wechatData.openid)
+      console.log('🔧 微信配置缺失，使用固定测试数据:', wechatData.openid)
     } else {
       // 正常调用微信接口
       wechatData = await getWechatOpenId(code)
