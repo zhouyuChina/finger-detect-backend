@@ -75,7 +75,7 @@ export async function POST(request) {
       return createErrorResponse('缺少用户信息', 400)
     }
 
-    // 调用微信接口获取 openId（临时使用模拟数据）
+    // 调用微信接口获取 openId
     let wechatData
     if (process.env.NODE_ENV === 'development' && code === 'test_code') {
       // 开发环境使用模拟数据
@@ -85,14 +85,14 @@ export async function POST(request) {
         sessionKey: 'mock_session_key'
       }
       console.log('🔧 开发环境使用模拟数据:', wechatData.openid)
-    } else if (process.env.NODE_ENV === 'production' && (!process.env.WECHAT_APP_ID || !process.env.WECHAT_APP_SECRET)) {
-      // 生产环境微信配置缺失时，使用模拟数据
+    } else if (!process.env.WECHAT_APP_ID || !process.env.WECHAT_APP_SECRET) {
+      // 微信配置缺失时，使用模拟数据（适用于任何环境）
       wechatData = {
-        openid: `prod_openid_${Date.now()}`,
-        unionid: `prod_unionid_${Date.now()}`,
+        openid: `mock_openid_${Date.now()}`,
+        unionid: `mock_unionid_${Date.now()}`,
         sessionKey: 'mock_session_key'
       }
-      console.log('🔧 生产环境微信配置缺失，使用模拟数据:', wechatData.openid)
+      console.log('🔧 微信配置缺失，使用模拟数据:', wechatData.openid)
     } else {
       // 正常调用微信接口
       wechatData = await getWechatOpenId(code)
