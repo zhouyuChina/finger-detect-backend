@@ -31,7 +31,7 @@ export function miniprogramAuthMiddleware(handler) {
             const prisma = new PrismaClient()
             
             const user = await prisma.user.findUnique({
-              where: { id: openidHeader }
+              where: { openid: openidHeader }
             })
             
             if (user) {

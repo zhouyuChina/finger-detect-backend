@@ -91,9 +91,9 @@ export async function POST(request) {
       console.log('✅ 获取微信 openId 成功:', wechatData.openid)
     }
 
-    // 检查用户是否已存在（使用 openid 作为主键）
+    // 检查用户是否已存在（使用 openid 字段查询）
     const existingUser = await prisma.user.findUnique({
-      where: { id: wechatData.openid },
+      where: { openid: wechatData.openid },
       include: { systemInfo: true }
     })
 
@@ -103,7 +103,7 @@ export async function POST(request) {
     if (existingUser) {
       // 用户已存在，更新信息
       user = await prisma.user.update({
-        where: { id: wechatData.openid },
+        where: { id: existingUser.id },
         data: {
           nickname: userInfo.nickName,
           avatar: userInfo.avatarUrl,
@@ -121,7 +121,7 @@ export async function POST(request) {
       // 更新系统信息
       if (systemInfo) {
         await prisma.userSystemInfo.upsert({
-          where: { userId: wechatData.openid },
+          where: { userId: user.id },
           update: {
             platform: systemInfo.platform,
             system: systemInfo.system,
@@ -138,7 +138,7 @@ export async function POST(request) {
             updatedAt: new Date()
           },
           create: {
-            userId: wechatData.openid,
+            userId: user.id,
             platform: systemInfo.platform,
             system: systemInfo.system,
             version: systemInfo.version,
@@ -160,7 +160,6 @@ export async function POST(request) {
 
       user = await prisma.user.create({
         data: {
-          id: wechatData.openid, // 使用 openid 作为主键
           openid: wechatData.openid,
           unionid: wechatData.unionid,
           nickname: userInfo.nickName,
@@ -180,7 +179,7 @@ export async function POST(request) {
       if (systemInfo) {
         await prisma.userSystemInfo.create({
           data: {
-            userId: wechatData.openid,
+            userId: user.id,
             platform: systemInfo.platform,
             system: systemInfo.system,
             version: systemInfo.version,
