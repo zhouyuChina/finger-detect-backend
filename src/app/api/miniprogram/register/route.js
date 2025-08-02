@@ -166,11 +166,18 @@ export async function POST(request) {
       // 新用户，创建记录
       isNewUser = true
 
+      // 处理昵称：如果是"微信用户"，生成随机昵称
+      let finalNickname = userInfo.nickName
+      if (finalNickname === '微信用户' || !finalNickname) {
+        const randomNum = Math.floor(Math.random() * 10000)
+        finalNickname = `用户${randomNum}`
+      }
+
       user = await prisma.user.create({
         data: {
           openid: wechatData.openid,
           unionid: wechatData.unionid,
-          nickname: userInfo.nickName,
+          nickname: finalNickname,
           avatar: userInfo.avatarUrl,
           gender: userInfo.gender?.toString(),
           country: userInfo.country,
