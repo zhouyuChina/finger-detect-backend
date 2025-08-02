@@ -24,7 +24,7 @@ async function getUserStats(request) {
 
     if (!user) {
       console.log('❌ 用户不存在，用户ID:', userId)
-      return createErrorResponse('用户不存在', 404)
+      return createErrorResponse('用户不存在', 200)
     }
 
     // 并行查询各种统计数据

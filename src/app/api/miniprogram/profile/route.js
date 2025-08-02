@@ -32,7 +32,7 @@ async function getUserProfile(request) {
 
     if (!user) {
       console.log('❌ 用户不存在，用户ID:', request.user.id)
-      return createErrorResponse('用户不存在', 404)
+      return createErrorResponse('用户不存在', 200)
     }
 
     console.log('✅ 用户信息查询成功:', user.id)
