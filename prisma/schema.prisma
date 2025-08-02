@@ -38,6 +38,8 @@ model User {
   reports     Int      @default(0) // 报告数量
   lastLogin   DateTime? // 最后登录时间
   remark      String?  // 备注
+  appVersion  String?  // 应用版本
+  registerTime DateTime? // 注册时间
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   isActive    Boolean  @default(true)
@@ -46,8 +48,32 @@ model User {
   feedbacks   Feedback[]
   coupons     UserCoupon[]
   userIdRecord UserId?
+  systemInfo  UserSystemInfo?
   
   @@map("users")
+}
+
+// 用户系统信息表
+model UserSystemInfo {
+  id          String   @id @default(cuid())
+  userId      String   @unique // 关联用户ID
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform    String?  // 平台
+  system      String?  // 系统版本
+  version     String?  // 微信版本
+  SDKVersion  String?  // SDK版本
+  brand       String?  // 设备品牌
+  model       String?  // 设备型号
+  screenWidth Int?     // 屏幕宽度
+  screenHeight Int?    // 屏幕高度
+  windowWidth Int?     // 窗口宽度
+  windowHeight Int?    // 窗口高度
+  pixelRatio  Float?   // 像素比
+  language    String?  // 语言
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("user_system_info")
 }
 
 // ID管理表
