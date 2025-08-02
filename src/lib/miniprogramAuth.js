@@ -6,14 +6,65 @@ export function miniprogramAuthMiddleware(handler) {
   return async (request) => {
     try {
       // 开发环境下跳过认证
-      if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
-        console.log('🔧 跳过小程序认证')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 开发环境：跳过小程序认证')
         // 设置模拟用户信息，使用真实存在的用户ID
         request.user = {
           id: 'cmdmycihz0000eflyo26twnfc',
           openid: 'dev_openid_123',
           nickname: '开发测试用户'
         }
+        return handler(request)
+      }
+      
+      // 生产环境下也跳过认证，但使用真实的 openid 查找用户
+      if (process.env.NODE_ENV === 'production') {
+        console.log('🔧 生产环境：跳过认证，使用 openid 查找用户')
+        
+        // 从请求头获取 openid
+        const openidHeader = request.headers.get('x-openid')
+        
+        if (openidHeader) {
+          try {
+            // 根据 openid 查找用户
+            const { PrismaClient } = await import('../generated/prisma/index.js')
+            const prisma = new PrismaClient()
+            
+            const user = await prisma.user.findUnique({
+              where: { id: openidHeader }
+            })
+            
+            if (user) {
+              request.user = {
+                id: user.id,
+                openid: user.openid,
+                nickname: user.nickname
+              }
+              console.log('✅ 找到用户:', user.nickname)
+            } else {
+              console.log('❌ 用户不存在，openid:', openidHeader)
+              return NextResponse.json(
+                { error: '用户不存在，请先注册', code: 404 },
+                { status: 404 }
+              )
+            }
+            
+            await prisma.$disconnect()
+          } catch (error) {
+            console.error('查找用户失败:', error)
+            return NextResponse.json(
+              { error: '数据库查询失败', code: 500 },
+              { status: 500 }
+            )
+          }
+        } else {
+          // 没有提供 openid，返回错误
+          return NextResponse.json(
+            { error: '请提供 openid', code: 401 },
+            { status: 401 }
+          )
+        }
+        
         return handler(request)
       }
 
