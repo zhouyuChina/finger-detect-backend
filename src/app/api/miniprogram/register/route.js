@@ -166,23 +166,50 @@ export async function POST(request) {
       // 新用户，创建记录
       isNewUser = true
 
-      // 处理昵称：如果是"微信用户"，生成随机昵称
-      let finalNickname = userInfo.nickName
-      if (finalNickname === '微信用户' || !finalNickname) {
-        const randomNum = Math.floor(Math.random() * 10000)
-        finalNickname = `用户${randomNum}`
+          // 处理昵称：如果是"微信用户"，生成随机昵称
+    let finalNickname = userInfo.nickName
+    if (finalNickname === '微信用户' || !finalNickname) {
+      const randomNum = Math.floor(Math.random() * 10000)
+      finalNickname = `用户${randomNum}`
+    }
+
+    // 尝试通过 UnionID 获取更详细的用户信息
+    let detailedUserInfo = null
+    if (wechatData.unionid && process.env.WECHAT_APP_ID && process.env.WECHAT_APP_SECRET) {
+      try {
+        // 获取 access_token
+        const tokenResponse = await fetch(
+          `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${process.env.WECHAT_APP_ID}&secret=${process.env.WECHAT_APP_SECRET}`
+        )
+        const tokenData = await tokenResponse.json()
+        
+        if (tokenData.access_token) {
+          // 通过 UnionID 获取用户信息
+          const userInfoResponse = await fetch(
+            `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${tokenData.access_token}&openid=${wechatData.openid}&lang=zh_CN`
+          )
+          const detailedInfo = await userInfoResponse.json()
+          
+          if (detailedInfo.nickname && detailedInfo.nickname !== '微信用户') {
+            detailedUserInfo = detailedInfo
+            console.log('✅ 获取到详细用户信息:', detailedInfo.nickname)
+          }
+        }
+      } catch (error) {
+        console.log('⚠️ 获取详细用户信息失败:', error.message)
       }
+    }
 
       user = await prisma.user.create({
         data: {
           openid: wechatData.openid,
           unionid: wechatData.unionid,
-          nickname: finalNickname,
-          avatar: userInfo.avatarUrl,
-          gender: userInfo.gender?.toString(),
-          country: userInfo.country,
-          province: userInfo.province,
-          city: userInfo.city,
+          nickname: detailedUserInfo?.nickname || finalNickname,
+          avatar: detailedUserInfo?.headimgurl || userInfo.avatarUrl,
+          gender: detailedUserInfo?.sex?.toString() || userInfo.gender?.toString(),
+          country: detailedUserInfo?.country || userInfo.country,
+          province: detailedUserInfo?.province || userInfo.province,
+          city: detailedUserInfo?.city || userInfo.city,
           appVersion: appVersion,
           registerTime: registerTime ? new Date(registerTime) : new Date(),
           lastLogin: new Date()
