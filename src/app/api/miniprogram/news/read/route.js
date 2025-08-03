@@ -3,11 +3,12 @@ import { miniprogramAuthMiddleware, createSuccessResponse, createErrorResponse }
 
 // 标记资讯为已读
 async function markAsRead(request) {
+  let prisma = null
   try {
     const { articleId } = await request.json()
     
     if (!articleId) {
-      return createErrorResponse('缺少资讯ID', 400)
+      return createErrorResponse('缺少资讯ID参数', 400)
     }
 
     // 从认证中间件获取用户信息
@@ -19,96 +20,122 @@ async function markAsRead(request) {
       readAt: new Date().toISOString()
     })
 
-    // TODO: 保存或更新用户阅读状态到数据库
-    // const readStatus = await prisma.userReadStatus.upsert({
-    //   where: {
-    //     userId_articleId: {
-    //       userId: userId,
-    //       articleId: parseInt(articleId)
-    //     }
-    //   },
-    //   update: {
-    //     isRead: true,
-    //     readAt: new Date()
-    //   },
-    //   create: {
-    //     userId: userId,
-    //     articleId: parseInt(articleId),
-    //     isRead: true,
-    //     readAt: new Date()
-    //   }
-    // })
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
 
-    // 模拟保存成功
-    const mockReadStatus = {
-      id: Date.now(),
-      userId: userId,
-      articleId: parseInt(articleId),
-      isRead: true,
-      readAt: new Date().toISOString()
+    // 验证文章是否存在
+    const article = await prisma.news.findUnique({
+      where: { id: parseInt(articleId) },
+      select: { id: true, title: true }
+    })
+
+    if (!article) {
+      return createErrorResponse(`文章ID ${articleId} 不存在`, 404)
     }
 
-    return createSuccessResponse(mockReadStatus, '标记已读成功')
+    // 保存或更新用户阅读状态到数据库
+    const readStatus = await prisma.userReadStatus.upsert({
+      where: {
+        userId_articleId: {
+          userId: userId,
+          articleId: parseInt(articleId)
+        }
+      },
+      update: {
+        isRead: true,
+        readAt: new Date()
+      },
+      create: {
+        userId: userId,
+        articleId: parseInt(articleId),
+        isRead: true,
+        readAt: new Date()
+      }
+    })
+
+    return createSuccessResponse(readStatus, '标记已读成功')
 
   } catch (error) {
     console.error('标记已读错误:', error)
     return createErrorResponse('标记已读失败')
+  } finally {
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('关闭 Prisma 连接失败:', error)
+      }
+    }
   }
 }
 
 // 获取用户对指定资讯的阅读状态
 async function getReadStatus(request) {
+  let prisma = null
   try {
     const { searchParams } = new URL(request.url)
     const articleIds = searchParams.get('articleIds') // 支持多个资讯ID，用逗号分隔
     
     if (!articleIds) {
-      return createErrorResponse('缺少资讯ID列表', 400)
+      return createErrorResponse('缺少articleIds参数，请提供要查询的文章ID列表（用逗号分隔）', 400)
     }
 
     // 从认证中间件获取用户信息
     const userId = request.user.id
-    const articleIdList = articleIds.split(',').map(id => parseInt(id.trim()))
+    const articleIdList = articleIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+
+    if (articleIdList.length === 0) {
+      return createErrorResponse('articleIds参数格式错误，请提供有效的数字ID（用逗号分隔）', 400)
+    }
 
     console.log('获取阅读状态:', {
       userId,
       articleIds: articleIdList
     })
 
-    // TODO: 从数据库获取用户的阅读状态
-    // const readStatuses = await prisma.userReadStatus.findMany({
-    //   where: {
-    //     userId: userId,
-    //     articleId: {
-    //       in: articleIdList
-    //     }
-    //   },
-    //   select: {
-    //     articleId: true,
-    //     isRead: true,
-    //     readAt: true
-    //   }
-    // })
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
 
-    // 模拟数据 - 返回每个资讯的阅读状态
-    // 使用基于用户ID和文章ID的确定性算法，确保同一用户对同一文章的状态保持一致
-    const mockReadStatuses = articleIdList.map(articleId => {
-      // 使用用户ID和文章ID生成一个确定性的哈希值
-      const hash = (userId * 1000 + articleId) % 10
-      const isRead = hash < 6 // 60%的概率为已读，确保状态稳定
-      
-      return {
-        articleId: articleId,
-        isRead: isRead,
-        readAt: isRead ? new Date(Date.now() - Math.random() * 86400000).toISOString() : null // 已读的文章有随机阅读时间
+    // 从数据库获取用户的阅读状态
+    const readStatuses = await prisma.userReadStatus.findMany({
+      where: {
+        userId: userId,
+        articleId: {
+          in: articleIdList
+        }
+      },
+      select: {
+        articleId: true,
+        isRead: true,
+        readAt: true
       }
     })
 
-    return createSuccessResponse(mockReadStatuses, '获取阅读状态成功')
+    // 为所有请求的文章ID返回状态，未读的文章返回默认状态
+    const result = articleIdList.map(articleId => {
+      const existingStatus = readStatuses.find(status => status.articleId === articleId)
+      return {
+        articleId: articleId,
+        isRead: existingStatus ? existingStatus.isRead : false,
+        readAt: existingStatus ? existingStatus.readAt : null
+      }
+    })
+
+    return createSuccessResponse(result, '获取阅读状态成功')
 
   } catch (error) {
     console.error('获取阅读状态错误:', error)
     return createErrorResponse('获取阅读状态失败')
+  } finally {
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('关闭 Prisma 连接失败:', error)
+      }
+    }
   }
 }
 
