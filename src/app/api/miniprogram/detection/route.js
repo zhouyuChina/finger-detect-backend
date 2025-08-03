@@ -427,7 +427,43 @@ async function createDetection(request) {
 
     console.log('✅ 第三方检测服务调用成功')
 
-    // 3. 创建检测记录
+    // 3. 创建或更新档案记录
+    const archive = await prisma.archive.upsert({
+      where: {
+        subUserId_archiveName: {
+          subUserId: subUser.id,
+          archiveName: archiveName
+        }
+      },
+      update: {
+        photoCount: {
+          increment: 1
+        },
+        detectionTime: new Date(),
+        updatedAt: new Date()
+      },
+      create: {
+        subUserId: subUser.id,
+        archiveName,
+        bodyPart: detectionType,
+        activity: 'medium',
+        photoCount: 1,
+        detectionTime: new Date()
+      },
+      select: {
+        id: true,
+        subUserId: true,
+        archiveName: true,
+        bodyPart: true,
+        activity: true,
+        photoCount: true,
+        detectionTime: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    // 4. 创建检测记录
     const newDetection = await prisma.detection.create({
       data: {
         subUserId: subUser.id,
@@ -456,12 +492,15 @@ async function createDetection(request) {
       }
     })
 
-    // 4. 更新子用户的检测数量
+    // 5. 更新子用户的检测数量和档案数量
     await prisma.subUser.update({
       where: { id: subUser.id },
       data: {
         reports: {
           increment: 1
+        },
+        archives: {
+          increment: archive.photoCount === 1 ? 1 : 0  // 只有新档案才增加计数
         }
       }
     })
