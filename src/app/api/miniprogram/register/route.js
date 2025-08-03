@@ -15,7 +15,13 @@ export async function POST(request) {
       return createErrorResponse('请求格式错误，请使用application/json', 400)
     }
     
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (error) {
+      console.log('❌ JSON解析错误:', error.message)
+      return createErrorResponse('请求体格式错误，请检查JSON格式', 400)
+    }
     console.log('📤 接收到的请求体:', JSON.stringify(body, null, 2))
     
     const { 
@@ -59,7 +65,17 @@ export async function POST(request) {
       // 如果用户已存在但没有子用户，创建默认子用户
       if (wechatUser.subUsers.length === 0) {
         console.log('📝 创建默认子用户...')
-        const defaultUsername = nickname || `user_${openid.slice(-6)}`
+        let defaultUsername = nickname || `user_${openid.slice(-6)}`
+        
+        // 检查用户名是否已存在，如果存在则添加时间戳
+        let existingSubUser = await prisma.subUser.findUnique({
+          where: { username: defaultUsername }
+        })
+        
+        if (existingSubUser) {
+          console.log('⚠️ 用户名已存在，添加时间戳:', defaultUsername)
+          defaultUsername = `${defaultUsername}_${Date.now()}`
+        }
         
         const defaultSubUser = await prisma.subUser.create({
           data: {
@@ -127,7 +143,17 @@ export async function POST(request) {
 
     // 3. 创建默认子用户
     console.log('📝 创建默认子用户...')
-    const defaultUsername = nickname || `user_${openid.slice(-6)}`
+    let defaultUsername = nickname || `user_${openid.slice(-6)}`
+    
+    // 检查用户名是否已存在，如果存在则添加时间戳
+    let existingSubUser = await prisma.subUser.findUnique({
+      where: { username: defaultUsername }
+    })
+    
+    if (existingSubUser) {
+      console.log('⚠️ 用户名已存在，添加时间戳:', defaultUsername)
+      defaultUsername = `${defaultUsername}_${Date.now()}`
+    }
     
     const defaultSubUser = await prisma.subUser.create({
       data: {
