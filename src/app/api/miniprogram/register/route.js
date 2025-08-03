@@ -99,19 +99,19 @@ export async function POST(request) {
       console.log('✅ 获取微信 openId 成功:', wechatData.openid)
     }
 
-    // 检查用户是否已存在（使用 openid 字段查询）
-    const existingUser = await prisma.user.findUnique({
+    // 检查微信用户是否已存在（使用 openid 字段查询）
+    const existingWechatUser = await prisma.wechatUser.findUnique({
       where: { openid: wechatData.openid },
       include: { systemInfo: true }
     })
 
-    let user
+    let wechatUser
     let isNewUser = false
 
-    if (existingUser) {
-      // 用户已存在，更新信息
-      user = await prisma.user.update({
-        where: { id: existingUser.id },
+    if (existingWechatUser) {
+      // 微信用户已存在，更新信息
+      wechatUser = await prisma.wechatUser.update({
+        where: { id: existingWechatUser.id },
         data: {
           nickname: userInfo.nickName,
           avatar: userInfo.avatarUrl,
@@ -129,7 +129,7 @@ export async function POST(request) {
       // 更新系统信息
       if (systemInfo) {
         await prisma.userSystemInfo.upsert({
-          where: { userId: user.id },
+          where: { wechatUserId: wechatUser.id },
           update: {
             platform: systemInfo.platform,
             system: systemInfo.system,
@@ -146,7 +146,7 @@ export async function POST(request) {
             updatedAt: new Date()
           },
           create: {
-            userId: user.id,
+            wechatUserId: wechatUser.id,
             platform: systemInfo.platform,
             system: systemInfo.system,
             version: systemInfo.version,
@@ -169,9 +169,9 @@ export async function POST(request) {
           // 处理昵称：如果是"微信用户"，生成带序号的昵称
     let finalNickname = userInfo.nickName
     if (finalNickname === '微信用户' || !finalNickname) {
-      // 获取当前用户总数，用于生成序号
-      const userCount = await prisma.user.count()
-      const userIndex = userCount + 1
+      // 获取当前微信用户总数，用于生成序号
+      const wechatUserCount = await prisma.wechatUser.count()
+      const userIndex = wechatUserCount + 1
       finalNickname = `微信用户${userIndex}`
     }
 
@@ -202,7 +202,7 @@ export async function POST(request) {
       }
     }
 
-      user = await prisma.user.create({
+      wechatUser = await prisma.wechatUser.create({
         data: {
           openid: wechatData.openid,
           unionid: wechatData.unionid,
@@ -223,7 +223,7 @@ export async function POST(request) {
       if (systemInfo) {
         await prisma.userSystemInfo.create({
           data: {
-            userId: user.id,
+            wechatUserId: wechatUser.id,
             platform: systemInfo.platform,
             system: systemInfo.system,
             version: systemInfo.version,
@@ -242,29 +242,29 @@ export async function POST(request) {
     }
 
     // 生成 JWT token
-    const token = generateToken(user.id, user.openid, user.nickname)
+    const token = generateToken(wechatUser.id, wechatUser.openid, wechatUser.nickname)
 
     // 构建响应数据
     const responseData = {
-      userId: user.id,
-      openId: user.openid,
-      unionId: user.unionid,
+      wechatUserId: wechatUser.id,
+      openId: wechatUser.openid,
+      unionId: wechatUser.unionid,
       token: token,
       userInfo: {
-        id: user.id,
-        nickName: user.nickname,
-        avatarUrl: user.avatar,
-        gender: parseInt(user.gender || '0'),
-        country: user.country,
-        province: user.province,
-        city: user.city,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        id: wechatUser.id,
+        nickName: wechatUser.nickname,
+        avatarUrl: wechatUser.avatar,
+        gender: parseInt(wechatUser.gender || '0'),
+        country: wechatUser.country,
+        province: wechatUser.province,
+        city: wechatUser.city,
+        createdAt: wechatUser.createdAt,
+        updatedAt: wechatUser.updatedAt
       },
       isNewUser: isNewUser
     }
 
-    console.log('✅ 用户注册成功:', { userId: user.id, isNewUser })
+    console.log('✅ 微信用户注册成功:', { wechatUserId: wechatUser.id, isNewUser })
 
     return createSuccessResponse(responseData, '注册成功')
 
