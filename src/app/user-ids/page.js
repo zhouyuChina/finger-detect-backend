@@ -39,23 +39,23 @@ export default function UserIdsPage() {
     fetchUserIds()
   }, [])
   
-  // 过滤ID管理数据
-  const filteredUserIds = allUserIds.filter(userId => {
+  // 过滤微信用户数据
+  const filteredWechatUsers = allUserIds.filter(wechatUser => {
     const matchWechatName = !searchWechatName || 
-      (userId.user?.nickname && userId.user.nickname.toLowerCase().includes(searchWechatName.toLowerCase()))
-    const matchStatus = !searchStatus || userId.status === searchStatus
+      (wechatUser.nickname && wechatUser.nickname.toLowerCase().includes(searchWechatName.toLowerCase()))
+    const matchStatus = !searchStatus || wechatUser.status === searchStatus
     return matchWechatName && matchStatus
   })
   
-  const totalUserIds = filteredUserIds.length
-  const totalPages = Math.ceil(totalUserIds / pageSize)
+  const totalWechatUsers = filteredWechatUsers.length
+  const totalPages = Math.ceil(totalWechatUsers / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const currentUserIds = filteredUserIds.slice(startIndex, endIndex)
+  const currentWechatUsers = filteredWechatUsers.slice(startIndex, endIndex)
 
   // 统计数据
-  const activeCount = filteredUserIds.filter(u => u.status === 'active').length
-  const inactiveCount = filteredUserIds.filter(u => u.status === 'inactive').length
+  const activeCount = filteredWechatUsers.filter(u => u.status === 'active').length
+  const inactiveCount = filteredWechatUsers.filter(u => u.status === 'inactive').length
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -193,7 +193,7 @@ export default function UserIdsPage() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">总记录数</p>
-              <p className="text-2xl font-semibold text-gray-900">{totalUserIds}</p>
+              <p className="text-2xl font-semibold text-gray-900">{totalWechatUsers}</p>
             </div>
           </div>
         </div>
@@ -296,67 +296,58 @@ export default function UserIdsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {currentUserIds.map((userId) => (
-                    <tr key={userId.id} className="hover:bg-gray-50">
+                  {currentWechatUsers.map((wechatUser) => (
+                    <tr key={wechatUser.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{userId.user?.nickname || '未知用户'}</div>
+                        <div className="text-sm font-medium text-gray-900">{wechatUser.nickname || '未知用户'}</div>
+                        <div className="text-sm text-gray-500">{wechatUser.openid}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          userId.identity === 'VIP用户' 
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : userId.identity === '企业用户'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {userId.identity}
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                          微信用户
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          userId.status === 'active' 
+                          wechatUser.status === 'active' 
                             ? 'bg-green-100 text-green-800' 
-                            : userId.status === 'inactive'
+                            : wechatUser.status === 'inactive'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {userId.status === 'active' ? '活跃' : userId.status === 'inactive' ? '非活跃' : '待审核'}
+                          {wechatUser.status === 'active' ? '活跃' : wechatUser.status === 'inactive' ? '非活跃' : '待审核'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.age}
+                        -
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.gender}
+                        {wechatUser.gender === '1' ? '男' : wechatUser.gender === '2' ? '女' : '未知'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.address}
+                        {wechatUser.city || wechatUser.province || wechatUser.country || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.subUsers}
+                        {wechatUser.subUsers?.length || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.archives}
+                        {wechatUser.verification?.archives || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.reports}
+                        {wechatUser.verification?.reports || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userId.photos}
+                        {wechatUser.verification?.photos || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          userId.unreadMessages > 0 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {userId.unreadMessages}
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                          {wechatUser.verification?.unreadMessages || 0}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button 
                           onClick={() => {
-                            const wechatName = userId.user?.nickname || ''
+                            const wechatName = wechatUser.nickname || ''
                             if (wechatName) {
                               router.push(`/user-management?searchUserId=${encodeURIComponent(wechatName)}`)
                             } else {
@@ -365,11 +356,11 @@ export default function UserIdsPage() {
                           }}
                           className="text-blue-600 hover:text-blue-900 mr-3"
                         >
-                          用户
+                          子用户
                         </button>
                         <button 
                           onClick={() => {
-                            const wechatName = userId.user?.nickname || ''
+                            const wechatName = wechatUser.nickname || ''
                             if (wechatName) {
                               router.push(`/archives?searchUserId=${encodeURIComponent(wechatName)}`)
                             } else {
@@ -382,7 +373,7 @@ export default function UserIdsPage() {
                         </button>
                         <button 
                           onClick={() => {
-                            const wechatName = userId.user?.nickname || ''
+                            const wechatName = wechatUser.nickname || ''
                             if (wechatName) {
                               router.push(`/detections?searchUserId=${encodeURIComponent(wechatName)}`)
                             } else {
@@ -394,7 +385,7 @@ export default function UserIdsPage() {
                           报告
                         </button>
                         <button 
-                          onClick={() => handleDelete(userId.id)}
+                          onClick={() => handleDelete(wechatUser.id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           删除
@@ -410,7 +401,7 @@ export default function UserIdsPage() {
             <div className="px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  显示第 {startIndex + 1} 到 {Math.min(endIndex, totalUserIds)} 条，共 {totalUserIds} 条记录
+                  显示第 {startIndex + 1} 到 {Math.min(endIndex, totalWechatUsers)} 条，共 {totalWechatUsers} 条记录
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
