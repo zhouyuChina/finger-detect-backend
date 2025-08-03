@@ -6,7 +6,18 @@ export async function POST(request) {
   try {
     console.log('📝 微信用户注册接口被调用')
     
+    // 检查Content-Type
+    const contentType = request.headers.get('content-type')
+    console.log('📄 Content-Type:', contentType)
+    
+    if (!contentType || !contentType.includes('application/json')) {
+      console.log('❌ Content-Type错误:', contentType)
+      return createErrorResponse('请求格式错误，请使用application/json', 400)
+    }
+    
     const body = await request.json()
+    console.log('📤 接收到的请求体:', JSON.stringify(body, null, 2))
+    
     const { 
       openid,
       unionid,
@@ -21,7 +32,13 @@ export async function POST(request) {
 
     // 验证必填字段
     if (!openid) {
+      console.log('❌ openid缺失')
       return createErrorResponse('openid为必填项', 400)
+    }
+    
+    if (openid.trim() === '') {
+      console.log('❌ openid为空字符串')
+      return createErrorResponse('openid不能为空', 400)
     }
 
     // 创建 PrismaClient 实例
@@ -77,6 +94,18 @@ export async function POST(request) {
 
     // 2. 创建新的微信用户
     console.log('🆕 创建新微信用户...')
+    
+    // 如果提供了unionid，先检查是否已存在
+    if (unionid) {
+      const existingUserWithUnionid = await prisma.wechatUser.findUnique({
+        where: { unionid }
+      })
+      if (existingUserWithUnionid) {
+        console.log('❌ unionid已存在:', unionid)
+        return createErrorResponse('该微信账号已被注册', 400)
+      }
+    }
+    
     wechatUser = await prisma.wechatUser.create({
       data: {
         openid,
