@@ -27,34 +27,42 @@ export async function GET(request) {
     const where = {}
     
     if (status) {
-      where.verifyStatus = status
+      where.status = status
     }
     
     if (search) {
       where.OR = [
-        { realName: { contains: search, mode: 'insensitive' } },
-        { idNumber: { contains: search, mode: 'insensitive' } },
-        { user: { nickname: { contains: search, mode: 'insensitive' } } }
+        { nickname: { contains: search, mode: 'insensitive' } },
+        { openid: { contains: search, mode: 'insensitive' } }
       ]
     }
 
     // 查询数据
-    const [userIds, total] = await Promise.all([
-      prisma.userId.findMany({
+    const [wechatUsers, total] = await Promise.all([
+      prisma.wechatUser.findMany({
         where,
         include: {
-          user: {
+          verification: {
             select: {
               id: true,
-              nickname: true,
-              avatar: true,
-              phone: true
+              realName: true,
+              idNumber: true,
+              verifyStatus: true,
+              verifyTime: true,
+              verifyAdmin: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
             }
           },
-          verifyAdmin: {
+          subUsers: {
             select: {
               id: true,
-              name: true
+              username: true,
+              realName: true,
+              status: true
             }
           }
         },
@@ -62,13 +70,13 @@ export async function GET(request) {
         skip,
         take: pageSize
       }),
-      prisma.userId.count({ where })
+      prisma.wechatUser.count({ where })
     ])
 
     return NextResponse.json({
       success: true,
       data: {
-        data: userIds,
+        data: wechatUsers,
         pagination: {
           page,
           pageSize,

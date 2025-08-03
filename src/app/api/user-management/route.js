@@ -33,17 +33,17 @@ export async function GET(request) {
     if (search) {
       where.OR = [
         { username: { contains: search, mode: 'insensitive' } },
-        { realName: { contains: search, mode: 'insensitive' } },
-        { userId: { contains: search, mode: 'insensitive' } }
+        { realName: { contains: search, mode: 'insensitive' } }
       ]
     }
 
     // 查询数据
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
+    const [subUsers, total] = await Promise.all([
+      prisma.subUser.findMany({
         where,
         select: {
           id: true,
+          wechatUserId: true,
           username: true,
           realName: true,
           phone: true,
@@ -52,26 +52,30 @@ export async function GET(request) {
           age: true,
           gender: true,
           address: true,
-          userId: true,
           archives: true,
           photos: true,
           reports: true,
           createdAt: true,
           updatedAt: true,
-          lastLogin: true,
-          remark: true
+          remark: true,
+          wechatUser: {
+            select: {
+              openid: true,
+              nickname: true
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip,
         take: pageSize
       }),
-      prisma.user.count({ where })
+      prisma.subUser.count({ where })
     ])
 
     return NextResponse.json({
       success: true,
       data: {
-        data: users,
+        data: subUsers,
         pagination: {
           page,
           pageSize,
@@ -102,6 +106,7 @@ export async function POST(request) {
 
     const body = await request.json()
     const {
+      wechatUserId,
       username,
       realName,
       phone,
@@ -109,34 +114,46 @@ export async function POST(request) {
       age,
       gender,
       address,
-      userId,
       status = 'active',
       remark
     } = body
 
     // 验证必填字段
-    if (!username || !realName) {
+    if (!wechatUserId || !username || !realName) {
       return NextResponse.json(
-        { success: false, message: '缺少必填字段' },
+        { success: false, message: '缺少必填字段（微信用户ID、用户名、真实姓名）' },
+        { status: 400 }
+      )
+    }
+
+    // 验证微信用户是否存在
+    const wechatUser = await prisma.wechatUser.findUnique({
+      where: { id: wechatUserId }
+    })
+
+    if (!wechatUser) {
+      return NextResponse.json(
+        { success: false, message: '微信用户不存在' },
         { status: 400 }
       )
     }
 
     // 检查用户名是否已存在
-    const existingUser = await prisma.user.findFirst({
+    const existingSubUser = await prisma.subUser.findFirst({
       where: { username }
     })
 
-    if (existingUser) {
+    if (existingSubUser) {
       return NextResponse.json(
         { success: false, message: '用户名已存在' },
         { status: 400 }
       )
     }
 
-    // 创建用户记录
-    const user = await prisma.user.create({
+    // 创建子用户记录
+    const subUser = await prisma.subUser.create({
       data: {
+        wechatUserId,
         username,
         realName,
         phone,
@@ -144,7 +161,6 @@ export async function POST(request) {
         age,
         gender,
         address,
-        userId,
         status,
         remark,
         archives: 0,
@@ -155,8 +171,8 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: '用户创建成功',
-      data: user
+      message: '子用户创建成功',
+      data: subUser
     })
   } catch (error) {
     console.error('创建用户失败:', error)

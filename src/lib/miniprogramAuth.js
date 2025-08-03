@@ -23,22 +23,42 @@ export function miniprogramAuthMiddleware(handler) {
           })
           
           if (wechatUser) {
+            // 获取当前微信用户的子用户列表
+            const subUsers = await prisma.subUser.findMany({
+              where: { wechatUserId: wechatUser.id },
+              orderBy: { createdAt: 'asc' }
+            })
+            
+            // 获取当前选中的子用户（默认第一个）
+            const currentSubUser = subUsers.length > 0 ? subUsers[0] : null
+            
             request.user = {
               id: wechatUser.id,
               openid: wechatUser.openid,
-              nickname: wechatUser.nickname
+              nickname: wechatUser.nickname,
+              subUsers: subUsers,
+              currentSubUser: currentSubUser
             }
-            console.log('✅ 找到微信用户:', wechatUser.nickname)
+            console.log('✅ 找到微信用户:', wechatUser.nickname, '子用户数量:', subUsers.length)
           } else {
             // 微信用户不存在，使用第一个微信用户作为默认用户
             const firstWechatUser = await prisma.wechatUser.findFirst()
             if (firstWechatUser) {
+              const subUsers = await prisma.subUser.findMany({
+                where: { wechatUserId: firstWechatUser.id },
+                orderBy: { createdAt: 'asc' }
+              })
+              
+              const currentSubUser = subUsers.length > 0 ? subUsers[0] : null
+              
               request.user = {
                 id: firstWechatUser.id,
                 openid: firstWechatUser.openid,
-                nickname: firstWechatUser.nickname
+                nickname: firstWechatUser.nickname,
+                subUsers: subUsers,
+                currentSubUser: currentSubUser
               }
-              console.log('🔧 使用默认微信用户:', firstWechatUser.nickname)
+              console.log('🔧 使用默认微信用户:', firstWechatUser.nickname, '子用户数量:', subUsers.length)
             } else {
               return NextResponse.json(
                 { error: '数据库中没有微信用户，请先注册', code: 404 },
@@ -50,12 +70,21 @@ export function miniprogramAuthMiddleware(handler) {
           // 没有提供 openid，使用第一个微信用户作为默认用户
           const firstWechatUser = await prisma.wechatUser.findFirst()
           if (firstWechatUser) {
+            const subUsers = await prisma.subUser.findMany({
+              where: { wechatUserId: firstWechatUser.id },
+              orderBy: { createdAt: 'asc' }
+            })
+            
+            const currentSubUser = subUsers.length > 0 ? subUsers[0] : null
+            
             request.user = {
               id: firstWechatUser.id,
               openid: firstWechatUser.openid,
-              nickname: firstWechatUser.nickname
+              nickname: firstWechatUser.nickname,
+              subUsers: subUsers,
+              currentSubUser: currentSubUser
             }
-            console.log('🔧 使用默认微信用户:', firstWechatUser.nickname)
+            console.log('🔧 使用默认微信用户:', firstWechatUser.nickname, '子用户数量:', subUsers.length)
           } else {
             return NextResponse.json(
               { error: '数据库中没有微信用户，请先注册', code: 404 },
@@ -84,12 +113,23 @@ export function miniprogramAuthMiddleware(handler) {
           })
           
           if (wechatUser) {
+            // 获取当前微信用户的子用户列表
+            const subUsers = await prisma.subUser.findMany({
+              where: { wechatUserId: wechatUser.id },
+              orderBy: { createdAt: 'asc' }
+            })
+            
+            // 获取当前选中的子用户（默认第一个）
+            const currentSubUser = subUsers.length > 0 ? subUsers[0] : null
+            
             request.user = {
               id: wechatUser.id,
               openid: wechatUser.openid,
-              nickname: wechatUser.nickname
+              nickname: wechatUser.nickname,
+              subUsers: subUsers,
+              currentSubUser: currentSubUser
             }
-            console.log('✅ 找到微信用户:', wechatUser.nickname)
+            console.log('✅ 找到微信用户:', wechatUser.nickname, '子用户数量:', subUsers.length)
           } else {
             console.log('❌ 微信用户不存在，openid:', openidHeader)
             return NextResponse.json(
@@ -118,25 +158,36 @@ export function miniprogramAuthMiddleware(handler) {
       if (openidHeader) {
         console.log('🔐 使用 openid 认证:', openidHeader)
         
-        // 根据 openid 查找用户
+        // 根据 openid 查找微信用户
         const { PrismaClient } = await import('../generated/prisma/index.js')
         prisma = new PrismaClient()
         
-        const user = await prisma.user.findUnique({
+        const wechatUser = await prisma.wechatUser.findUnique({
           where: { openid: openidHeader }
         })
         
-        if (user) {
+        if (wechatUser) {
+          // 获取当前微信用户的子用户列表
+          const subUsers = await prisma.subUser.findMany({
+            where: { wechatUserId: wechatUser.id },
+            orderBy: { createdAt: 'asc' }
+          })
+          
+          // 获取当前选中的子用户（默认第一个）
+          const currentSubUser = subUsers.length > 0 ? subUsers[0] : null
+          
           userInfo = {
-            id: user.id,
-            openid: user.openid,
-            nickname: user.nickname
+            id: wechatUser.id,
+            openid: wechatUser.openid,
+            nickname: wechatUser.nickname,
+            subUsers: subUsers,
+            currentSubUser: currentSubUser
           }
-          console.log('✅ openid 认证成功:', userInfo.nickname)
+          console.log('✅ openid 认证成功:', userInfo.nickname, '子用户数量:', subUsers.length)
         } else {
-          console.log('❌ 用户不存在，openid:', openidHeader)
+          console.log('❌ 微信用户不存在，openid:', openidHeader)
           return NextResponse.json(
-            { error: '用户不存在', code: 401 },
+            { error: '微信用户不存在', code: 401 },
             { status: 401 }
           )
         }
@@ -149,12 +200,40 @@ export function miniprogramAuthMiddleware(handler) {
         
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
-          userInfo = {
-            id: decoded.userId,
-            openid: decoded.openid,
-            nickname: decoded.nickname
+          
+          // 根据 token 中的信息查找微信用户
+          const { PrismaClient } = await import('../generated/prisma/index.js')
+          prisma = new PrismaClient()
+          
+          const wechatUser = await prisma.wechatUser.findUnique({
+            where: { id: decoded.userId }
+          })
+          
+          if (wechatUser) {
+            // 获取当前微信用户的子用户列表
+            const subUsers = await prisma.subUser.findMany({
+              where: { wechatUserId: wechatUser.id },
+              orderBy: { createdAt: 'asc' }
+            })
+            
+            // 获取当前选中的子用户（默认第一个）
+            const currentSubUser = subUsers.length > 0 ? subUsers[0] : null
+            
+            userInfo = {
+              id: wechatUser.id,
+              openid: wechatUser.openid,
+              nickname: wechatUser.nickname,
+              subUsers: subUsers,
+              currentSubUser: currentSubUser
+            }
+            console.log('✅ JWT token 认证成功:', userInfo.nickname, '子用户数量:', subUsers.length)
+          } else {
+            console.log('❌ 微信用户不存在，token中的userId:', decoded.userId)
+            return NextResponse.json(
+              { error: '用户不存在', code: 401 },
+              { status: 401 }
+            )
           }
-          console.log('✅ JWT token 认证成功:', userInfo.nickname)
         } catch (error) {
           console.log('❌ JWT token 验证失败:', error.message)
           return NextResponse.json(
