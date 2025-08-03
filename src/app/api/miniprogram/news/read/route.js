@@ -26,7 +26,7 @@ async function markAsRead(request) {
 
     // 验证文章是否存在
     const article = await prisma.news.findUnique({
-      where: { id: parseInt(articleId) },
+      where: { id: articleId },
       select: { id: true, title: true }
     })
 
@@ -39,7 +39,7 @@ async function markAsRead(request) {
       where: {
         userId_articleId: {
           userId: userId,
-          articleId: parseInt(articleId)
+          articleId: articleId
         }
       },
       update: {
@@ -48,7 +48,7 @@ async function markAsRead(request) {
       },
       create: {
         userId: userId,
-        articleId: parseInt(articleId),
+        articleId: articleId,
         isRead: true,
         readAt: new Date()
       }
@@ -83,10 +83,10 @@ async function getReadStatus(request) {
 
     // 从认证中间件获取用户信息
     const userId = request.user.id
-    const articleIdList = articleIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+    const articleIdList = articleIds.split(',').map(id => id.trim()).filter(id => id.length > 0)
 
     if (articleIdList.length === 0) {
-      return createErrorResponse('articleIds参数格式错误，请提供有效的数字ID（用逗号分隔）', 400)
+      return createErrorResponse('articleIds参数格式错误，请提供有效的文章ID（用逗号分隔）', 400)
     }
 
     console.log('获取阅读状态:', {

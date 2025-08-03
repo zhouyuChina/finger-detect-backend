@@ -323,3 +323,17 @@ model OperationLog {
   
   @@map("operation_logs")
 }
+
+// 用户阅读状态表
+model UserReadStatus {
+  id        String   @id @default(cuid())
+  userId    String   // 用户ID
+  articleId String   // 文章ID
+  isRead    Boolean  @default(false) // 是否已读
+  readAt    DateTime? // 阅读时间
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, articleId])
+  @@map("user_read_status")
+}
