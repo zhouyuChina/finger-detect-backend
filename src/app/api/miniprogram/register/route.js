@@ -1,6 +1,50 @@
 import { NextResponse } from 'next/server'
 import { createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
 
+// 微信API调用函数
+async function getWechatOpenid(code) {
+  try {
+    const appid = process.env.WECHAT_APP_ID
+    const secret = process.env.WECHAT_APP_SECRET
+    
+    if (!appid || !secret) {
+      return {
+        success: false,
+        message: '微信小程序配置缺失'
+      }
+    }
+
+    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`
+    
+    console.log('📞 调用微信API:', url.replace(secret, '***'))
+    
+    const response = await fetch(url)
+    const data = await response.json()
+    
+    console.log('📄 微信API响应:', JSON.stringify(data, null, 2))
+    
+    if (data.errcode) {
+      return {
+        success: false,
+        message: `微信API错误: ${data.errcode} - ${data.errmsg}`
+      }
+    }
+    
+    return {
+      success: true,
+      openid: data.openid,
+      unionid: data.unionid,
+      session_key: data.session_key
+    }
+  } catch (error) {
+    console.error('❌ 微信API调用失败:', error.message)
+    return {
+      success: false,
+      message: '微信API调用失败: ' + error.message
+    }
+  }
+}
+
 export async function POST(request) {
   let prisma = null
   try {
@@ -25,26 +69,54 @@ export async function POST(request) {
     console.log('📤 接收到的请求体:', JSON.stringify(body, null, 2))
     
     const { 
-      openid,
+      code,           // 微信登录code
+      openid,         // 直接传入的openid（兼容旧版本）
       unionid,
-      nickname,
-      avatar,
-      gender,
-      city,
-      province,
-      country,
+      userInfo,       // 微信用户信息
+      systemInfo,     // 系统信息
+      registerTime,
       appVersion
     } = body
 
+    // 提取用户信息
+    const nickname = userInfo?.nickName || body.nickname
+    const avatar = userInfo?.avatarUrl || body.avatar
+    const gender = userInfo?.gender || body.gender
+    const city = userInfo?.city || body.city
+    const province = userInfo?.province || body.province
+    const country = userInfo?.country || body.country
+
+    let finalOpenid = openid
+    let finalUnionid = unionid
+
+    // 如果提供了code，则调用微信API换取openid
+    if (code && !openid) {
+      console.log('📞 使用微信登录code换取openid...')
+      try {
+        const wxResult = await getWechatOpenid(code)
+        if (wxResult.success) {
+          finalOpenid = wxResult.openid
+          finalUnionid = wxResult.unionid
+          console.log('✅ 微信API调用成功，openid:', finalOpenid)
+        } else {
+          console.log('❌ 微信API调用失败:', wxResult.message)
+          return createErrorResponse('微信登录失败: ' + wxResult.message, 400)
+        }
+      } catch (error) {
+        console.log('❌ 微信API调用异常:', error.message)
+        return createErrorResponse('微信登录失败: ' + error.message, 400)
+      }
+    }
+
     // 验证必填字段
-    if (!openid) {
+    if (!finalOpenid) {
       console.log('❌ openid缺失')
-      return createErrorResponse('openid为必填项', 400)
+      return createErrorResponse('微信登录失败，无法获取用户身份', 400)
     }
     
-    if (openid.trim() === '') {
+    if (finalOpenid.trim() === '') {
       console.log('❌ openid为空字符串')
-      return createErrorResponse('openid不能为空', 400)
+      return createErrorResponse('微信登录失败，无法获取用户身份', 400)
     }
 
     // 创建 PrismaClient 实例
@@ -53,7 +125,7 @@ export async function POST(request) {
 
     // 1. 检查微信用户是否已存在
     let wechatUser = await prisma.wechatUser.findUnique({
-      where: { openid },
+      where: { openid: finalOpenid },
       include: {
         subUsers: true
       }
@@ -90,7 +162,7 @@ export async function POST(request) {
         
         // 重新获取用户信息
         wechatUser = await prisma.wechatUser.findUnique({
-          where: { openid },
+          where: { openid: finalOpenid },
           include: {
             subUsers: true
           }
@@ -112,20 +184,20 @@ export async function POST(request) {
     console.log('🆕 创建新微信用户...')
     
     // 如果提供了unionid，先检查是否已存在
-    if (unionid) {
+    if (finalUnionid) {
       const existingUserWithUnionid = await prisma.wechatUser.findUnique({
-        where: { unionid }
+        where: { unionid: finalUnionid }
       })
       if (existingUserWithUnionid) {
-        console.log('❌ unionid已存在:', unionid)
+        console.log('❌ unionid已存在:', finalUnionid)
         return createErrorResponse('该微信账号已被注册', 400)
       }
     }
     
     wechatUser = await prisma.wechatUser.create({
       data: {
-        openid,
-        unionid,
+        openid: finalOpenid,
+        unionid: finalUnionid,
         nickname: nickname || '微信用户',
         avatar,
         gender: gender?.toString(),
@@ -168,7 +240,7 @@ export async function POST(request) {
 
     // 4. 获取完整的用户信息
     const completeUser = await prisma.wechatUser.findUnique({
-      where: { openid },
+      where: { openid: finalOpenid },
       include: {
         subUsers: true
       }
