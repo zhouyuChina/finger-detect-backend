@@ -134,31 +134,38 @@ export async function POST(request) {
     if (wechatUser) {
       console.log('✅ 微信用户已存在:', wechatUser.nickname)
       
-      // 如果用户已存在但没有子用户，创建默认子用户
-      if (wechatUser.subUsers.length === 0) {
-        console.log('📝 创建默认子用户...')
-        let defaultUsername = nickname || `user_${openid.slice(-6)}`
+      // 检查是否有代表用户本人的子用户
+      const hasSelfSubUser = wechatUser.subUsers.some(subUser => 
+        subUser.username === nickname || 
+        subUser.realName === nickname ||
+        subUser.username === wechatUser.nickname ||
+        subUser.realName === wechatUser.nickname
+      )
+      
+      if (!hasSelfSubUser) {
+        console.log('📝 创建代表用户本人的子用户...')
+        let selfUsername = nickname || wechatUser.nickname || `user_${finalOpenid.slice(-6)}`
         
         // 检查用户名是否已存在，如果存在则添加时间戳
         let existingSubUser = await prisma.subUser.findUnique({
-          where: { username: defaultUsername }
+          where: { username: selfUsername }
         })
         
         if (existingSubUser) {
-          console.log('⚠️ 用户名已存在，添加时间戳:', defaultUsername)
-          defaultUsername = `${defaultUsername}_${Date.now()}`
+          console.log('⚠️ 用户名已存在，添加时间戳:', selfUsername)
+          selfUsername = `${selfUsername}_${Date.now()}`
         }
         
-        const defaultSubUser = await prisma.subUser.create({
+        const selfSubUser = await prisma.subUser.create({
           data: {
             wechatUserId: wechatUser.id,
-            username: defaultUsername,
-            realName: nickname || '默认用户',
+            username: selfUsername,
+            realName: nickname || wechatUser.nickname || '微信用户',
             status: 'active'
           }
         })
         
-        console.log('✅ 默认子用户创建成功:', defaultSubUser.realName)
+        console.log('✅ 用户本人子用户创建成功:', selfSubUser.realName)
         
         // 重新获取用户信息
         wechatUser = await prisma.wechatUser.findUnique({
@@ -213,30 +220,30 @@ export async function POST(request) {
 
     console.log('✅ 微信用户创建成功:', wechatUser.nickname)
 
-    // 3. 创建默认子用户
-    console.log('📝 创建默认子用户...')
-    let defaultUsername = nickname || `user_${openid.slice(-6)}`
+    // 3. 创建代表用户本人的子用户
+    console.log('📝 创建代表用户本人的子用户...')
+    let selfUsername = nickname || `user_${finalOpenid.slice(-6)}`
     
     // 检查用户名是否已存在，如果存在则添加时间戳
     let existingSubUser = await prisma.subUser.findUnique({
-      where: { username: defaultUsername }
+      where: { username: selfUsername }
     })
     
     if (existingSubUser) {
-      console.log('⚠️ 用户名已存在，添加时间戳:', defaultUsername)
-      defaultUsername = `${defaultUsername}_${Date.now()}`
+      console.log('⚠️ 用户名已存在，添加时间戳:', selfUsername)
+      selfUsername = `${selfUsername}_${Date.now()}`
     }
     
-    const defaultSubUser = await prisma.subUser.create({
+    const selfSubUser = await prisma.subUser.create({
       data: {
         wechatUserId: wechatUser.id,
-        username: defaultUsername,
-        realName: nickname || '默认用户',
+        username: selfUsername,
+        realName: nickname || '微信用户',
         status: 'active'
       }
     })
 
-    console.log('✅ 默认子用户创建成功:', defaultSubUser.realName)
+    console.log('✅ 用户本人子用户创建成功:', selfSubUser.realName)
 
     // 4. 获取完整的用户信息
     const completeUser = await prisma.wechatUser.findUnique({
