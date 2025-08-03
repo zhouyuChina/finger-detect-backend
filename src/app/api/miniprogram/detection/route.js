@@ -133,46 +133,206 @@ async function mockThirdPartyDetection(imageUrl, detectionType) {
   // 模拟网络延迟
   await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000))
   
-  // 根据检测类型生成不同的结果
+  // 根据检测类型生成不同的灰指甲检测结果
   const results = {
-    fingerprint: {
+    left_hand_thumb: {
       normal: {
-        description: '指纹检测结果正常，指纹纹路清晰，无异常特征。',
-        suggestion: '建议保持良好的手部卫生，定期清洁指纹采集设备。'
+        description: '左手拇指指甲检测结果正常，指甲表面光滑，颜色均匀，无灰指甲症状。',
+        suggestion: '建议继续保持良好的手部卫生习惯，定期修剪指甲，避免指甲损伤。'
       },
       abnormal: {
-        description: '检测到指纹异常，可能存在磨损、疤痕或其他特征变化。',
-        suggestion: '建议重新采集指纹，或咨询专业医生进行进一步检查。'
+        description: '检测到左手拇指可能存在灰指甲症状，指甲颜色异常，表面粗糙。',
+        suggestion: '建议及时咨询皮肤科医生，进行专业治疗，避免症状扩散。'
       }
     },
-    face: {
+    left_hand_index: {
       normal: {
-        description: '面部检测结果正常，面部特征完整，无异常发现。',
-        suggestion: '建议保持良好的面部护理习惯，避免过度暴露在阳光下。'
+        description: '左手食指指甲检测结果正常，指甲结构完整，无异常变化。',
+        suggestion: '建议保持手部干燥，避免长时间浸泡在水中，预防真菌感染。'
       },
       abnormal: {
-        description: '检测到面部异常，可能存在皮肤问题或其他特征变化。',
-        suggestion: '建议咨询皮肤科医生，进行专业的面部护理指导。'
+        description: '检测到左手食指可能存在灰指甲，指甲增厚，颜色发黄。',
+        suggestion: '建议使用抗真菌药物，保持指甲清洁干燥，避免传染。'
       }
     },
-    iris: {
+    left_hand_middle: {
       normal: {
-        description: '虹膜检测结果正常，虹膜结构完整，无异常特征。',
-        suggestion: '建议定期进行眼科检查，保持良好的用眼习惯。'
+        description: '左手中指指甲检测结果正常，指甲健康，无灰指甲迹象。',
+        suggestion: '建议定期检查指甲健康状态，保持良好的个人卫生习惯。'
       },
       abnormal: {
-        description: '检测到虹膜异常，可能存在眼部疾病或其他问题。',
-        suggestion: '建议立即咨询眼科医生，进行专业的眼部检查。'
+        description: '检测到左手中指可能存在灰指甲症状，指甲变形，质地改变。',
+        suggestion: '建议及时就医治疗，避免症状加重，注意个人用品隔离。'
       }
     },
-    voice: {
+    left_hand_ring: {
       normal: {
-        description: '语音检测结果正常，声纹特征稳定，无异常变化。',
-        suggestion: '建议保持良好的嗓音习惯，避免过度用嗓。'
+        description: '左手无名指指甲检测结果正常，指甲状态良好，无异常。',
+        suggestion: '建议避免使用刺激性化学品，保护指甲健康。'
       },
       abnormal: {
-        description: '检测到语音异常，可能存在嗓音问题或其他变化。',
-        suggestion: '建议咨询耳鼻喉科医生，进行专业的嗓音检查。'
+        description: '检测到左手无名指可能存在灰指甲，指甲分层，边缘不规则。',
+        suggestion: '建议使用专业抗真菌治疗，避免指甲外伤，保持清洁。'
+      }
+    },
+    left_hand_little: {
+      normal: {
+        description: '左手小指指甲检测结果正常，指甲完整，无灰指甲症状。',
+        suggestion: '建议保持手部通风，避免潮湿环境，预防真菌滋生。'
+      },
+      abnormal: {
+        description: '检测到左手小指可能存在灰指甲，指甲变脆，易断裂。',
+        suggestion: '建议加强营养补充，使用专业治疗药物，避免指甲损伤。'
+      }
+    },
+    right_hand_thumb: {
+      normal: {
+        description: '右手拇指指甲检测结果正常，指甲健康，无灰指甲迹象。',
+        suggestion: '建议保持手部清洁，避免接触感染源，定期检查指甲状态。'
+      },
+      abnormal: {
+        description: '检测到右手拇指可能存在灰指甲症状，指甲颜色异常，质地改变。',
+        suggestion: '建议及时就医诊断，使用专业治疗方案，避免症状扩散。'
+      }
+    },
+    right_hand_index: {
+      normal: {
+        description: '右手食指指甲检测结果正常，指甲表面光滑，无异常。',
+        suggestion: '建议避免指甲外伤，保持手部干燥，预防真菌感染。'
+      },
+      abnormal: {
+        description: '检测到右手食指可能存在灰指甲，指甲增厚，颜色发黄。',
+        suggestion: '建议使用抗真菌药物，保持指甲清洁，避免传染他人。'
+      }
+    },
+    right_hand_middle: {
+      normal: {
+        description: '右手中指指甲检测结果正常，指甲结构完整，健康状态良好。',
+        suggestion: '建议定期修剪指甲，保持手部卫生，预防感染。'
+      },
+      abnormal: {
+        description: '检测到右手中指可能存在灰指甲症状，指甲变形，边缘不规则。',
+        suggestion: '建议及时治疗，避免症状加重，注意个人卫生。'
+      }
+    },
+    right_hand_ring: {
+      normal: {
+        description: '右手无名指指甲检测结果正常，指甲健康，无灰指甲症状。',
+        suggestion: '建议避免使用刺激性化学品，保护指甲健康。'
+      },
+      abnormal: {
+        description: '检测到右手无名指可能存在灰指甲，指甲分层，质地改变。',
+        suggestion: '建议使用专业抗真菌治疗，保持指甲清洁干燥。'
+      }
+    },
+    right_hand_little: {
+      normal: {
+        description: '右手小指指甲检测结果正常，指甲完整，无异常变化。',
+        suggestion: '建议保持手部通风，避免潮湿环境，预防真菌感染。'
+      },
+      abnormal: {
+        description: '检测到右手小指可能存在灰指甲，指甲变脆，易断裂。',
+        suggestion: '建议加强营养补充，使用专业治疗药物，避免指甲损伤。'
+      }
+    },
+    left_foot_big: {
+      normal: {
+        description: '左脚大脚趾指甲检测结果正常，指甲健康，无灰指甲症状。',
+        suggestion: '建议保持脚部清洁干燥，选择透气性好的鞋袜，预防真菌感染。'
+      },
+      abnormal: {
+        description: '检测到左脚大脚趾可能存在灰指甲，指甲增厚，颜色异常。',
+        suggestion: '建议及时就医治疗，保持脚部干燥，避免症状扩散。'
+      }
+    },
+    left_foot_second: {
+      normal: {
+        description: '左脚第二趾指甲检测结果正常，指甲状态良好，无异常。',
+        suggestion: '建议定期修剪脚趾甲，保持脚部卫生，预防感染。'
+      },
+      abnormal: {
+        description: '检测到左脚第二趾可能存在灰指甲症状，指甲变形，质地改变。',
+        suggestion: '建议使用抗真菌药物，保持脚部清洁，避免传染。'
+      }
+    },
+    left_foot_third: {
+      normal: {
+        description: '左脚第三趾指甲检测结果正常，指甲完整，无灰指甲迹象。',
+        suggestion: '建议避免脚部潮湿，选择合适鞋袜，预防真菌滋生。'
+      },
+      abnormal: {
+        description: '检测到左脚第三趾可能存在灰指甲，指甲分层，边缘不规则。',
+        suggestion: '建议及时治疗，避免症状加重，注意个人用品隔离。'
+      }
+    },
+    left_foot_fourth: {
+      normal: {
+        description: '左脚第四趾指甲检测结果正常，指甲健康，无异常变化。',
+        suggestion: '建议保持脚部通风，避免长时间穿密闭鞋袜。'
+      },
+      abnormal: {
+        description: '检测到左脚第四趾可能存在灰指甲，指甲变脆，易断裂。',
+        suggestion: '建议加强营养补充，使用专业治疗药物，保持脚部清洁。'
+      }
+    },
+    left_foot_little: {
+      normal: {
+        description: '左脚小脚趾指甲检测结果正常，指甲完整，无灰指甲症状。',
+        suggestion: '建议定期检查脚趾甲健康状态，保持良好的个人卫生。'
+      },
+      abnormal: {
+        description: '检测到左脚小脚趾可能存在灰指甲，指甲颜色异常，质地改变。',
+        suggestion: '建议及时就医诊断，使用专业治疗方案，避免症状扩散。'
+      }
+    },
+    right_foot_big: {
+      normal: {
+        description: '右脚大脚趾指甲检测结果正常，指甲健康，无灰指甲迹象。',
+        suggestion: '建议保持脚部清洁干燥，选择透气性好的鞋袜，预防真菌感染。'
+      },
+      abnormal: {
+        description: '检测到右脚大脚趾可能存在灰指甲，指甲增厚，颜色发黄。',
+        suggestion: '建议及时就医治疗，保持脚部干燥，避免症状扩散。'
+      }
+    },
+    right_foot_second: {
+      normal: {
+        description: '右脚第二趾指甲检测结果正常，指甲状态良好，无异常。',
+        suggestion: '建议定期修剪脚趾甲，保持脚部卫生，预防感染。'
+      },
+      abnormal: {
+        description: '检测到右脚第二趾可能存在灰指甲症状，指甲变形，质地改变。',
+        suggestion: '建议使用抗真菌药物，保持脚部清洁，避免传染。'
+      }
+    },
+    right_foot_third: {
+      normal: {
+        description: '右脚第三趾指甲检测结果正常，指甲完整，无灰指甲迹象。',
+        suggestion: '建议避免脚部潮湿，选择合适鞋袜，预防真菌滋生。'
+      },
+      abnormal: {
+        description: '检测到右脚第三趾可能存在灰指甲，指甲分层，边缘不规则。',
+        suggestion: '建议及时治疗，避免症状加重，注意个人用品隔离。'
+      }
+    },
+    right_foot_fourth: {
+      normal: {
+        description: '右脚第四趾指甲检测结果正常，指甲健康，无异常变化。',
+        suggestion: '建议保持脚部通风，避免长时间穿密闭鞋袜。'
+      },
+      abnormal: {
+        description: '检测到右脚第四趾可能存在灰指甲，指甲变脆，易断裂。',
+        suggestion: '建议加强营养补充，使用专业治疗药物，保持脚部清洁。'
+      }
+    },
+    right_foot_little: {
+      normal: {
+        description: '右脚小脚趾指甲检测结果正常，指甲完整，无灰指甲症状。',
+        suggestion: '建议定期检查脚趾甲健康状态，保持良好的个人卫生。'
+      },
+      abnormal: {
+        description: '检测到右脚小脚趾可能存在灰指甲，指甲颜色异常，质地改变。',
+        suggestion: '建议及时就医诊断，使用专业治疗方案，避免症状扩散。'
       }
     }
   }
@@ -180,7 +340,7 @@ async function mockThirdPartyDetection(imageUrl, detectionType) {
   // 随机生成结果（70% 正常，30% 异常）
   const isNormal = Math.random() > 0.3
   const resultType = isNormal ? 'normal' : 'abnormal'
-  const result = results[detectionType]?.[resultType] || results.fingerprint.normal
+  const result = results[detectionType]?.[resultType] || results.left_hand_thumb.normal
   
   // 生成置信度（正常结果置信度较高）
   const confidence = isNormal ? 0.85 + Math.random() * 0.1 : 0.6 + Math.random() * 0.2
@@ -209,7 +369,7 @@ async function createDetection(request) {
     const { 
       username,
       archiveName, 
-      detectionType = 'fingerprint',
+      detectionType = 'left_hand_thumb',
       imageUrl
     } = body
 
@@ -219,7 +379,12 @@ async function createDetection(request) {
     }
 
     // 验证检测类型
-    const validTypes = ['fingerprint', 'face', 'iris', 'voice']
+    const validTypes = [
+      'left_hand_thumb', 'left_hand_index', 'left_hand_middle', 'left_hand_ring', 'left_hand_little',
+      'right_hand_thumb', 'right_hand_index', 'right_hand_middle', 'right_hand_ring', 'right_hand_little',
+      'left_foot_big', 'left_foot_second', 'left_foot_third', 'left_foot_fourth', 'left_foot_little',
+      'right_foot_big', 'right_foot_second', 'right_foot_third', 'right_foot_fourth', 'right_foot_little'
+    ]
     if (!validTypes.includes(detectionType)) {
       return createErrorResponse('检测类型无效', 400)
     }

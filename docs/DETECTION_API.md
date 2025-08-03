@@ -53,13 +53,13 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
       {
         "id": "cmdw3r532000splzxlhr67jtc",
         "archiveName": "张三检测1",
-        "detectionType": "fingerprint",
+        "detectionType": "left_hand_thumb",
         "imageUrl": "https://example.com/image.jpg",
         "result": "normal",
         "confidence": 0.89,
         "status": "completed",
         "errorMsg": null,
-        "remark": "检测类型: fingerprint, 置信度: 0.89",
+        "remark": "检测类型: left_hand_thumb, 置信度: 0.89",
         "detectionTime": "2024-01-01T00:00:00.000Z",
         "createdAt": "2024-01-01T00:00:00.000Z",
         "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -87,7 +87,7 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
 #### detections 字段
 - `id`: 检测记录ID
 - `archiveName`: 档案名称
-- `detectionType`: 检测类型（fingerprint, face, iris, voice）
+- `detectionType`: 检测类型（左右手脚的手指和脚趾）
 - `imageUrl`: 图片URL
 - `result`: 检测结果（normal, abnormal）
 - `confidence`: 置信度（0-1）
@@ -120,7 +120,7 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
 {
   "username": "subuser001",
   "archiveName": "新检测",
-  "detectionType": "fingerprint",
+  "detectionType": "left_hand_thumb",
   "imageUrl": "https://example.com/image.jpg"
 }
 ```
@@ -134,10 +134,29 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
 
 ### 支持的检测类型
 
-- `fingerprint`: 指纹检测
-- `face`: 面部检测
-- `iris`: 虹膜检测
-- `voice`: 语音检测
+#### 手部检测
+- `left_hand_thumb`: 左手拇指
+- `left_hand_index`: 左手食指
+- `left_hand_middle`: 左手中指
+- `left_hand_ring`: 左手无名指
+- `left_hand_little`: 左手小指
+- `right_hand_thumb`: 右手拇指
+- `right_hand_index`: 右手食指
+- `right_hand_middle`: 右手中指
+- `right_hand_ring`: 右手无名指
+- `right_hand_little`: 右手小指
+
+#### 脚部检测
+- `left_foot_big`: 左脚大脚趾
+- `left_foot_second`: 左脚第二趾
+- `left_foot_third`: 左脚第三趾
+- `left_foot_fourth`: 左脚第四趾
+- `left_foot_little`: 左脚小脚趾
+- `right_foot_big`: 右脚大脚趾
+- `right_foot_second`: 右脚第二趾
+- `right_foot_third`: 右脚第三趾
+- `right_foot_fourth`: 右脚第四趾
+- `right_foot_little`: 右脚小脚趾
 
 ### 响应示例
 
@@ -148,12 +167,12 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
     "detection": {
       "id": "cmdw3r532000splzxlhr67jtc",
       "archiveName": "新检测",
-      "detectionType": "fingerprint",
+      "detectionType": "left_hand_thumb",
       "imageUrl": "https://example.com/image.jpg",
       "result": "normal",
       "confidence": 0.89,
       "status": "completed",
-      "remark": "检测类型: fingerprint, 置信度: 0.89",
+      "remark": "检测类型: left_hand_thumb, 置信度: 0.89",
       "detectionTime": "2024-01-01T00:00:00.000Z",
       "createdAt": "2024-01-01T00:00:00.000Z"
     },
@@ -163,7 +182,7 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
       "suggestion": "建议保持良好的手部卫生，定期清洁指纹采集设备。",
       "result": "normal",
       "confidence": 0.89,
-      "detectionType": "fingerprint",
+      "detectionType": "left_hand_thumb",
       "timestamp": "2024-01-01T00:00:00.000Z"
     }
   },
@@ -198,30 +217,23 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
 
 ### 检测类型对应的结果
 
-#### 指纹检测 (fingerprint)
-- **正常**: "指纹检测结果正常，指纹纹路清晰，无异常特征。"
-- **异常**: "检测到指纹异常，可能存在磨损、疤痕或其他特征变化。"
+#### 手部检测示例
+- **左手拇指** (left_hand_thumb): 检测指甲表面光滑度、颜色均匀性、灰指甲症状
+- **右手食指** (right_hand_index): 检测指甲结构完整性、真菌感染迹象
+- **其他手指**: 类似检测，针对不同手指的特点
 
-#### 面部检测 (face)
-- **正常**: "面部检测结果正常，面部特征完整，无异常发现。"
-- **异常**: "检测到面部异常，可能存在皮肤问题或其他特征变化。"
-
-#### 虹膜检测 (iris)
-- **正常**: "虹膜检测结果正常，虹膜结构完整，无异常特征。"
-- **异常**: "检测到虹膜异常，可能存在眼部疾病或其他问题。"
-
-#### 语音检测 (voice)
-- **正常**: "语音检测结果正常，声纹特征稳定，无异常变化。"
-- **异常**: "检测到语音异常，可能存在嗓音问题或其他变化。"
+#### 脚部检测示例
+- **左脚大脚趾** (left_foot_big): 检测脚趾甲健康状态、真菌感染症状
+- **右脚大脚趾** (right_foot_big): 检测指甲增厚、颜色异常等灰指甲特征
+- **其他脚趾**: 类似检测，针对不同脚趾的特点
 
 ### 使用建议
 
 每种检测类型都提供相应的使用建议：
 
-- **指纹**: 建议保持良好的手部卫生，定期清洁指纹采集设备
-- **面部**: 建议保持良好的面部护理习惯，避免过度暴露在阳光下
-- **虹膜**: 建议定期进行眼科检查，保持良好的用眼习惯
-- **语音**: 建议保持良好的嗓音习惯，避免过度用嗓
+- **手部检测**: 建议保持良好的手部卫生习惯，定期修剪指甲，避免指甲损伤
+- **脚部检测**: 建议保持脚部清洁干燥，选择透气性好的鞋袜，预防真菌感染
+- **通用建议**: 避免潮湿环境，定期检查指甲健康状态，及时就医治疗
 
 ---
 
@@ -308,7 +320,7 @@ getDetections('subuser001')
 createDetection({
   username: 'subuser001',
   archiveName: '新检测',
-  detectionType: 'fingerprint',
+  detectionType: 'left_hand_thumb',
   imageUrl: 'https://example.com/image.jpg'
 })
 ```
@@ -352,7 +364,7 @@ wx.request({
   data: {
     username: 'subuser001',
     archiveName: '新检测',
-    detectionType: 'fingerprint',
+    detectionType: 'left_hand_thumb',
     imageUrl: 'https://example.com/image.jpg'
   },
   success: function(res) {
@@ -407,7 +419,7 @@ wx.request({
 1. **认证要求**: 所有接口都需要提供有效的 `X-Openid` 头部
 2. **用户权限**: 只能操作自己微信用户下的子用户检测
 3. **图片URL**: 支持 http、https 和相对路径格式
-4. **检测类型**: 支持指纹、面部、虹膜、语音四种类型
+4. **检测类型**: 支持左右手脚的手指和脚趾检测，共20种检测类型
 5. **Mock 服务**: 当前使用 Mock 服务，后续可替换为真实第三方服务
 6. **网络延迟**: Mock 服务会模拟 1-3 秒的网络延迟
 7. **结果概率**: 正常结果概率 70%，异常结果概率 30% 

@@ -9,46 +9,56 @@ async function mockThirdPartyDetection(imageUrl, detectionType) {
   // 模拟网络延迟
   await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000))
   
-  // 根据检测类型生成不同的结果
+  // 根据检测类型生成不同的灰指甲检测结果
   const results = {
-    fingerprint: {
+    left_hand_thumb: {
       normal: {
-        description: '指纹检测结果正常，指纹纹路清晰，无异常特征。',
-        suggestion: '建议保持良好的手部卫生，定期清洁指纹采集设备。'
+        description: '左手拇指指甲检测结果正常，指甲表面光滑，颜色均匀，无灰指甲症状。',
+        suggestion: '建议继续保持良好的手部卫生习惯，定期修剪指甲，避免指甲损伤。'
       },
       abnormal: {
-        description: '检测到指纹异常，可能存在磨损、疤痕或其他特征变化。',
-        suggestion: '建议重新采集指纹，或咨询专业医生进行进一步检查。'
+        description: '检测到左手拇指可能存在灰指甲症状，指甲颜色异常，表面粗糙。',
+        suggestion: '建议及时咨询皮肤科医生，进行专业治疗，避免症状扩散。'
       }
     },
-    face: {
+    left_hand_index: {
       normal: {
-        description: '面部检测结果正常，面部特征完整，无异常发现。',
-        suggestion: '建议保持良好的面部护理习惯，避免过度暴露在阳光下。'
+        description: '左手食指指甲检测结果正常，指甲结构完整，无异常变化。',
+        suggestion: '建议保持手部干燥，避免长时间浸泡在水中，预防真菌感染。'
       },
       abnormal: {
-        description: '检测到面部异常，可能存在皮肤问题或其他特征变化。',
-        suggestion: '建议咨询皮肤科医生，进行专业的面部护理指导。'
+        description: '检测到左手食指可能存在灰指甲，指甲增厚，颜色发黄。',
+        suggestion: '建议使用抗真菌药物，保持指甲清洁干燥，避免传染。'
       }
     },
-    iris: {
+    right_hand_thumb: {
       normal: {
-        description: '虹膜检测结果正常，虹膜结构完整，无异常特征。',
-        suggestion: '建议定期进行眼科检查，保持良好的用眼习惯。'
+        description: '右手拇指指甲检测结果正常，指甲健康，无灰指甲迹象。',
+        suggestion: '建议保持手部清洁，避免接触感染源，定期检查指甲状态。'
       },
       abnormal: {
-        description: '检测到虹膜异常，可能存在眼部疾病或其他问题。',
-        suggestion: '建议立即咨询眼科医生，进行专业的眼部检查。'
+        description: '检测到右手拇指可能存在灰指甲症状，指甲颜色异常，质地改变。',
+        suggestion: '建议及时就医诊断，使用专业治疗方案，避免症状扩散。'
       }
     },
-    voice: {
+    left_foot_big: {
       normal: {
-        description: '语音检测结果正常，声纹特征稳定，无异常变化。',
-        suggestion: '建议保持良好的嗓音习惯，避免过度用嗓。'
+        description: '左脚大脚趾指甲检测结果正常，指甲健康，无灰指甲症状。',
+        suggestion: '建议保持脚部清洁干燥，选择透气性好的鞋袜，预防真菌感染。'
       },
       abnormal: {
-        description: '检测到语音异常，可能存在嗓音问题或其他变化。',
-        suggestion: '建议咨询耳鼻喉科医生，进行专业的嗓音检查。'
+        description: '检测到左脚大脚趾可能存在灰指甲，指甲增厚，颜色异常。',
+        suggestion: '建议及时就医治疗，保持脚部干燥，避免症状扩散。'
+      }
+    },
+    right_foot_big: {
+      normal: {
+        description: '右脚大脚趾指甲检测结果正常，指甲健康，无灰指甲迹象。',
+        suggestion: '建议保持脚部清洁干燥，选择透气性好的鞋袜，预防真菌感染。'
+      },
+      abnormal: {
+        description: '检测到右脚大脚趾可能存在灰指甲，指甲增厚，颜色发黄。',
+        suggestion: '建议及时就医治疗，保持脚部干燥，避免症状扩散。'
       }
     }
   }
@@ -56,7 +66,7 @@ async function mockThirdPartyDetection(imageUrl, detectionType) {
   // 随机生成结果（70% 正常，30% 异常）
   const isNormal = Math.random() > 0.3
   const resultType = isNormal ? 'normal' : 'abnormal'
-  const result = results[detectionType]?.[resultType] || results.fingerprint.normal
+  const result = results[detectionType]?.[resultType] || results.left_hand_thumb.normal
   
   // 生成置信度（正常结果置信度较高）
   const confidence = isNormal ? 0.85 + Math.random() * 0.1 : 0.6 + Math.random() * 0.2
@@ -219,7 +229,7 @@ async function testDetectionApi() {
     const newDetectionData = {
       username: testSubUser.username,
       archiveName: `测试检测${Date.now()}`,
-      detectionType: 'fingerprint',
+      detectionType: 'left_hand_thumb',
       imageUrl: 'https://example.com/test-image.jpg'
     }
 
