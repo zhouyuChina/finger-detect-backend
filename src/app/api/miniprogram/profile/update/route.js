@@ -30,15 +30,16 @@ async function updateUserProfile(request) {
       return createErrorResponse('邮箱格式不正确', 400)
     }
 
-    // 更新用户信息
-    const updatedUser = await prisma.user.update({
+    // 获取当前子用户ID
+    const currentSubUserId = request.user.currentSubUser?.id
+
+    // 更新微信用户信息（基本信息）
+    const updatedWechatUser = await prisma.wechatUser.update({
       where: { id: userId },
       data: {
         ...(nickname && { nickname }),
         ...(avatar && { avatar }),
         ...(gender && { gender: gender.toString() }),
-        ...(phone && { phone }),
-        ...(email && { email }),
         updatedAt: new Date()
       },
       select: {
@@ -46,23 +47,42 @@ async function updateUserProfile(request) {
         nickname: true,
         avatar: true,
         gender: true,
-        phone: true,
-        email: true,
         updatedAt: true
       }
     })
 
-    console.log('✅ 用户信息更新成功:', updatedUser.nickname)
+    // 如果有子用户，同时更新子用户信息（详细个人信息）
+    let updatedSubUser = null
+    if (currentSubUserId) {
+      updatedSubUser = await prisma.subUser.update({
+        where: { id: currentSubUserId },
+        data: {
+          ...(phone && { phone }),
+          ...(email && { email }),
+          ...(gender && { gender: gender.toString() }),
+          updatedAt: new Date()
+        },
+        select: {
+          id: true,
+          phone: true,
+          email: true,
+          gender: true,
+          updatedAt: true
+        }
+      })
+    }
+
+    console.log('✅ 用户信息更新成功:', updatedWechatUser.nickname)
 
     return createSuccessResponse({
-      id: updatedUser.id,
-      nickname: updatedUser.nickname,
-      avatar: updatedUser.avatar,
-      avatarUrl: updatedUser.avatar,
-      gender: updatedUser.gender,
-      phone: updatedUser.phone,
-      email: updatedUser.email,
-      updatedAt: updatedUser.updatedAt
+      id: updatedWechatUser.id,
+      nickname: updatedWechatUser.nickname,
+      avatar: updatedWechatUser.avatar,
+      avatarUrl: updatedWechatUser.avatar,
+      gender: updatedSubUser?.gender || updatedWechatUser.gender,
+      phone: updatedSubUser?.phone,
+      email: updatedSubUser?.email,
+      updatedAt: updatedWechatUser.updatedAt
     }, '用户信息更新成功')
 
   } catch (error) {

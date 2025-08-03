@@ -9,9 +9,15 @@ async function getDetections(request) {
     const limit = parseInt(searchParams.get('limit')) || 10
     const userId = searchParams.get('userId')
 
+    // 获取当前子用户ID
+    const currentSubUserId = request.user.currentSubUser?.id
+    if (!currentSubUserId) {
+      return createErrorResponse('请先创建子用户账号', 400)
+    }
+
     // TODO: 从数据库获取检测记录
     // const detections = await prisma.detection.findMany({
-    //   where: { userId: request.user.id },
+    //   where: { subUserId: currentSubUserId },
     //   skip: (page - 1) * limit,
     //   take: limit,
     //   orderBy: { createdAt: 'desc' }
@@ -21,7 +27,7 @@ async function getDetections(request) {
     const mockDetections = [
       {
         id: 1,
-        userId: request.user.id,
+        subUserId: currentSubUserId,
         archiveName: '档案1',
         detectionType: 'fingerprint',
         result: 'normal',
@@ -56,10 +62,16 @@ async function createDetection(request) {
       return createErrorResponse('缺少必要参数', 400)
     }
 
+    // 获取当前子用户ID
+    const currentSubUserId = request.user.currentSubUser?.id
+    if (!currentSubUserId) {
+      return createErrorResponse('请先创建子用户账号', 400)
+    }
+
     // TODO: 保存到数据库
     // const detection = await prisma.detection.create({
     //   data: {
-    //     userId: request.user.id,
+    //     subUserId: currentSubUserId,
     //     archiveName,
     //     detectionType,
     //     imageUrl,
@@ -70,7 +82,7 @@ async function createDetection(request) {
 
     const mockDetection = {
       id: Date.now(),
-      userId: request.user.id,
+      subUserId: currentSubUserId,
       archiveName,
       detectionType,
       result,

@@ -13,21 +13,22 @@ async function getUserStats(request) {
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
 
-    // 获取用户信息以获取关联的 userId
-    const user = await prisma.user.findUnique({
+    // 获取微信用户信息
+    const wechatUser = await prisma.wechatUser.findUnique({
       where: { id: userId },
       select: { 
-        photos: true, 
-        reports: true, 
-        archives: true,
-        userId: true // 获取关联的 userId
+        id: true,
+        openid: true
       }
     })
 
-    if (!user) {
-      console.log('❌ 用户不存在，用户ID:', userId)
+    if (!wechatUser) {
+      console.log('❌ 微信用户不存在，用户ID:', userId)
       return createErrorResponse('用户不存在', 200)
     }
+
+    // 获取当前子用户ID（用于业务数据统计）
+    const currentSubUserId = request.user.currentSubUser?.id || null
 
     // 并行查询各种统计数据
     const [
@@ -37,21 +38,38 @@ async function getUserStats(request) {
       totalDetections,
       unreadMessages
     ] = await Promise.all([
-      // 拍照记录总数 (从用户表的 photos 字段)
-      Promise.resolve(user.photos || 0),
+      // 拍照记录总数 (从子用户表的 photos 字段，如果没有子用户则返回0)
+      currentSubUserId ? 
+        prisma.subUser.findUnique({
+          where: { id: currentSubUserId },
+          select: { photos: true }
+        }).then(user => user?.photos || 0) :
+        Promise.resolve(0),
       
-      // 报告记录总数 (从用户表的 reports 字段)
-      Promise.resolve(user.reports || 0),
+      // 报告记录总数 (从子用户表的 reports 字段)
+      currentSubUserId ? 
+        prisma.subUser.findUnique({
+          where: { id: currentSubUserId },
+          select: { reports: true }
+        }).then(user => user?.reports || 0) :
+        Promise.resolve(0),
       
-      // 建档记录总数 (从用户表的 archives 字段)
-      Promise.resolve(user.archives || 0),
+      // 建档记录总数 (从子用户表的 archives 字段)
+      currentSubUserId ? 
+        prisma.subUser.findUnique({
+          where: { id: currentSubUserId },
+          select: { archives: true }
+        }).then(user => user?.archives || 0) :
+        Promise.resolve(0),
       
-      // 总检测次数 (从检测记录表，根据 userId 关联)
-      prisma.detection.count({
-        where: { 
-          userId: user.userId || userId // 如果没有 userId 字段，使用用户 ID
-        }
-      }),
+      // 总检测次数 (从检测记录表，根据子用户ID关联)
+      currentSubUserId ? 
+        prisma.detection.count({
+          where: { 
+            subUserId: currentSubUserId
+          }
+        }) :
+        Promise.resolve(0),
       
       // 未读消息数量 (从系统回复表，这里暂时返回 0，需要根据实际业务逻辑调整)
       Promise.resolve(0) // 暂时返回 0，因为当前没有用户消息读取状态表

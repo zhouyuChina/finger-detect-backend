@@ -13,48 +13,73 @@ async function getUserProfile(request) {
     console.log('📋 用户ID:', request.user?.id)
     console.log('📋 用户类型:', typeof request.user?.id)
     
-    // 获取用户信息
-    const user = await prisma.user.findUnique({
+    // 获取微信用户信息
+    const wechatUser = await prisma.wechatUser.findUnique({
       where: { id: request.user.id },
       select: {
         id: true,
-        realName: true,
+        openid: true,
         nickname: true,
-        username: true,
-        phone: true,
         avatar: true,
-        email: true,
         gender: true,
-        age: true,
+        city: true,
+        province: true,
+        country: true,
         createdAt: true,
         updatedAt: true
       }
     })
 
-    if (!user) {
-      console.log('❌ 用户不存在，用户ID:', request.user.id)
+    if (!wechatUser) {
+      console.log('❌ 微信用户不存在，用户ID:', request.user.id)
       return createErrorResponse('用户不存在', 200)
     }
 
-    console.log('✅ 用户信息查询成功:', user.id)
+    console.log('✅ 微信用户信息查询成功:', wechatUser.id)
+
+    // 获取当前子用户信息（如果有的话）
+    let currentSubUser = null
+    if (request.user.currentSubUser) {
+      currentSubUser = await prisma.subUser.findUnique({
+        where: { id: request.user.currentSubUser.id },
+        select: {
+          id: true,
+          username: true,
+          realName: true,
+          phone: true,
+          email: true,
+          age: true,
+          gender: true,
+          address: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      })
+    }
 
     // 处理手机号脱敏
-    const maskedPhone = user.phone ? user.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : null
+    const maskedPhone = currentSubUser?.phone ? currentSubUser.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : null
 
-    // 构建响应数据，支持多种字段名称
+    // 构建响应数据，优先使用子用户信息，回退到微信用户信息
     const userData = {
-      id: user.id,
-      name: user.realName || user.nickname || user.username, // 优先显示真实姓名
-      nickname: user.nickname,
-      username: user.username,
+      id: wechatUser.id,
+      openid: wechatUser.openid,
+      name: currentSubUser?.realName || wechatUser.nickname || '微信用户', // 优先显示真实姓名
+      nickname: wechatUser.nickname,
+      username: currentSubUser?.username,
       phone: maskedPhone,
-      avatar: user.avatar,
-      avatarUrl: user.avatar, // 兼容字段
-      email: user.email,
-      gender: user.gender,
+      avatar: wechatUser.avatar,
+      avatarUrl: wechatUser.avatar, // 兼容字段
+      email: currentSubUser?.email,
+      gender: currentSubUser?.gender || wechatUser.gender,
+      age: currentSubUser?.age,
+      address: currentSubUser?.address,
       birthday: null, // 当前数据库没有生日字段
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      createdAt: wechatUser.createdAt,
+      updatedAt: wechatUser.updatedAt,
+      // 子用户信息
+      subUsers: request.user.subUsers || [],
+      currentSubUser: currentSubUser
     }
 
     return createSuccessResponse(userData, '获取用户信息成功')

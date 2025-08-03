@@ -46,14 +46,14 @@ async function syncWechatUserInfo(request) {
     // 处理昵称：如果微信返回的是"微信用户"，使用带序号的昵称
     let finalNickname = wechatUserInfo.nickname
     if (finalNickname === '微信用户' || !finalNickname) {
-      // 获取当前用户总数，用于生成序号
-      const userCount = await prisma.user.count()
+      // 获取当前微信用户总数，用于生成序号
+      const userCount = await prisma.wechatUser.count()
       const userIndex = userCount
       finalNickname = `微信用户${userIndex}`
     }
 
-    // 更新用户信息
-    const updatedUser = await prisma.user.update({
+    // 更新微信用户信息
+    const updatedWechatUser = await prisma.wechatUser.update({
       where: { id: userId },
       data: {
         nickname: finalNickname,
@@ -76,18 +76,18 @@ async function syncWechatUserInfo(request) {
       }
     })
 
-    console.log('✅ 用户信息同步成功:', updatedUser.nickname)
+    console.log('✅ 用户信息同步成功:', updatedWechatUser.nickname)
 
     return createSuccessResponse({
-      id: updatedUser.id,
-      nickname: updatedUser.nickname,
-      avatar: updatedUser.avatar,
-      avatarUrl: updatedUser.avatar,
-      gender: updatedUser.gender,
-      country: updatedUser.country,
-      province: updatedUser.province,
-      city: updatedUser.city,
-      updatedAt: updatedUser.updatedAt
+      id: updatedWechatUser.id,
+      nickname: updatedWechatUser.nickname,
+      avatar: updatedWechatUser.avatar,
+      avatarUrl: updatedWechatUser.avatar,
+      gender: updatedWechatUser.gender,
+      country: updatedWechatUser.country,
+      province: updatedWechatUser.province,
+      city: updatedWechatUser.city,
+      updatedAt: updatedWechatUser.updatedAt
     }, '用户信息同步成功')
 
   } catch (error) {
