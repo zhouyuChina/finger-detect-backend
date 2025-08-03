@@ -1,291 +1,146 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '../../../../generated/prisma/index.js'
 import { createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
-import jwt from 'jsonwebtoken'
 
-const prisma = new PrismaClient()
-
-// 调用微信官方接口换取 openId
-async function getWechatOpenId(code) {
-  try {
-    const appId = process.env.WECHAT_APP_ID
-    const appSecret = process.env.WECHAT_APP_SECRET
-    
-    // 开发环境如果没有配置，使用模拟数据
-    if (process.env.NODE_ENV === 'development' && (!appId || !appSecret)) {
-      console.log('🔧 开发环境：微信小程序配置缺失，使用模拟数据')
-      return {
-        openid: `openid_${Date.now()}`,
-        unionid: `unionid_${Date.now()}`,
-        sessionKey: 'mock_session_key'
-      }
-    }
-    
-    if (!appId || !appSecret) {
-      throw new Error('微信小程序配置缺失')
-    }
-
-    const response = await fetch(
-      `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${code}&grant_type=authorization_code`
-    )
-
-    const data = await response.json()
-    
-    if (data.errcode) {
-      throw new Error(`微信接口错误: ${data.errmsg}`)
-    }
-
-    return {
-      openid: data.openid,
-      unionid: data.unionid || null,
-      sessionKey: data.session_key
-    }
-  } catch (error) {
-    console.error('获取微信 openId 失败:', error)
-    throw error
-  }
-}
-
-// 生成 JWT token
-function generateToken(userId, openid, nickname) {
-  return jwt.sign(
-    {
-      userId: userId,
-      openid: openid,
-      nickname: nickname
-    },
-    process.env.JWT_SECRET || 'your-secret-key',
-    { expiresIn: '30d' }
-  )
-}
-
-// 用户注册接口
 export async function POST(request) {
+  let prisma = null
   try {
-    console.log('🔐 用户注册接口被调用')
+    console.log('📝 微信用户注册接口被调用')
     
     const body = await request.json()
-    const { code, userInfo, systemInfo, registerTime, appVersion } = body
+    const { 
+      openid,
+      unionid,
+      nickname,
+      avatar,
+      gender,
+      city,
+      province,
+      country,
+      appVersion
+    } = body
 
-    if (!code) {
-      return createErrorResponse('缺少微信登录凭证', 400)
+    // 验证必填字段
+    if (!openid) {
+      return createErrorResponse('openid为必填项', 400)
     }
 
-    if (!userInfo || !userInfo.nickName) {
-      return createErrorResponse('缺少用户信息', 400)
-    }
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
 
-    // 调用微信接口获取 openId
-    let wechatData
-    if (process.env.NODE_ENV === 'development' && code === 'test_code') {
-      // 开发环境使用模拟数据
-      wechatData = {
-        openid: `openid_${Date.now()}`,
-        unionid: `unionid_${Date.now()}`,
-        sessionKey: 'mock_session_key'
+    // 1. 检查微信用户是否已存在
+    let wechatUser = await prisma.wechatUser.findUnique({
+      where: { openid },
+      include: {
+        subUsers: true
       }
-      console.log('🔧 开发环境使用模拟数据:', wechatData.openid)
-    } else if (!process.env.WECHAT_APP_ID || !process.env.WECHAT_APP_SECRET) {
-      // 微信配置缺失时，使用固定的测试数据（适用于任何环境）
-      wechatData = {
-        openid: 'test_openid_123456',
-        unionid: 'test_unionid_123456',
-        sessionKey: 'mock_session_key'
-      }
-      console.log('🔧 微信配置缺失，使用固定测试数据:', wechatData.openid)
-    } else {
-      // 正常调用微信接口
-      wechatData = await getWechatOpenId(code)
-      console.log('✅ 获取微信 openId 成功:', wechatData.openid)
-    }
-
-    // 检查微信用户是否已存在（使用 openid 字段查询）
-    const existingWechatUser = await prisma.wechatUser.findUnique({
-      where: { openid: wechatData.openid },
-      include: { systemInfo: true }
     })
 
-    let wechatUser
-    let isNewUser = false
-
-    if (existingWechatUser) {
-      // 微信用户已存在，更新信息
-      wechatUser = await prisma.wechatUser.update({
-        where: { id: existingWechatUser.id },
-        data: {
-          nickname: userInfo.nickName,
-          avatar: userInfo.avatarUrl,
-          gender: userInfo.gender?.toString(),
-          country: userInfo.country,
-          province: userInfo.province,
-          city: userInfo.city,
-          lastLogin: new Date(),
-          appVersion: appVersion,
-          updatedAt: new Date()
-        },
-        include: { systemInfo: true }
-      })
-
-      // 更新系统信息
-      if (systemInfo) {
-        await prisma.userSystemInfo.upsert({
-          where: { wechatUserId: wechatUser.id },
-          update: {
-            platform: systemInfo.platform,
-            system: systemInfo.system,
-            version: systemInfo.version,
-            SDKVersion: systemInfo.SDKVersion,
-            brand: systemInfo.brand,
-            model: systemInfo.model,
-            screenWidth: systemInfo.screenWidth,
-            screenHeight: systemInfo.screenHeight,
-            windowWidth: systemInfo.windowWidth,
-            windowHeight: systemInfo.windowHeight,
-            pixelRatio: systemInfo.pixelRatio,
-            language: systemInfo.language,
-            updatedAt: new Date()
-          },
-          create: {
-            wechatUserId: wechatUser.id,
-            platform: systemInfo.platform,
-            system: systemInfo.system,
-            version: systemInfo.version,
-            SDKVersion: systemInfo.SDKVersion,
-            brand: systemInfo.brand,
-            model: systemInfo.model,
-            screenWidth: systemInfo.screenWidth,
-            screenHeight: systemInfo.screenHeight,
-            windowWidth: systemInfo.windowWidth,
-            windowHeight: systemInfo.windowHeight,
-            pixelRatio: systemInfo.pixelRatio,
-            language: systemInfo.language
-          }
-        })
-      }
-    } else {
-      // 新用户，创建记录
-      isNewUser = true
-
-          // 处理昵称：如果是"微信用户"，生成带序号的昵称
-    let finalNickname = userInfo.nickName
-    if (finalNickname === '微信用户' || !finalNickname) {
-      // 获取当前微信用户总数，用于生成序号
-      const wechatUserCount = await prisma.wechatUser.count()
-      const userIndex = wechatUserCount + 1
-      finalNickname = `微信用户${userIndex}`
-    }
-
-    // 尝试通过 UnionID 获取更详细的用户信息
-    let detailedUserInfo = null
-    if (wechatData.unionid && process.env.WECHAT_APP_ID && process.env.WECHAT_APP_SECRET) {
-      try {
-        // 获取 access_token
-        const tokenResponse = await fetch(
-          `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${process.env.WECHAT_APP_ID}&secret=${process.env.WECHAT_APP_SECRET}`
-        )
-        const tokenData = await tokenResponse.json()
+    if (wechatUser) {
+      console.log('✅ 微信用户已存在:', wechatUser.nickname)
+      
+      // 如果用户已存在但没有子用户，创建默认子用户
+      if (wechatUser.subUsers.length === 0) {
+        console.log('📝 创建默认子用户...')
+        const defaultUsername = nickname || `user_${openid.slice(-6)}`
         
-        if (tokenData.access_token) {
-          // 通过 UnionID 获取用户信息
-          const userInfoResponse = await fetch(
-            `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${tokenData.access_token}&openid=${wechatData.openid}&lang=zh_CN`
-          )
-          const detailedInfo = await userInfoResponse.json()
-          
-          if (detailedInfo.nickname && detailedInfo.nickname !== '微信用户') {
-            detailedUserInfo = detailedInfo
-            console.log('✅ 获取到详细用户信息:', detailedInfo.nickname)
-          }
-        }
-      } catch (error) {
-        console.log('⚠️ 获取详细用户信息失败:', error.message)
-      }
-    }
-
-      wechatUser = await prisma.wechatUser.create({
-        data: {
-          openid: wechatData.openid,
-          unionid: wechatData.unionid,
-          nickname: detailedUserInfo?.nickname || finalNickname,
-          avatar: detailedUserInfo?.headimgurl || userInfo.avatarUrl,
-          gender: detailedUserInfo?.sex?.toString() || userInfo.gender?.toString(),
-          country: detailedUserInfo?.country || userInfo.country,
-          province: detailedUserInfo?.province || userInfo.province,
-          city: detailedUserInfo?.city || userInfo.city,
-          appVersion: appVersion,
-          registerTime: registerTime ? new Date(registerTime) : new Date(),
-          lastLogin: new Date()
-        },
-        include: { systemInfo: true }
-      })
-
-      // 创建系统信息记录
-      if (systemInfo) {
-        await prisma.userSystemInfo.create({
+        const defaultSubUser = await prisma.subUser.create({
           data: {
             wechatUserId: wechatUser.id,
-            platform: systemInfo.platform,
-            system: systemInfo.system,
-            version: systemInfo.version,
-            SDKVersion: systemInfo.SDKVersion,
-            brand: systemInfo.brand,
-            model: systemInfo.model,
-            screenWidth: systemInfo.screenWidth,
-            screenHeight: systemInfo.screenHeight,
-            windowWidth: systemInfo.windowWidth,
-            windowHeight: systemInfo.windowHeight,
-            pixelRatio: systemInfo.pixelRatio,
-            language: systemInfo.language
+            username: defaultUsername,
+            realName: nickname || '默认用户',
+            status: 'active'
+          }
+        })
+        
+        console.log('✅ 默认子用户创建成功:', defaultSubUser.realName)
+        
+        // 重新获取用户信息
+        wechatUser = await prisma.wechatUser.findUnique({
+          where: { openid },
+          include: {
+            subUsers: true
           }
         })
       }
+      
+      return createSuccessResponse({
+        user: {
+          id: wechatUser.id,
+          openid: wechatUser.openid,
+          nickname: wechatUser.nickname,
+          subUsers: wechatUser.subUsers,
+          currentSubUser: wechatUser.subUsers[0] || null
+        }
+      }, '用户登录成功')
     }
 
-    // 生成 JWT token
-    const token = generateToken(wechatUser.id, wechatUser.openid, wechatUser.nickname)
+    // 2. 创建新的微信用户
+    console.log('🆕 创建新微信用户...')
+    wechatUser = await prisma.wechatUser.create({
+      data: {
+        openid,
+        unionid,
+        nickname: nickname || '微信用户',
+        avatar,
+        gender: gender?.toString(),
+        city,
+        province,
+        country,
+        appVersion,
+        status: 'active',
+        registerTime: new Date(),
+        lastLogin: new Date()
+      }
+    })
 
-    // 构建响应数据
-    const responseData = {
-      wechatUserId: wechatUser.id,
-      openId: wechatUser.openid,
-      unionId: wechatUser.unionid,
-      token: token,
-      userInfo: {
-        id: wechatUser.id,
-        nickName: wechatUser.nickname,
-        avatarUrl: wechatUser.avatar,
-        gender: parseInt(wechatUser.gender || '0'),
-        country: wechatUser.country,
-        province: wechatUser.province,
-        city: wechatUser.city,
-        createdAt: wechatUser.createdAt,
-        updatedAt: wechatUser.updatedAt
-      },
-      isNewUser: isNewUser
-    }
+    console.log('✅ 微信用户创建成功:', wechatUser.nickname)
 
-    console.log('✅ 微信用户注册成功:', { wechatUserId: wechatUser.id, isNewUser })
+    // 3. 创建默认子用户
+    console.log('📝 创建默认子用户...')
+    const defaultUsername = nickname || `user_${openid.slice(-6)}`
+    
+    const defaultSubUser = await prisma.subUser.create({
+      data: {
+        wechatUserId: wechatUser.id,
+        username: defaultUsername,
+        realName: nickname || '默认用户',
+        status: 'active'
+      }
+    })
 
-    return createSuccessResponse(responseData, '注册成功')
+    console.log('✅ 默认子用户创建成功:', defaultSubUser.realName)
+
+    // 4. 获取完整的用户信息
+    const completeUser = await prisma.wechatUser.findUnique({
+      where: { openid },
+      include: {
+        subUsers: true
+      }
+    })
+
+    return createSuccessResponse({
+      user: {
+        id: completeUser.id,
+        openid: completeUser.openid,
+        nickname: completeUser.nickname,
+        subUsers: completeUser.subUsers,
+        currentSubUser: completeUser.subUsers[0]
+      }
+    }, '用户注册成功')
 
   } catch (error) {
-    console.error('❌ 用户注册失败:', error.message)
+    console.error('❌ 用户注册错误:', error.message)
     console.error('错误堆栈:', error.stack)
-    
-    if (error.message.includes('微信接口错误')) {
-      return createErrorResponse('微信登录失败，请重试', 400)
-    }
-    
-    if (error.message.includes('微信小程序配置缺失')) {
-      return createErrorResponse('系统配置错误', 500)
-    }
-    
-    if (error.message.includes('Invalid JSON')) {
-      return createErrorResponse('请求数据格式错误', 400)
-    }
-    
-    return createErrorResponse('注册失败，请重试')
+    return createErrorResponse('用户注册失败: ' + error.message)
   } finally {
-    await prisma.$disconnect()
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+        console.log('✅ Prisma连接已关闭')
+      } catch (error) {
+        console.error('❌ 关闭Prisma连接失败:', error)
+      }
+    }
   }
 } 
