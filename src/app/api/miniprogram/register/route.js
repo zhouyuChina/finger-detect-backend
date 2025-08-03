@@ -176,13 +176,20 @@ export async function POST(request) {
         })
       }
       
+      // 找到代表用户本人的子用户（默认用户）
+      const defaultSubUser = wechatUser.subUsers.find(subUser => 
+        subUser.username === wechatUser.nickname || 
+        subUser.realName === wechatUser.nickname ||
+        subUser.username === `user_${finalOpenid.slice(-6)}`
+      ) || wechatUser.subUsers[0] || null
+      
       return createSuccessResponse({
         user: {
           id: wechatUser.id,
           openid: wechatUser.openid,
           nickname: wechatUser.nickname,
           subUsers: wechatUser.subUsers,
-          currentSubUser: wechatUser.subUsers[0] || null
+          currentSubUser: defaultSubUser
         }
       }, '用户登录成功')
     }
@@ -253,13 +260,20 @@ export async function POST(request) {
       }
     })
 
+    // 找到代表用户本人的子用户（默认用户）
+    const defaultSubUser = completeUser.subUsers.find(subUser => 
+      subUser.username === completeUser.nickname || 
+      subUser.realName === completeUser.nickname ||
+      subUser.username === `user_${finalOpenid.slice(-6)}`
+    ) || completeUser.subUsers[0] || null
+    
     return createSuccessResponse({
       user: {
         id: completeUser.id,
         openid: completeUser.openid,
         nickname: completeUser.nickname,
         subUsers: completeUser.subUsers,
-        currentSubUser: completeUser.subUsers[0]
+        currentSubUser: defaultSubUser
       }
     }, '用户注册成功')
 
