@@ -2,11 +2,9 @@ import { NextResponse } from 'next/server'
 import { miniprogramAuthMiddleware, createSuccessResponse, createErrorResponse } from '../../../../../lib/miniprogramAuth.js'
 
 // 标记资讯为已读
-async function markAsRead(request) {
+async function markAsRead(articleId) {
   let prisma = null
   try {
-    const { articleId } = await request.json()
-    
     if (!articleId) {
       return createErrorResponse('缺少资讯ID参数', 400)
     }
@@ -71,22 +69,19 @@ async function markAsRead(request) {
 }
 
 // 获取用户对指定资讯的阅读状态
-async function getReadStatus(request) {
+async function getReadStatus(articleIds) {
   let prisma = null
   try {
-    const { searchParams } = new URL(request.url)
-    const articleIds = searchParams.get('articleIds') // 支持多个资讯ID，用逗号分隔
-    
-    if (!articleIds) {
-      return createErrorResponse('缺少articleIds参数，请提供要查询的文章ID列表（用逗号分隔）', 400)
+    if (!articleIds || !Array.isArray(articleIds) || articleIds.length === 0) {
+      return createErrorResponse('缺少articleIds参数，请提供要查询的文章ID数组', 400)
     }
 
     // 从认证中间件获取用户信息
     const userId = request.user.id
-    const articleIdList = articleIds.split(',').map(id => id.trim()).filter(id => id.length > 0)
+    const articleIdList = articleIds.filter(id => typeof id === 'string' && id.length > 0)
 
     if (articleIdList.length === 0) {
-      return createErrorResponse('articleIds参数格式错误，请提供有效的文章ID（用逗号分隔）', 400)
+      return createErrorResponse('articleIds参数格式错误，请提供有效的文章ID数组', 400)
     }
 
     console.log('获取阅读状态:', {
@@ -140,5 +135,22 @@ async function getReadStatus(request) {
 }
 
 // 使用中间件包装处理函数
-export const POST = miniprogramAuthMiddleware(markAsRead)
-export const GET = miniprogramAuthMiddleware(getReadStatus) 
+export const POST = miniprogramAuthMiddleware(async (request) => {
+  try {
+    // 根据请求体内容判断是标记已读还是获取阅读状态
+    const body = await request.json().catch(() => ({}))
+    
+    if (body.articleIds && Array.isArray(body.articleIds)) {
+      // 获取阅读状态
+      return getReadStatus(body.articleIds)
+    } else if (body.articleId) {
+      // 标记已读
+      return markAsRead(body.articleId)
+    } else {
+      return createErrorResponse('请求参数错误，请提供articleId或articleIds参数', 400)
+    }
+  } catch (error) {
+    console.error('处理请求错误:', error)
+    return createErrorResponse('请求参数解析失败', 400)
+  }
+}) 
