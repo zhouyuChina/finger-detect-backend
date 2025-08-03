@@ -241,7 +241,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
       <MenuBar editor={editor} />
       <EditorContent 
         editor={editor} 
-        className="p-4 min-h-[300px] focus:outline-none prose prose-sm max-w-none"
+        className="p-4 min-h-[300px] focus:outline-none prose prose-sm max-w-none text-black"
         placeholder={placeholder}
       />
     </div>

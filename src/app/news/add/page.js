@@ -242,7 +242,7 @@ export default function AddNewsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 类型标记
               </label>
-              <div className="space-y-2">
+              <div className="space-y-2 text-gray-700">
                 <label className="flex items-center">
                   <input
                     type="checkbox"
