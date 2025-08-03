@@ -3,81 +3,90 @@ import { createSuccessResponse, createErrorResponse } from '../../../../lib/mini
 
 // 获取Banner列表（小程序专用）- 公开接口，无需认证
 async function getBanners(request) {
+  let prisma = null
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit')) || 5
     
-    // TODO: 从数据库获取活跃的Banner
-    // const banners = await prisma.banner.findMany({
-    //   where: {
-    //     isActive: true,
-    //     AND: [
-    //       { startTime: { lte: new Date() } },
-    //       { endTime: { gte: new Date() } }
-    //     ]
-    //   },
-    //   orderBy: [
-    //     { sort: 'asc' },
-    //     { createdAt: 'desc' }
-    //   ],
-    //   take: limit,
-    //   select: {
-    //     id: true,
-    //     title: true,
-    //     imageUrl: true,
-    //     linkUrl: true,
-    //     sort: true
-    //   }
-    // })
-
-    // TODO: 从数据库获取Banner配置
-    // const configs = await prisma.systemConfig.findMany({
-    //   where: {
-    //     key: {
-    //       in: ['banner_interval', 'banner_autoplay']
-    //     }
-    //   }
-    // })
-    // const configObject = {}
-    // configs.forEach(config => {
-    //   configObject[config.key] = config.value
-    // })
-
-    // 模拟数据 - 使用真实存在的图片
-    const mockBanners = [
-      {
-        id: 1,
-        title: '欢迎使用指纹检测',
-        imageUrl: '/uploads/1753695692581_bx6dkiv1bbn.png',
-        linkUrl: '/pages/index/index',
-        sort: 1
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
+    
+    // 从数据库获取活跃的Banner
+    const banners = await prisma.banner.findMany({
+      where: {
+        isActive: true,
+        AND: [
+          { 
+            OR: [
+              { startTime: null },
+              { startTime: { lte: new Date() } }
+            ]
+          },
+          { 
+            OR: [
+              { endTime: null },
+              { endTime: { gte: new Date() } }
+            ]
+          }
+        ]
       },
-      {
-        id: 2,
-        title: '专业检测服务',
-        imageUrl: '/uploads/1753694778560_amo65patk7e.png',
-        linkUrl: '/pages/service/service',
-        sort: 2
+      orderBy: [
+        { sort: 'asc' },
+        { createdAt: 'desc' }
+      ],
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        imageUrl: true,
+        linkUrl: true,
+        sort: true
       }
-    ]
+    })
 
-    // 模拟配置数据
-    const mockConfig = {
+    // 从数据库获取Banner配置
+    const configs = await prisma.systemConfig.findMany({
+      where: {
+        key: {
+          in: ['banner_interval', 'banner_autoplay']
+        }
+      }
+    })
+    
+    const configObject = {}
+    configs.forEach(config => {
+      configObject[config.key] = config.value
+    })
+
+    // 默认配置
+    const defaultConfig = {
       banner_interval: '3',
       banner_autoplay: 'true'
     }
 
+    // 合并配置
+    const finalConfig = { ...defaultConfig, ...configObject }
+
     return createSuccessResponse({
-      banners: mockBanners,
+      banners: banners,
       config: {
-        interval: parseInt(mockConfig.banner_interval) * 1000, // 转换为毫秒
-        autoplay: mockConfig.banner_autoplay === 'true'
+        interval: parseInt(finalConfig.banner_interval) * 1000, // 转换为毫秒
+        autoplay: finalConfig.banner_autoplay === 'true'
       }
     }, '获取Banner列表成功')
 
   } catch (error) {
     console.error('获取Banner列表错误:', error)
     return createErrorResponse('获取Banner列表失败')
+  } finally {
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('关闭 Prisma 连接失败:', error)
+      }
+    }
   }
 }
 
