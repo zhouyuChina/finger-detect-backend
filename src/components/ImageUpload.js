@@ -96,7 +96,7 @@ export default function ImageUpload({ value, onChange, placeholder = "请选择�
           </div>
                  ) : value ? (
            <div className="space-y-2">
-             <div className="relative w-full h-32 mx-auto">
+             <div className="relative w-full h-32 mx-auto" style={{ overflow: 'hidden' }}>
                <SimpleImage
                  src={value}
                  alt="预览"
