@@ -15,32 +15,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 用户表
-model User {
+// 微信用户表（唯一标识）
+model WechatUser {
   id          String   @id @default(cuid())
-  openid      String?  @unique // 微信openid
+  openid      String   @unique // 微信openid（唯一标识）
   unionid     String?  @unique // 微信unionid
-  username    String?  @unique // 用户名
-  nickname    String?  // 昵称
-  realName    String?  // 真实姓名
-  avatar      String?  // 头像
-  phone       String?  // 手机号
-  email       String?  // 邮箱
+  nickname    String?  // 微信昵称
+  avatar      String?  // 微信头像
   gender      String?  // 性别
-  age         Int?     // 年龄
   city        String?  // 城市
   province    String?  // 省份
   country     String?  // 国家
+  status      String   @default("active") // 状态: active, inactive, banned
+  lastLogin   DateTime? // 最后登录时间
+  registerTime DateTime? // 注册时间
+  appVersion  String?  // 应用版本
+  remark      String?  // 备注
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  
+  // 关联关系
+  subUsers    SubUser[] // 子用户列表
+  systemInfo  UserSystemInfo?
+  verification WechatUserVerification?
+  
+  @@map("wechat_users")
+}
+
+// 子用户表（每个微信用户下的子用户）
+model SubUser {
+  id          String   @id @default(cuid())
+  wechatUserId String  // 关联微信用户ID
+  wechatUser  WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
+  username    String?  @unique // 用户名
+  realName    String?  // 真实姓名
+  phone       String?  // 手机号
+  email       String?  // 邮箱
+  age         Int?     // 年龄
+  gender      String?  // 性别
   address     String?  // 地址
   status      String   @default("active") // 状态: active, inactive, pending, banned
-  userId      String?  // 所属ID
   archives    Int      @default(0) // 建档数量
   photos      Int      @default(0) // 拍照数量
   reports     Int      @default(0) // 报告数量
-  lastLogin   DateTime? // 最后登录时间
   remark      String?  // 备注
-  appVersion  String?  // 应用版本
-  registerTime DateTime? // 注册时间
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   isActive    Boolean  @default(true)
@@ -48,17 +67,15 @@ model User {
   // 关联关系
   feedbacks   Feedback[]
   coupons     UserCoupon[]
-  userIdRecord UserId?
-  systemInfo  UserSystemInfo?
   
-  @@map("users")
+  @@map("sub_users")
 }
 
 // 用户系统信息表
 model UserSystemInfo {
   id          String   @id @default(cuid())
-  userId      String   @unique // 关联用户ID
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wechatUserId String  @unique // 关联微信用户ID
+  wechatUser  WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
   platform    String?  // 平台
   system      String?  // 系统版本
   version     String?  // 微信版本
@@ -77,11 +94,11 @@ model UserSystemInfo {
   @@map("user_system_info")
 }
 
-// ID管理表
-model UserId {
+// 微信用户认证信息表
+model WechatUserVerification {
   id            String   @id @default(cuid())
-  userId        String   @unique // 关联用户ID
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wechatUserId  String   @unique // 关联微信用户ID
+  wechatUser    WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
   idNumber      String   // 身份证号
   realName      String   // 真实姓名
   age           Int?     // 年龄
@@ -89,7 +106,7 @@ model UserId {
   address       String?  // 地址
   identity      String   @default("普通用户") // 身份类型: 普通用户, VIP用户, 企业用户
   status        String   @default("pending") // 活跃状态: active, inactive, pending
-  subUsers      Int      @default(0) // 二级用户数量
+  subUsers      Int      @default(0) // 子用户数量
   archives      Int      @default(0) // 建档数量
   photos        Int      @default(0) // 拍照数量
   reports       Int      @default(0) // 报告数量
@@ -105,7 +122,7 @@ model UserId {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
-  @@map("user_ids")
+  @@map("wechat_user_verifications")
 }
 
 // 管理员表
@@ -123,7 +140,7 @@ model Admin {
   updatedAt DateTime @updatedAt
   
   // 关联关系
-  verifiedIds UserId[]
+  verifiedIds WechatUserVerification[]
   
   @@map("admins")
 }
@@ -203,8 +220,8 @@ model News {
 // 反馈表
 model Feedback {
   id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subUserId   String
+  subUser     SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
   type        String   // 反馈类型: bug, suggestion, complaint
   title       String   // 标题
   content     String   // 内容
@@ -266,15 +283,15 @@ model Coupon {
 // 用户优惠券关联表
 model UserCoupon {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subUserId String
+  subUser   SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
   couponId  String
   coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
   isUsed    Boolean  @default(false)
   usedAt    DateTime?
   createdAt DateTime @default(now())
   
-  @@unique([userId, couponId])
+  @@unique([subUserId, couponId])
   @@map("user_coupons")
 }
 
