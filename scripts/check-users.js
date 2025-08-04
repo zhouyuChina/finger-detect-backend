@@ -50,7 +50,8 @@ async function checkUsers() {
           include: {
             wechatUser: true
           }
-        }
+        },
+        archive: true
       }
     })
     
@@ -59,7 +60,7 @@ async function checkUsers() {
     if (detections.length > 0) {
       console.log(`\n🔍 最新检测记录:`)
       detections.slice(0, 3).forEach((detection, index) => {
-        console.log(`  ${index + 1}. ${detection.archiveName}`)
+        console.log(`  ${index + 1}. ${detection.archive?.archiveName || '未知档案'}`)
         console.log(`     子用户: ${detection.subUser.realName || detection.subUser.username}`)
         console.log(`     微信用户: ${detection.subUser.wechatUser.nickname}`)
         console.log(`     结果: ${detection.result}`)

@@ -7,9 +7,11 @@ async function getArchives(request) {
   try {
     console.log('📁 获取档案列表接口被调用')
     console.log('📋 当前微信用户ID:', request.user?.id)
+    console.log('📋 当前微信用户openid:', request.user?.openid)
     
     const { searchParams } = new URL(request.url)
     const username = searchParams.get('username')
+    console.log('📋 请求的用户名:', username)
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 10
     
@@ -23,6 +25,8 @@ async function getArchives(request) {
     prisma = new PrismaClient()
 
     // 1. 首先根据openid和用户名找到对应的子用户
+    console.log('🔍 查找子用户，微信用户ID:', request.user.id, '用户名:', username)
+    
     const subUser = await prisma.subUser.findFirst({
       where: {
         wechatUserId: request.user.id,
@@ -38,6 +42,14 @@ async function getArchives(request) {
 
     if (!subUser) {
       console.log('❌ 子用户不存在，微信用户ID:', request.user.id, '用户名:', username)
+      
+      // 检查所有子用户
+      const allSubUsers = await prisma.subUser.findMany({
+        where: { wechatUserId: request.user.id },
+        select: { id: true, username: true, realName: true, status: true }
+      })
+      console.log('📋 该微信用户的所有子用户:', allSubUsers)
+      
       return createErrorResponse('用户不存在或无权限访问', 404)
     }
 
@@ -55,10 +67,11 @@ async function getArchives(request) {
         select: {
           id: true,
           archiveName: true,
-          activity: true,
-          photoCount: true,
+          status: true,
+          totalDetections: true,
           bodyPart: true,
-          detectionTime: true,
+          startDate: true,
+          lastDetectionTime: true,
           createdAt: true,
           updatedAt: true
         },
@@ -79,8 +92,7 @@ async function getArchives(request) {
         // 查找该档案的最新检测记录
         const latestDetection = await prisma.detection.findFirst({
           where: {
-            subUserId: subUser.id,
-            archiveName: archive.archiveName
+            archiveId: archive.id
           },
           select: {
             imageUrl: true,
@@ -94,10 +106,11 @@ async function getArchives(request) {
         return {
           id: archive.id,
           archiveName: archive.archiveName,
-          activity: archive.activity,
-          photoCount: archive.photoCount,
+          status: archive.status,
+          totalDetections: archive.totalDetections,
           bodyPart: archive.bodyPart,
-          detectionTime: archive.detectionTime,
+          startDate: archive.startDate,
+          lastDetectionTime: archive.lastDetectionTime,
           createdAt: archive.createdAt,
           updatedAt: archive.updatedAt,
           // 添加图片信息
@@ -132,7 +145,7 @@ async function getArchives(request) {
   } catch (error) {
     console.error('❌ 获取档案列表错误:', error.message)
     console.error('错误堆栈:', error.stack)
-    return createErrorResponse('获取档案列表失败')
+    return createErrorResponse(`获取档案列表失败: ${error.message}`)
   } finally {
     // 确保 Prisma 连接被正确关闭
     if (prisma) {
@@ -222,55 +235,61 @@ async function createArchive(request) {
       return createErrorResponse('档案名称已存在', 400)
     }
 
-    // 3. 创建新档案和检测记录
-    const [newArchive, newDetection] = await Promise.all([
-      prisma.archive.create({
-        data: {
-          subUserId: subUser.id,
-          archiveName,
-          bodyPart,
-          activity,
-          photoCount: 1, // 创建档案时至少有一张图片
-          detectionTime: new Date()
-        },
-        select: {
-          id: true,
-          subUserId: true,
-          archiveName: true,
-          bodyPart: true,
-          activity: true,
-          photoCount: true,
-          detectionTime: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      }),
-      prisma.detection.create({
-        data: {
-          subUserId: subUser.id,
-          archiveName,
-          detectionType: bodyPart,
-          imageUrl,
-          result: 'normal', // 默认结果
-          confidence: 0.9, // 默认置信度
-          status: 'completed',
-          detectionTime: new Date()
-        },
-        select: {
-          id: true,
-          archiveName: true,
-          detectionType: true,
-          imageUrl: true,
-          result: true,
-          confidence: true,
-          status: true,
-          detectionTime: true,
-          createdAt: true
-        }
-      })
-    ])
+    // 3. 先创建档案
+    const newArchive = await prisma.archive.create({
+      data: {
+        subUserId: subUser.id,
+        archiveName,
+        bodyPart,
+        status: 'active',
+        startDate: new Date(),
+        totalDetections: 1
+      },
+      select: {
+        id: true,
+        subUserId: true,
+        archiveName: true,
+        bodyPart: true,
+        status: true,
+        startDate: true,
+        totalDetections: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
 
-    // 4. 更新子用户的档案数量和拍照数量
+    // 4. 创建检测记录
+    const newDetection = await prisma.detection.create({
+      data: {
+        subUserId: subUser.id,
+        archiveId: newArchive.id,
+        detectionType: bodyPart,
+        imageUrl,
+        result: 'normal', // 默认结果
+        confidence: 0.9, // 默认置信度
+        status: 'completed',
+        detectionTime: new Date()
+      },
+      select: {
+        id: true,
+        archiveId: true,
+        detectionType: true,
+        imageUrl: true,
+        result: true,
+        confidence: true,
+        status: true,
+        detectionTime: true,
+        createdAt: true
+      }
+    })
+
+    // 5. 更新档案的最后检测时间
+    await prisma.archive.update({
+      where: { id: newArchive.id },
+      data: { lastDetectionTime: new Date() }
+    })
+
+    // 6. 更新子用户的档案数量和拍照数量
     await prisma.subUser.update({
       where: { id: subUser.id },
       data: {

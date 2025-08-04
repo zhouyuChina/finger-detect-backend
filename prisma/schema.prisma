@@ -152,8 +152,9 @@ model Detection {
   id          String   @id @default(cuid())
   subUserId   String   // 关联子用户ID
   subUser     SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
-  archiveName String   // 档案名称
-  detectionType String @default("left_hand_thumb") // 检测类型: left_hand_thumb, left_hand_index, left_hand_middle, left_hand_ring, left_hand_little, right_hand_thumb, right_hand_index, right_hand_middle, right_hand_ring, right_hand_little, left_foot_big, left_foot_second, left_foot_third, left_foot_fourth, left_foot_little, right_foot_big, right_foot_second, right_foot_third, right_foot_fourth, right_foot_little
+  archiveId   String   // 关联档案ID
+  archive     Archive  @relation(fields: [archiveId], references: [id], onDelete: Cascade)
+  detectionType String @default("left_hand_thumb") // 检测类型
   imageUrl    String   // 检测图片URL
   result      String   // 检测结果: normal, abnormal
   confidence  Float    // 置信度
@@ -173,12 +174,18 @@ model Archive {
   subUserId   String   // 关联子用户ID
   subUser     SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
   archiveName String   // 档案名称
-  activity    String   @default("medium") // 活跃度: high, medium, low, inactive
-  photoCount  Int      @default(0) // 拍照数量
-  bodyPart    String   @default("left_hand_thumb") // 检测部位: left_hand_thumb, left_hand_index, left_hand_middle, left_hand_ring, left_hand_little, right_hand_thumb, right_hand_index, right_hand_middle, right_hand_ring, right_hand_little, left_foot_big, left_foot_second, left_foot_third, left_foot_fourth, left_foot_little, right_foot_big, right_foot_second, right_foot_third, right_foot_fourth, right_foot_little
-  detectionTime DateTime @default(now()) // 检测时间
+  bodyPart    String   @default("left_hand_thumb") // 检测部位
+  status      String   @default("active") // 档案状态: active, completed, cancelled
+  description String?  // 档案描述
+  startDate   DateTime @default(now()) // 开始日期
+  endDate     DateTime? // 结束日期（治疗完成时设置）
+  totalDetections Int   @default(0) // 总检测次数
+  lastDetectionTime DateTime? // 最后检测时间
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  // 关联关系
+  detections  Detection[] // 该档案下的所有检测记录
   
   @@unique([subUserId, archiveName])
   @@map("archives")

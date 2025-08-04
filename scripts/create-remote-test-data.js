@@ -84,9 +84,9 @@ async function createRemoteTestData() {
           subUserId: testSubUser.id,
           archiveName: archiveData.archiveName,
           bodyPart: archiveData.bodyPart,
-          activity: archiveData.activity,
-          photoCount: archiveData.photoCount,
-          detectionTime: new Date()
+          status: 'active',
+          startDate: new Date(),
+          totalDetections: 0
         }
       })
       
@@ -97,7 +97,7 @@ async function createRemoteTestData() {
         const detection = await prisma.detection.create({
           data: {
             subUserId: testSubUser.id,
-            archiveName: archiveData.archiveName,
+            archiveId: archive.id,
             detectionType: archiveData.bodyPart,
             imageUrl: `http://example.com/images/${archiveData.archiveName}_${i + 1}.jpg`,
             result: i === 0 ? 'normal' : 'abnormal',
@@ -111,7 +111,31 @@ async function createRemoteTestData() {
       }
     }
     
-    // 6. 更新子用户统计
+    // 6. 更新档案统计
+    for (const archiveData of testArchives) {
+      const archive = await prisma.archive.findFirst({
+        where: {
+          subUserId: testSubUser.id,
+          archiveName: archiveData.archiveName
+        }
+      })
+      
+      if (archive) {
+        const detectionCount = await prisma.detection.count({
+          where: { archiveId: archive.id }
+        })
+        
+        await prisma.archive.update({
+          where: { id: archive.id },
+          data: {
+            totalDetections: detectionCount,
+            lastDetectionTime: new Date()
+          }
+        })
+      }
+    }
+    
+    // 7. 更新子用户统计
     const archiveCount = await prisma.archive.count({
       where: { subUserId: testSubUser.id }
     })
@@ -154,12 +178,12 @@ async function createRemoteTestData() {
       console.log(`  档案数量: ${subUser.archiveList.length}`)
       console.log(`  检测记录数量: ${subUser.detections.length}`)
       
-      subUser.archiveList.forEach(archive => {
-        const relatedDetections = subUser.detections.filter(
-          d => d.archiveName === archive.archiveName
-        )
-        console.log(`    📋 ${archive.archiveName}: ${relatedDetections.length} 条检测记录`)
-      })
+              subUser.archiveList.forEach(archive => {
+          const relatedDetections = subUser.detections.filter(
+            d => d.archiveId === archive.id
+          )
+          console.log(`    📋 ${archive.archiveName}: ${relatedDetections.length} 条检测记录`)
+        })
     })
     
     console.log('\n🎯 测试数据创建完成！')

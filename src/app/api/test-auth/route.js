@@ -1,28 +1,32 @@
-import { NextResponse } from 'next/server'
-import { miniprogramAuthMiddleware } from '../../../../src/lib/miniprogramAuth.js'
+import { miniprogramAuthMiddleware, createSuccessResponse, createErrorResponse } from '../../../lib/miniprogramAuth.js'
 
 async function testAuth(request) {
   try {
-    console.log('🔐 测试认证中间件')
-    console.log('👤 用户信息:', request.user)
+    console.log('🧪 测试认证API')
+    console.log('📋 request.user:', request.user)
     
-    return NextResponse.json({
-      success: true,
-      message: '认证测试成功',
-      data: {
-        user: request.user,
-        timestamp: new Date().toISOString()
+    if (!request.user) {
+      return createErrorResponse('认证失败：request.user为空', 401)
+    }
+    
+    return createSuccessResponse({
+      user: {
+        id: request.user.id,
+        openid: request.user.openid,
+        nickname: request.user.nickname,
+        subUsersCount: request.user.subUsers?.length || 0,
+        currentSubUser: request.user.currentSubUser ? {
+          id: request.user.currentSubUser.id,
+          username: request.user.currentSubUser.username,
+          realName: request.user.currentSubUser.realName
+        } : null
       }
-    })
+    }, '认证成功')
+    
   } catch (error) {
-    console.error('❌ 认证测试失败:', error.message)
-    return NextResponse.json({
-      success: false,
-      message: '认证测试失败: ' + error.message,
-      code: 500
-    }, { status: 500 })
+    console.error('❌ 测试认证API错误:', error)
+    return createErrorResponse(`测试认证API失败: ${error.message}`)
   }
 }
 
-export const GET = miniprogramAuthMiddleware(testAuth)
-export const POST = miniprogramAuthMiddleware(testAuth) 
+export const GET = miniprogramAuthMiddleware(testAuth) 
