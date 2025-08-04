@@ -26,7 +26,7 @@ cd /www/wwwroot/finger-detect-backend
 mkdir -p backups/$(date +%Y%m%d_%H%M%S)
 
 # 备份数据库
-docker exec finger-detect-postgres pg_dump -U postgres finger_detect_db > backups/$(date +%Y%m%d_%H%M%S)/backup.sql
+pg_dump -U postgres finger_detect_db > backups/$(date +%Y%m%d_%H%M%S)/backup.sql
 
 echo "✅ 数据库已备份到 backups/$(date +%Y%m%d_%H%M%S)/backup.sql"
 ```
@@ -42,18 +42,13 @@ pm2 status
 
 ### 5. 清空数据库
 ```bash
-# 连接到PostgreSQL容器
-docker exec -it finger-detect-postgres psql -U postgres
+# 删除数据库
+psql -U postgres -c "DROP DATABASE IF EXISTS finger_detect_db;"
 
-# 在PostgreSQL中执行以下命令：
-# 1. 删除数据库
-DROP DATABASE IF EXISTS finger_detect_db;
+# 重新创建数据库
+psql -U postgres -c "CREATE DATABASE finger_detect_db;"
 
-# 2. 重新创建数据库
-CREATE DATABASE finger_detect_db;
-
-# 3. 退出PostgreSQL
-\q
+echo "✅ 数据库已清空并重新创建"
 ```
 
 ### 6. 拉取最新代码
@@ -150,11 +145,11 @@ npx prisma migrate deploy
 
 ### 如果数据库连接失败
 ```bash
-# 检查PostgreSQL容器状态
-docker ps | grep postgres
+# 检查PostgreSQL服务状态
+systemctl status postgresql
 
-# 重启PostgreSQL容器
-docker restart finger-detect-postgres
+# 重启PostgreSQL服务
+systemctl restart postgresql
 
 # 等待几秒后重试
 sleep 5

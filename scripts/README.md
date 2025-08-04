@@ -18,9 +18,6 @@
 - **deploy.js** - 基础部署脚本
 - **quick-deploy.sh** - 快速部署脚本（包含完整流程）
 - **baota-deploy.sh** - 宝塔面板部署脚本
-- **update-remote-db.sh** - 远程数据库更新脚本
-- **manual-update-remote.sh** - 手动更新远程数据库脚本
-- **quick-reset-db.sh** - 快速重置数据库脚本
 
 ## 使用说明
 
@@ -38,17 +35,10 @@ node scripts/check-users.js
 
 ### 远程部署
 ```bash
-# 更新远程数据库
-bash scripts/update-remote-db.sh
-
-# 手动更新远程数据库
-bash scripts/manual-update-remote.sh
-
-# 快速重置数据库（清空所有数据）
-bash scripts/quick-reset-db.sh
-
 # 快速部署
 bash scripts/quick-deploy.sh
+
+# 手动操作请参考 docs/MANUAL_DATABASE_RESET.md
 ```
 
 ### 创建测试数据
