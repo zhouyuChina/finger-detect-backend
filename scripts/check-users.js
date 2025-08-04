@@ -1,87 +1,73 @@
 const { PrismaClient } = require('../src/generated/prisma/index.js')
 
-const prisma = new PrismaClient()
-
 async function checkUsers() {
+  const prisma = new PrismaClient()
+  
   try {
-    console.log('🔍 检查数据库中的用户数据...')
+    console.log('🔍 检查现有用户...')
     
-    // 检查微信用户
+    // 查询所有微信用户
     const wechatUsers = await prisma.wechatUser.findMany({
-      include: {
-        subUsers: true
+      select: {
+        id: true,
+        openid: true,
+        nickname: true,
+        status: true,
+        createdAt: true
       }
     })
     
-    console.log(`📊 微信用户数量: ${wechatUsers.length}`)
-    
+    console.log('📋 微信用户列表:')
     wechatUsers.forEach((user, index) => {
-      console.log(`\n👤 微信用户 ${index + 1}:`)
-      console.log(`  - ID: ${user.id}`)
-      console.log(`  - OpenID: ${user.openid}`)
-      console.log(`  - 昵称: ${user.nickname || '未设置'}`)
-      console.log(`  - 状态: ${user.status}`)
-      console.log(`  - 子用户数量: ${user.subUsers.length}`)
-      
-      if (user.subUsers.length > 0) {
-        console.log(`  - 子用户列表:`)
-        user.subUsers.forEach((subUser, subIndex) => {
-          console.log(`    ${subIndex + 1}. ${subUser.realName || '未设置姓名'} (${subUser.username || '未设置用户名'})`)
-          console.log(`       状态: ${subUser.status}`)
-          console.log(`       档案数: ${subUser.archives}`)
-          console.log(`       报告数: ${subUser.reports}`)
-        })
-      }
+      console.log(`${index + 1}. ID: ${user.id}`)
+      console.log(`   OpenID: ${user.openid}`)
+      console.log(`   昵称: ${user.nickname}`)
+      console.log(`   状态: ${user.status}`)
+      console.log(`   创建时间: ${user.createdAt.toLocaleString()}`)
+      console.log('')
     })
     
-    // 检查子用户
+    // 查询所有子用户
     const subUsers = await prisma.subUser.findMany({
-      include: {
-        wechatUser: true
+      select: {
+        id: true,
+        wechatUserId: true,
+        username: true,
+        realName: true,
+        status: true,
+        createdAt: true
       }
     })
     
-    console.log(`\n📊 子用户总数: ${subUsers.length}`)
-    
-    // 检查检测记录
-    const detections = await prisma.detection.findMany({
-      include: {
-        subUser: {
-          include: {
-            wechatUser: true
-          }
-        },
-        archive: true
-      }
+    console.log('📋 子用户列表:')
+    subUsers.forEach((user, index) => {
+      console.log(`${index + 1}. ID: ${user.id}`)
+      console.log(`   微信用户ID: ${user.wechatUserId}`)
+      console.log(`   用户名: ${user.username}`)
+      console.log(`   真实姓名: ${user.realName}`)
+      console.log(`   状态: ${user.status}`)
+      console.log(`   创建时间: ${user.createdAt.toLocaleString()}`)
+      console.log('')
     })
     
-    console.log(`📊 检测记录总数: ${detections.length}`)
-    
-    if (detections.length > 0) {
-      console.log(`\n🔍 最新检测记录:`)
-      detections.slice(0, 3).forEach((detection, index) => {
-        console.log(`  ${index + 1}. ${detection.archive?.archiveName || '未知档案'}`)
-        console.log(`     子用户: ${detection.subUser.realName || detection.subUser.username}`)
-        console.log(`     微信用户: ${detection.subUser.wechatUser.nickname}`)
-        console.log(`     结果: ${detection.result}`)
-        console.log(`     状态: ${detection.status}`)
-      })
-    }
+    // 显示可用的测试组合
+    console.log('🎯 可用的测试组合:')
+    wechatUsers.forEach(wechatUser => {
+      const relatedSubUsers = subUsers.filter(sub => sub.wechatUserId === wechatUser.id)
+      if (relatedSubUsers.length > 0) {
+        console.log(`微信用户: ${wechatUser.nickname} (${wechatUser.openid})`)
+        relatedSubUsers.forEach(subUser => {
+          console.log(`  - 子用户: ${subUser.username} (${subUser.realName})`)
+        })
+        console.log('')
+      }
+    })
     
   } catch (error) {
-    console.error('❌ 检查失败:', error.message)
-    console.error('错误堆栈:', error.stack)
+    console.error('❌ 查询用户失败:', error)
   } finally {
     await prisma.$disconnect()
   }
 }
 
-checkUsers()
-  .then(() => {
-    console.log('\n✅ 检查完成')
-    process.exit(0)
-  })
-  .catch((error) => {
-    console.error('❌ 检查失败:', error)
-    process.exit(1)
-  }) 
+checkUsers() 

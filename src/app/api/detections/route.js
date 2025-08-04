@@ -28,26 +28,36 @@ export async function GET(request) {
     // 构建查询条件
     const where = {}
     
-    if (userId) {
-      where.userId = { contains: userId, mode: 'insensitive' }
-    }
-    
-    if (userNickname) {
-      where.userNickname = { contains: userNickname, mode: 'insensitive' }
-    }
-    
     if (archiveName) {
       where.archiveName = { contains: archiveName, mode: 'insensitive' }
     }
     
     if (bodyPart) {
-      where.bodyPart = bodyPart
+      where.detectionType = bodyPart
     }
 
-    // 查询数据
+    // 如果搜索用户ID或昵称，需要关联查询
+    if (userId || userNickname) {
+      where.subUser = {}
+      if (userId) {
+        where.subUser.username = { contains: userId, mode: 'insensitive' }
+      }
+      if (userNickname) {
+        where.subUser.realName = { contains: userNickname, mode: 'insensitive' }
+      }
+    }
+
+    // 查询数据，包含关联的用户信息
     const [detections, total] = await Promise.all([
       prisma.detection.findMany({
         where,
+        include: {
+          subUser: {
+            include: {
+              wechatUser: true
+            }
+          }
+        },
         orderBy: { createdAt: 'desc' },
         skip,
         take: pageSize
@@ -55,10 +65,26 @@ export async function GET(request) {
       prisma.detection.count({ where })
     ])
 
+    // 转换数据格式以匹配前端期望
+    const formattedDetections = detections.map(detection => ({
+      id: detection.id,
+      userId: detection.subUser?.username || '未知',
+      userNickname: detection.subUser?.realName || '未知',
+      archiveName: detection.archiveName,
+      bodyPart: detection.detectionType,
+      imageUrl: detection.imageUrl,
+      result: detection.result,
+      confidence: detection.confidence,
+      status: detection.status,
+      detectionTime: detection.detectionTime,
+      createdAt: detection.createdAt,
+      updatedAt: detection.updatedAt
+    }))
+
     return NextResponse.json({
       success: true,
       data: {
-        data: detections,
+        data: formattedDetections,
         pagination: {
           page,
           pageSize,
@@ -92,7 +118,7 @@ export async function POST(request) {
       userId,
       userNickname,
       archiveName,
-      bodyPart = 'finger',
+      bodyPart = 'left_hand_thumb',
       imageUrl,
       result,
       confidence,
@@ -107,24 +133,201 @@ export async function POST(request) {
       )
     }
 
-    // 创建检测记录
+    // 查找或创建SubUser
+    let subUser = await prisma.subUser.findFirst({
+      where: {
+        username: userId
+      }
+    })
+
+    if (!subUser) {
+      // 如果没有找到用户，创建一个默认的WechatUser和SubUser
+      const wechatUser = await prisma.wechatUser.create({
+        data: {
+          openid: `admin_created_${Date.now()}`,
+          nickname: userNickname
+        }
+      })
+
+      subUser = await prisma.subUser.create({
+        data: {
+          wechatUserId: wechatUser.id,
+          username: userId,
+          realName: userNickname
+        }
+      })
+    }
+
+    // 检查档案是否已存在
+    const existingArchive = await prisma.archive.findUnique({
+      where: {
+        subUserId_archiveName: {
+          subUserId: subUser.id,
+          archiveName: archiveName
+        }
+      }
+    })
+
+    // 检查是否已有检测记录
+    const existingDetections = await prisma.detection.findMany({
+      where: {
+        subUserId: subUser.id,
+        archiveName: archiveName,
+        status: 'completed'
+      },
+      select: {
+        id: true,
+        result: true,
+        confidence: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    })
+
+    let isNewArchive = false
+    let archive
+
+    if (existingArchive) {
+      // 档案已存在，检查是否已有报告
+      if (existingDetections.length > 0) {
+        // 已有报告，这是治疗过程中的拍照，不生成新报告
+        console.log('📸 档案已存在且有报告，这是治疗过程中的拍照')
+        
+        // 只更新档案的照片数量，不创建新的检测记录
+        archive = await prisma.archive.update({
+          where: {
+            subUserId_archiveName: {
+              subUserId: subUser.id,
+              archiveName: archiveName
+            }
+          },
+          data: {
+            photoCount: {
+              increment: 1
+            },
+            detectionTime: new Date(),
+            updatedAt: new Date()
+          }
+        })
+
+        // 更新子用户的拍照数量
+        await prisma.subUser.update({
+          where: { id: subUser.id },
+          data: {
+            photos: {
+              increment: 1
+            }
+          }
+        })
+
+        return NextResponse.json({
+          success: true,
+          message: '治疗过程拍照完成，照片已保存',
+          data: {
+            archive: {
+              id: archive.id,
+              archiveName: archive.archiveName,
+              photoCount: archive.photoCount,
+              detectionTime: archive.detectionTime,
+              updatedAt: archive.updatedAt
+            },
+            isTreatmentPhoto: true
+          }
+        })
+      } else {
+        // 档案存在但没有检测记录，创建第一份报告
+        console.log('📋 档案存在但无报告，创建第一份报告')
+        isNewArchive = false
+      }
+    } else {
+      // 新档案，创建第一份报告
+      console.log('🆕 新档案，创建第一份报告')
+      isNewArchive = true
+    }
+
+    // 创建或更新档案记录
+    if (isNewArchive) {
+      archive = await prisma.archive.create({
+        data: {
+          subUserId: subUser.id,
+          archiveName,
+          bodyPart: bodyPart,
+          activity: 'medium',
+          photoCount: 1,
+          detectionTime: new Date()
+        }
+      })
+    } else {
+      // 更新现有档案
+      archive = await prisma.archive.update({
+        where: {
+          subUserId_archiveName: {
+            subUserId: subUser.id,
+            archiveName: archiveName
+          }
+        },
+        data: {
+          photoCount: {
+            increment: 1
+          },
+          detectionTime: new Date(),
+          updatedAt: new Date()
+        }
+      })
+    }
+
+    // 创建检测记录（第一份报告）
     const detection = await prisma.detection.create({
       data: {
-        userId,
-        userNickname,
+        subUserId: subUser.id,
         archiveName,
-        bodyPart,
+        detectionType: bodyPart,
         imageUrl: imageUrl || '',
         result: result || '',
         confidence: confidence || 0,
-        status
+        status: status || 'completed'
       }
     })
+
+    // 更新子用户的检测数量和拍照数量
+    await prisma.subUser.update({
+      where: { id: subUser.id },
+      data: {
+        reports: {
+          increment: 1  // 只有创建报告时才增加
+        },
+        photos: {
+          increment: 1
+        },
+        archives: {
+          increment: isNewArchive ? 1 : 0  // 只有新档案才增加计数
+        }
+      }
+    })
+
+    // 转换数据格式
+    const formattedDetection = {
+      id: detection.id,
+      userId: subUser.username,
+      userNickname: subUser.realName,
+      archiveName: detection.archiveName,
+      bodyPart: detection.detectionType,
+      imageUrl: detection.imageUrl,
+      result: detection.result,
+      confidence: detection.confidence,
+      status: detection.status,
+      detectionTime: detection.detectionTime,
+      createdAt: detection.createdAt,
+      updatedAt: detection.updatedAt
+    }
 
     return NextResponse.json({
       success: true,
       message: '检测记录创建成功',
-      data: detection
+      data: formattedDetection,
+      isFirstReport: true
     })
   } catch (error) {
     console.error('创建检测记录失败:', error)
