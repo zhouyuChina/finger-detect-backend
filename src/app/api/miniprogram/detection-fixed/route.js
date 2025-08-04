@@ -110,20 +110,18 @@ async function createDetectionFixed(request) {
           subUserId: subUser.id,
           archiveName,
           bodyPart: detectionType,
-          status: 'active',
-          startDate: new Date(),
-          totalDetections: 1,
-          lastDetectionTime: new Date()
+          activity: 'high',
+          photoCount: 1,
+          detectionTime: new Date()
         },
         select: {
           id: true,
           subUserId: true,
           archiveName: true,
           bodyPart: true,
-          status: true,
-          startDate: true,
-          totalDetections: true,
-          lastDetectionTime: true,
+          activity: true,
+          photoCount: true,
+          detectionTime: true,
           createdAt: true,
           updatedAt: true
         }
@@ -141,10 +139,10 @@ async function createDetectionFixed(request) {
             }
           },
           data: {
-            totalDetections: {
+            photoCount: {
               increment: 1
             },
-            lastDetectionTime: new Date(),
+            detectionTime: new Date(),
             updatedAt: new Date()
           },
           select: {
@@ -152,10 +150,9 @@ async function createDetectionFixed(request) {
             subUserId: true,
             archiveName: true,
             bodyPart: true,
-            status: true,
-            startDate: true,
-            totalDetections: true,
-            lastDetectionTime: true,
+            activity: true,
+            photoCount: true,
+            detectionTime: true,
             createdAt: true,
             updatedAt: true
           }
@@ -171,7 +168,7 @@ async function createDetectionFixed(request) {
     const newDetection = await prisma.detection.create({
       data: {
         subUserId: subUser.id,
-        archiveId: archive.id,
+        archiveName: archiveName,
         detectionType,
         imageUrl,
         result: thirdPartyResult.data.result,
@@ -183,7 +180,7 @@ async function createDetectionFixed(request) {
       select: {
         id: true,
         subUserId: true,
-        archiveId: true,
+        archiveName: true,
         detectionType: true,
         imageUrl: true,
         result: true,
@@ -218,7 +215,7 @@ async function createDetectionFixed(request) {
     const responseData = {
       detection: {
         id: newDetection.id,
-        archiveId: newDetection.archiveId,
+        archiveName: newDetection.archiveName,
         detectionType: newDetection.detectionType,
         imageUrl: newDetection.imageUrl,
         result: newDetection.result,
@@ -240,8 +237,8 @@ async function createDetectionFixed(request) {
       archive: {
         id: archive.id,
         archiveName: archive.archiveName,
-        totalDetections: archive.totalDetections,
-        lastDetectionTime: archive.lastDetectionTime,
+        photoCount: archive.photoCount,
+        detectionTime: archive.detectionTime,
         createdAt: archive.createdAt
       }
     }
