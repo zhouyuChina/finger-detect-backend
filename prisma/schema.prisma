@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
   binaryTargets = ["native", "rhel-openssl-1.1.x"]
 }
 
@@ -15,353 +9,321 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 微信用户表（唯一标识）
 model WechatUser {
-  id          String   @id @default(cuid())
-  openid      String   @unique // 微信openid（唯一标识）
-  unionid     String?  @unique // 微信unionid
-  nickname    String?  // 微信昵称
-  avatar      String?  // 微信头像
-  gender      String?  // 性别
-  city        String?  // 城市
-  province    String?  // 省份
-  country     String?  // 国家
-  status      String   @default("active") // 状态: active, inactive, banned
-  lastLogin   DateTime? // 最后登录时间
-  registerTime DateTime? // 注册时间
-  appVersion  String?  // 应用版本
-  remark      String?  // 备注
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isActive    Boolean  @default(true)
-  
-  // 关联关系
-  subUsers    SubUser[] // 子用户列表
-  systemInfo  UserSystemInfo?
+  id           String                  @id @default(cuid())
+  openid       String                  @unique
+  unionid      String?                 @unique
+  nickname     String?
+  avatar       String?
+  gender       String?
+  city         String?
+  province     String?
+  country      String?
+  status       String                  @default("active")
+  lastLogin    DateTime?
+  registerTime DateTime?
+  appVersion   String?
+  remark       String?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  isActive     Boolean                 @default(true)
+  subUsers     SubUser[]
+  systemInfo   UserSystemInfo?
   verification WechatUserVerification?
-  
+
   @@map("wechat_users")
 }
 
-// 子用户表（每个微信用户下的子用户）
 model SubUser {
-  id          String   @id @default(cuid())
-  wechatUserId String  // 关联微信用户ID
-  wechatUser  WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
-  username    String?  @unique // 用户名
-  realName    String?  // 真实姓名
-  phone       String?  // 手机号
-  email       String?  // 邮箱
-  age         Int?     // 年龄
-  gender      String?  // 性别
-  address     String?  // 地址
-  status      String   @default("active") // 状态: active, inactive, pending, banned
-  archives    Int      @default(0) // 建档数量
-  photos      Int      @default(0) // 拍照数量
-  reports     Int      @default(0) // 报告数量
-  remark      String?  // 备注
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isActive    Boolean  @default(true)
-  
-  // 关联关系
-  feedbacks   Feedback[]
-  coupons     UserCoupon[]
-  detections  Detection[]
-  archiveList Archive[]
-  
+  id           String       @id @default(cuid())
+  wechatUserId String
+  username     String?      @unique
+  realName     String?
+  phone        String?
+  email        String?
+  age          Int?
+  gender       String?
+  address      String?
+  status       String       @default("active")
+  archives     Int          @default(0)
+  photos       Int          @default(0)
+  reports      Int          @default(0)
+  remark       String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  isActive     Boolean      @default(true)
+  archiveList  Archive[]
+  detections   Detection[]
+  feedbacks    Feedback[]
+  wechatUser   WechatUser   @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
+  coupons      UserCoupon[]
+
   @@map("sub_users")
 }
 
-// 用户系统信息表
 model UserSystemInfo {
-  id          String   @id @default(cuid())
-  wechatUserId String  @unique // 关联微信用户ID
-  wechatUser  WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
-  platform    String?  // 平台
-  system      String?  // 系统版本
-  version     String?  // 微信版本
-  SDKVersion  String?  // SDK版本
-  brand       String?  // 设备品牌
-  model       String?  // 设备型号
-  screenWidth Int?     // 屏幕宽度
-  screenHeight Int?    // 屏幕高度
-  windowWidth Int?     // 窗口宽度
-  windowHeight Int?    // 窗口高度
-  pixelRatio  Float?   // 像素比
-  language    String?  // 语言
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id           String     @id @default(cuid())
+  platform     String?
+  system       String?
+  version      String?
+  SDKVersion   String?
+  brand        String?
+  model        String?
+  screenWidth  Int?
+  screenHeight Int?
+  windowWidth  Int?
+  windowHeight Int?
+  pixelRatio   Float?
+  language     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  wechatUserId String     @unique
+  wechatUser   WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
+
   @@map("user_system_info")
 }
 
-// 微信用户认证信息表
 model WechatUserVerification {
-  id            String   @id @default(cuid())
-  wechatUserId  String   @unique // 关联微信用户ID
-  wechatUser    WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
-  idNumber      String   // 身份证号
-  realName      String   // 真实姓名
-  age           Int?     // 年龄
-  gender        String?  // 性别
-  address       String?  // 地址
-  identity      String   @default("普通用户") // 身份类型: 普通用户, VIP用户, 企业用户
-  status        String   @default("pending") // 活跃状态: active, inactive, pending
-  subUsers      Int      @default(0) // 子用户数量
-  archives      Int      @default(0) // 建档数量
-  photos        Int      @default(0) // 拍照数量
-  reports       Int      @default(0) // 报告数量
-  unreadMessages Int     @default(0) // 未读消息数量
-  idCardFront   String?  // 身份证正面照片
-  idCardBack    String?  // 身份证背面照片
-  idCardHand    String?  // 手持身份证照片
-  verifyStatus  String   @default("pending") // 认证状态: pending, verified, rejected
-  verifyTime    DateTime? // 认证时间
-  rejectReason  String?  // 拒绝原因
-  verifyAdminId String?  // 审核管理员ID
-  verifyAdmin   Admin?   @relation(fields: [verifyAdminId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id             String     @id @default(cuid())
+  wechatUserId   String     @unique
+  idNumber       String
+  realName       String
+  age            Int?
+  gender         String?
+  address        String?
+  identity       String     @default("普通用户")
+  status         String     @default("pending")
+  subUsers       Int        @default(0)
+  archives       Int        @default(0)
+  photos         Int        @default(0)
+  reports        Int        @default(0)
+  unreadMessages Int        @default(0)
+  idCardFront    String?
+  idCardBack     String?
+  idCardHand     String?
+  verifyStatus   String     @default("pending")
+  verifyTime     DateTime?
+  rejectReason   String?
+  verifyAdminId  String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  verifyAdmin    Admin?     @relation(fields: [verifyAdminId], references: [id])
+  wechatUser     WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
+
   @@map("wechat_user_verifications")
 }
 
-// 管理员表
 model Admin {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String   // 加密后的密码
-  name      String   // 真实姓名
-  email     String?  @unique
-  phone     String?
-  role      String   @default("admin") // admin, super_admin
-  isActive  Boolean  @default(true)
-  lastLogin DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // 关联关系
+  id          String                   @id @default(cuid())
+  username    String                   @unique
+  password    String
+  name        String
+  email       String?                  @unique
+  phone       String?
+  role        String                   @default("admin")
+  isActive    Boolean                  @default(true)
+  lastLogin   DateTime?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
   verifiedIds WechatUserVerification[]
-  
+
   @@map("admins")
 }
 
-// 检测记录表
 model Detection {
-  id          String   @id @default(cuid())
-  subUserId   String   // 关联子用户ID
-  subUser     SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
-  archiveId   String   // 关联档案ID
-  archive     Archive  @relation(fields: [archiveId], references: [id], onDelete: Cascade)
-  detectionType String @default("left_hand_thumb") // 检测类型
-  imageUrl    String   // 检测图片URL
-  result      String   // 检测结果: normal, abnormal
-  confidence  Float    // 置信度
-  status      String   @default("pending") // pending, processing, completed, failed
-  errorMsg    String?  // 错误信息
-  remark      String?  // 备注
-  detectionTime DateTime @default(now()) // 检测时间
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id            String   @id @default(cuid())
+  imageUrl      String
+  result        String
+  confidence    Float
+  status        String   @default("pending")
+  errorMsg      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  archiveName   String
+  detectionTime DateTime @default(now())
+  detectionType String   @default("left_hand_thumb")
+  remark        String?
+  subUserId     String
+  subUser       SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
+
   @@map("detections")
 }
 
-// 档案表
 model Archive {
-  id          String   @id @default(cuid())
-  subUserId   String   // 关联子用户ID
-  subUser     SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
-  archiveName String   // 档案名称
-  bodyPart    String   @default("left_hand_thumb") // 检测部位
-  status      String   @default("active") // 档案状态: active, completed, cancelled
-  description String?  // 档案描述
-  startDate   DateTime @default(now()) // 开始日期
-  endDate     DateTime? // 结束日期（治疗完成时设置）
-  totalDetections Int   @default(0) // 总检测次数
-  lastDetectionTime DateTime? // 最后检测时间
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // 关联关系
-  detections  Detection[] // 该档案下的所有检测记录
-  
+  id            String   @id @default(cuid())
+  archiveName   String
+  activity      String   @default("medium")
+  photoCount    Int      @default(0)
+  bodyPart      String   @default("left_hand_thumb")
+  detectionTime DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  subUserId     String
+  subUser       SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
+
   @@unique([subUserId, archiveName])
   @@map("archives")
 }
 
-// 轮播图表
 model Banner {
-  id          String   @id @default(cuid())
-  title       String   // 标题
-  imageUrl    String   // 图片URL
-  linkUrl     String?  // 链接URL
-  sort        Int      @default(0) // 排序
-  isActive    Boolean  @default(true)
-  startTime   DateTime? // 开始时间
-  endTime     DateTime? // 结束时间
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String    @id @default(cuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  sort      Int       @default(0)
+  isActive  Boolean   @default(true)
+  startTime DateTime?
+  endTime   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
   @@map("banners")
 }
 
-// 新闻资讯表
 model News {
-  id          String   @id @default(cuid())
-  title       String   // 标题
-  content     String   // 内容
-  summary     String?  // 摘要
-  coverImage  String?  // 封面图片
-  author      String?  // 作者
-  category    String?  // 分类
-  tags        String[] // 标签数组
-  types       String[] // 类型数组 (置顶、重要、系统、通知)
-  status      String   @default("draft") // 状态: draft, unpublished, published, cancelled
-  viewCount   Int      @default(0) // 浏览量
-  isPublished Boolean  @default(false)
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  summary     String?
+  coverImage  String?
+  author      String?
+  viewCount   Int       @default(0)
+  isPublished Boolean   @default(false)
   publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  category    String?
+  status      String    @default("draft")
+  tags        String[]
+  types       String[]
+
   @@map("news")
 }
 
-// 反馈表
 model Feedback {
-  id          String   @id @default(cuid())
-  subUserId   String
-  subUser     SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
-  type        String   // 反馈类型: bug, suggestion, complaint
-  title       String   // 标题
-  content     String   // 内容
-  images      String[] // 图片URL数组
-  status      String   @default("pending") // pending, processing, resolved, rejected
-  reply       String?  // 回复内容
-  repliedAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String    @id @default(cuid())
+  type      String
+  title     String
+  content   String
+  images    String[]
+  status    String    @default("pending")
+  reply     String?
+  repliedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  subUserId String
+  subUser   SubUser   @relation(fields: [subUserId], references: [id], onDelete: Cascade)
+
   @@map("feedbacks")
 }
 
-// 系统消息表
 model SystemReply {
-  id          String   @id @default(cuid())
-  title       String   // 消息标题
-  type        String   // 类型: system_notice, activity_announcement, feature_update, maintenance_notice, security_alert
-  targetUsers String   @default("all") // 目标用户: all, vip, enterprise, normal, new
-  content     String   // 消息内容
-  status      String   @default("draft") // 状态: draft, published, expired, cancelled
-  readCount   Int      @default(0) // 已读数量
-  totalCount  Int      @default(0) // 总发送数量
-  isActive    Boolean  @default(true)
-  publishedAt DateTime? // 发布时间
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id          String    @id @default(cuid())
+  type        String
+  content     String
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  readCount   Int       @default(0)
+  status      String    @default("draft")
+  targetUsers String    @default("all")
+  title       String
+  totalCount  Int       @default(0)
+
   @@map("system_replies")
 }
 
-// 优惠券表
 model Coupon {
-  id          String   @id @default(cuid())
-  name        String   // 优惠券名称
-  code        String   @unique // 优惠券代码
-  type        String   // 类型: discount, free
-  value       Float    // 面值
-  minAmount   Float?   // 最低消费金额
-  maxDiscount Float?   // 最大优惠金额
-  totalCount  Int      // 总数量
-  usedCount   Int      @default(0) // 已使用数量
-  startTime   DateTime // 开始时间
-  endTime     DateTime // 结束时间
-  channel     String   @default("all") // 发放渠道: all, wechat, app, website, offline, partner
-  targetUsers String   @default("all") // 目标用户: all, vip, enterprise, normal, new
-  status      String   @default("pending") // 状态: pending, active, expired, paused, cancelled
-  description String?  // 优惠券描述
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // 关联关系
+  id          String       @id @default(cuid())
+  name        String
+  code        String       @unique
+  type        String
+  value       Float
+  minAmount   Float?
+  maxDiscount Float?
+  totalCount  Int
+  usedCount   Int          @default(0)
+  startTime   DateTime
+  endTime     DateTime
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  channel     String       @default("all")
+  description String?
+  status      String       @default("pending")
+  targetUsers String       @default("all")
   userCoupons UserCoupon[]
-  
+
   @@map("coupons")
 }
 
-// 用户优惠券关联表
 model UserCoupon {
-  id        String   @id @default(cuid())
-  subUserId String
-  subUser   SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
+  id        String    @id @default(cuid())
   couponId  String
-  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  isUsed    Boolean  @default(false)
+  isUsed    Boolean   @default(false)
   usedAt    DateTime?
-  createdAt DateTime @default(now())
-  
+  createdAt DateTime  @default(now())
+  subUserId String
+  coupon    Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  subUser   SubUser   @relation(fields: [subUserId], references: [id], onDelete: Cascade)
+
   @@unique([subUserId, couponId])
   @@map("user_coupons")
 }
 
-// 公司信息表
 model Company {
   id          String   @id @default(cuid())
-  name        String   // 公司名称
-  logo        String?  // 公司logo
-  description String?  // 公司描述
-  address     String?  // 地址
-  phone       String?  // 电话
-  email       String?  // 邮箱
-  website     String?  // 网站
-  wechat      String?  // 微信号
+  name        String
+  logo        String?
+  description String?
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  wechat      String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@map("companies")
 }
 
-// 系统配置表
 model SystemConfig {
   id          String   @id @default(cuid())
-  key         String   @unique // 配置键
-  value       String   // 配置值
-  description String?  // 描述
-  type        String   @default("string") // string, number, boolean, json
-  isPublic    Boolean  @default(false) // 是否公开
+  key         String   @unique
+  value       String
+  description String?
+  type        String   @default("string")
+  isPublic    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@map("system_configs")
 }
 
-// 操作日志表
 model OperationLog {
-  id          String   @id @default(cuid())
-  adminId     String?  // 管理员ID
-  action      String   // 操作类型
-  resource    String   // 操作资源
-  resourceId  String?  // 资源ID
-  details     String?  // 操作详情
-  ip          String?  // IP地址
-  userAgent   String?  // 用户代理
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  adminId    String?
+  action     String
+  resource   String
+  resourceId String?
+  details    String?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
   @@map("operation_logs")
 }
 
-// 用户阅读状态表
 model UserReadStatus {
-  id        String   @id @default(cuid())
-  userId    String   // 用户ID
-  articleId String   // 文章ID
-  isRead    Boolean  @default(false) // 是否已读
-  readAt    DateTime? // 阅读时间
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id        String    @id @default(cuid())
+  userId    String
+  articleId String
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
   @@unique([userId, articleId])
   @@map("user_read_status")
 }

@@ -35,8 +35,9 @@ async function debugUserInfo(request) {
         id: true,
         archiveName: true,
         bodyPart: true,
-        status: true,
-        totalDetections: true,
+        activity: true,
+        photoCount: true,
+        detectionTime: true,
         createdAt: true,
         subUser: {
           select: {

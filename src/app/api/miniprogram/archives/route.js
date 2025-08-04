@@ -67,11 +67,10 @@ async function getArchives(request) {
         select: {
           id: true,
           archiveName: true,
-          status: true,
-          totalDetections: true,
+          activity: true,
+          photoCount: true,
           bodyPart: true,
-          startDate: true,
-          lastDetectionTime: true,
+          detectionTime: true,
           createdAt: true,
           updatedAt: true
         },
@@ -92,7 +91,8 @@ async function getArchives(request) {
         // 查找该档案的最新检测记录
         const latestDetection = await prisma.detection.findFirst({
           where: {
-            archiveId: archive.id
+            archiveName: archive.archiveName,
+            subUserId: subUser.id
           },
           select: {
             imageUrl: true,
@@ -106,11 +106,11 @@ async function getArchives(request) {
         return {
           id: archive.id,
           archiveName: archive.archiveName,
-          status: archive.status,
-          totalDetections: archive.totalDetections,
+          status: archive.activity, // 使用 activity 作为 status
+          totalDetections: archive.photoCount, // 使用 photoCount 作为 totalDetections
           bodyPart: archive.bodyPart,
-          startDate: archive.startDate,
-          lastDetectionTime: archive.lastDetectionTime,
+          startDate: archive.createdAt, // 使用 createdAt 作为 startDate
+          lastDetectionTime: archive.detectionTime, // 使用 detectionTime 作为 lastDetectionTime
           createdAt: archive.createdAt,
           updatedAt: archive.updatedAt,
           // 添加图片信息
@@ -249,18 +249,18 @@ async function createArchive(request) {
         subUserId: subUser.id,
         archiveName,
         bodyPart,
-        status: 'active',
-        startDate: new Date(),
-        totalDetections: 1
+        activity: 'high', // 使用 activity 替代 status
+        photoCount: 1, // 使用 photoCount 替代 totalDetections
+        detectionTime: new Date() // 使用 detectionTime 替代 startDate
       },
       select: {
         id: true,
         subUserId: true,
         archiveName: true,
         bodyPart: true,
-        status: true,
-        startDate: true,
-        totalDetections: true,
+        activity: true,
+        photoCount: true,
+        detectionTime: true,
         createdAt: true,
         updatedAt: true
       }
@@ -272,7 +272,7 @@ async function createArchive(request) {
       newDetection = await prisma.detection.create({
         data: {
           subUserId: subUser.id,
-          archiveId: newArchive.id,
+          archiveName: archiveName, // 使用 archiveName 而不是 archiveId
           detectionType: bodyPart,
           imageUrl,
           result: 'normal', // 默认结果
@@ -282,7 +282,7 @@ async function createArchive(request) {
         },
         select: {
           id: true,
-          archiveId: true,
+          archiveName: true,
           detectionType: true,
           imageUrl: true,
           result: true,
@@ -298,7 +298,7 @@ async function createArchive(request) {
     if (newDetection) {
       await prisma.archive.update({
         where: { id: newArchive.id },
-        data: { lastDetectionTime: new Date() }
+        data: { detectionTime: new Date() }
       })
     }
 
