@@ -316,7 +316,11 @@ async function createArchive(request) {
     })
 
     console.log('✅ 档案创建成功:', newArchive.archiveName)
-    console.log('✅ 检测记录创建成功:', newDetection.id)
+    if (newDetection) {
+      console.log('✅ 检测记录创建成功:', newDetection.id)
+    } else {
+      console.log('ℹ️  未创建检测记录（未提供图片URL）')
+    }
 
     // 5. 构建响应数据
     const responseData = {
