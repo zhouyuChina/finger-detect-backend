@@ -110,12 +110,12 @@ export default function ArchivesPage() {
     if (archive) {
       setEditingArchive(archive)
       setFormData({
-        userId: archive.userId,
-        userNickname: archive.userNickname,
-        archiveName: archive.archiveName,
-        activity: archive.activity,
-        photoCount: archive.photoCount,
-        bodyPart: archive.bodyPart
+        userId: archive.userId || '',
+        userNickname: archive.userNickname || '',
+        archiveName: archive.archiveName || '',
+        activity: archive.activity || 'high',
+        photoCount: archive.photoCount || 0,
+        bodyPart: archive.bodyPart || 'finger'
       })
     } else {
       setEditingArchive(null)
@@ -402,7 +402,7 @@ export default function ArchivesPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">总拍照数</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {allArchives.reduce((sum, archive) => sum + archive.photoCount, 0).toLocaleString()}
+                {allArchives.reduce((sum, archive) => sum + (archive.photoCount || 0), 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -478,29 +478,29 @@ export default function ArchivesPage() {
               {currentArchives.map((archive) => (
                 <tr key={archive.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{archive.userId}</div>
+                    <div className="text-sm font-medium text-gray-900">{archive.userId || '未知'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{archive.userNickname}</div>
+                    <div className="text-sm text-gray-900">{archive.userNickname || '未知'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{archive.archiveName}</div>
+                    <div className="text-sm font-medium text-gray-900">{archive.archiveName || '未知'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActivityColor(archive.activity)}`}>
-                      {getActivityText(archive.activity)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActivityColor(archive.activity || 'inactive')}`}>
+                      {getActivityText(archive.activity || 'inactive')}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {archive.photoCount.toLocaleString()}
+                    {(archive.photoCount || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(archive.bodyPart)}`}>
-                      {getBodyPartText(archive.bodyPart)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(archive.bodyPart || 'finger')}`}>
+                      {getBodyPartText(archive.bodyPart || 'finger')}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(archive.detectionTime).toLocaleString('zh-CN')}
+                    {archive.detectionTime ? new Date(archive.detectionTime).toLocaleString('zh-CN') : '未知时间'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
@@ -704,29 +704,29 @@ export default function ArchivesPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">主用户</label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                    {viewingArchive.userId}
+                    {viewingArchive.userId || '未知'}
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                    {viewingArchive.userNickname}
+                    {viewingArchive.userNickname || '未知'}
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">档案名称</label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                    {viewingArchive.archiveName}
+                    {viewingArchive.archiveName || '未知'}
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">档案活跃度</label>
                   <div className="px-3 py-2">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActivityColor(viewingArchive.activity)}`}>
-                      {getActivityText(viewingArchive.activity)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActivityColor(viewingArchive.activity || 'inactive')}`}>
+                      {getActivityText(viewingArchive.activity || 'inactive')}
                     </span>
                   </div>
                 </div>
@@ -734,15 +734,15 @@ export default function ArchivesPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">拍照数量</label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                    {viewingArchive.photoCount.toLocaleString()}
+                    {(viewingArchive.photoCount || 0).toLocaleString()}
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">检测部位</label>
                   <div className="px-3 py-2">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(viewingArchive.bodyPart)}`}>
-                      {getBodyPartText(viewingArchive.bodyPart)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(viewingArchive.bodyPart || 'finger')}`}>
+                      {getBodyPartText(viewingArchive.bodyPart || 'finger')}
                     </span>
                   </div>
                 </div>
@@ -750,7 +750,7 @@ export default function ArchivesPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">检测时间</label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-                    {viewingArchive.detectionTime}
+                    {viewingArchive.detectionTime || '未知时间'}
                   </div>
                 </div>
               </div>

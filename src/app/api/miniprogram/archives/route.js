@@ -220,7 +220,15 @@ async function createArchive(request) {
 
     if (!subUser) {
       console.log('❌ 子用户不存在，微信用户ID:', request.user.id, '用户名:', username)
-      return createErrorResponse('用户不存在或无权限操作', 404)
+      
+      // 获取该微信用户的所有子用户，用于调试
+      const allSubUsers = await prisma.subUser.findMany({
+        where: { wechatUserId: request.user.id },
+        select: { id: true, username: true, realName: true, status: true }
+      })
+      console.log('📋 该微信用户的所有子用户:', allSubUsers)
+      
+      return createErrorResponse(`用户不存在或无权限操作。可用用户名: ${allSubUsers.map(u => u.username).join(', ')}`, 404)
     }
 
     // 2. 检查档案名称是否已存在（在同一子用户下）
