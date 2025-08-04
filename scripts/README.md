@@ -18,6 +18,7 @@
 - **deploy.js** - 基础部署脚本
 - **quick-deploy.sh** - 快速部署脚本（包含完整流程）
 - **baota-deploy.sh** - 宝塔面板部署脚本
+- **force-reset-db.sh** - 强制重置数据库脚本（清空所有数据并更新到最新版本）
 
 ## 使用说明
 
@@ -37,6 +38,9 @@ node scripts/check-users.js
 ```bash
 # 快速部署
 bash scripts/quick-deploy.sh
+
+# 强制重置数据库（清空所有数据并更新到最新版本）
+bash scripts/force-reset-db.sh
 
 # 手动操作请参考 docs/MANUAL_DATABASE_RESET.md
 ```
