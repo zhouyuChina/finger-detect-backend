@@ -16,35 +16,35 @@ echo "  - 目录: $REMOTE_DIR"
 
 # 1. 备份当前数据库（可选）
 echo "📦 备份当前数据库..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && docker exec finger-detect-postgres pg_dump -U postgres finger_detect_db > backup_$(date +%Y%m%d_%H%M%S).sql"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && docker exec finger-detect-postgres pg_dump -U postgres finger_detect_db > backup_$(date +%Y%m%d_%H%M%S).sql"
 
 # 2. 拉取最新代码
 echo "📥 拉取最新代码..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && git pull origin dev"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && git pull origin dev"
 
 # 3. 安装依赖（如果需要）
 echo "📦 安装依赖..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npm install"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npm install"
 
 # 4. 生成Prisma客户端
 echo "🔧 生成Prisma客户端..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma generate"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma generate"
 
 # 5. 检查迁移状态
 echo "🔍 检查迁移状态..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma migrate status"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma migrate status"
 
 # 6. 应用数据库迁移
 echo "🔄 应用数据库迁移..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma migrate deploy"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma migrate deploy"
 
 # 7. 验证数据库结构
 echo "✅ 验证数据库结构..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma db pull"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && npx prisma db pull"
 
 # 8. 重启应用服务
 echo "🔄 重启应用服务..."
-ssh $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && pm2 restart all"
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "cd $REMOTE_DIR && pm2 restart all"
 
 echo "🎉 远程数据库更新完成！"
 echo "📋 可以测试以下API："
