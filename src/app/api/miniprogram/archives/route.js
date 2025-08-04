@@ -10,27 +10,27 @@ async function getArchives(request) {
     console.log('📋 当前微信用户openid:', request.user?.openid)
     
     const { searchParams } = new URL(request.url)
-    const username = searchParams.get('username')
-    console.log('📋 请求的用户名:', username)
+    const subUserId = searchParams.get('subUserId')
+    console.log('📋 请求的子用户ID:', subUserId)
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 10
     
     // 验证参数
-    if (!username) {
-      return createErrorResponse('请提供用户名参数', 400)
+    if (!subUserId) {
+      return createErrorResponse('请提供子用户ID参数', 400)
     }
 
     // 创建 PrismaClient 实例
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
 
-    // 1. 首先根据openid和用户名找到对应的子用户
-    console.log('🔍 查找子用户，微信用户ID:', request.user.id, '用户名:', username)
+    // 1. 验证子用户是否属于当前微信用户
+    console.log('🔍 验证子用户权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
     
     const subUser = await prisma.subUser.findFirst({
       where: {
+        id: subUserId,
         wechatUserId: request.user.id,
-        username: username,
         status: 'active'
       },
       select: {
@@ -41,7 +41,7 @@ async function getArchives(request) {
     })
 
     if (!subUser) {
-      console.log('❌ 子用户不存在，微信用户ID:', request.user.id, '用户名:', username)
+      console.log('❌ 子用户不存在或无权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
       
       // 检查所有子用户
       const allSubUsers = await prisma.subUser.findMany({
@@ -53,7 +53,7 @@ async function getArchives(request) {
       return createErrorResponse('用户不存在或无权限访问', 404)
     }
 
-    console.log('✅ 找到子用户:', subUser.realName)
+    console.log('✅ 验证子用户权限成功:', subUser.realName)
 
     // 2. 计算分页参数
     const skip = (page - 1) * limit
@@ -168,15 +168,15 @@ async function createArchive(request) {
     console.log('📋 请求数据:', JSON.stringify(body, null, 2))
     
     const { 
-      username,
+      subUserId,
       archiveName, 
       bodyPart = 'left_hand_thumb',
       imageUrl
     } = body
 
     // 验证必填字段
-    if (!username || !archiveName) {
-      return createErrorResponse('用户名和档案名称为必填项', 400)
+    if (!subUserId || !archiveName) {
+      return createErrorResponse('子用户ID和档案名称为必填项', 400)
     }
 
     // 验证检测类型
@@ -204,11 +204,11 @@ async function createArchive(request) {
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
 
-    // 1. 根据openid和用户名找到对应的子用户
+    // 1. 验证子用户是否属于当前微信用户
     const subUser = await prisma.subUser.findFirst({
       where: {
+        id: subUserId,
         wechatUserId: request.user.id,
-        username: username,
         status: 'active'
       },
       select: {
@@ -219,7 +219,7 @@ async function createArchive(request) {
     })
 
     if (!subUser) {
-      console.log('❌ 子用户不存在，微信用户ID:', request.user.id, '用户名:', username)
+      console.log('❌ 子用户不存在或无权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
       
       // 获取该微信用户的所有子用户，用于调试
       const allSubUsers = await prisma.subUser.findMany({
@@ -228,8 +228,10 @@ async function createArchive(request) {
       })
       console.log('📋 该微信用户的所有子用户:', allSubUsers)
       
-      return createErrorResponse(`用户不存在或无权限操作。可用用户名: ${allSubUsers.map(u => u.username).join(', ')}`, 404)
+      return createErrorResponse(`用户不存在或无权限操作。可用子用户ID: ${allSubUsers.map(u => u.id).join(', ')}`, 404)
     }
+
+    console.log('✅ 验证子用户权限成功:', subUser.realName)
 
     // 2. 检查档案名称是否已存在（在同一子用户下）
     const existingArchive = await prisma.archive.findFirst({
