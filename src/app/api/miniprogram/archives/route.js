@@ -165,6 +165,8 @@ async function createArchive(request) {
     console.log('➕ 创建档案接口被调用')
     
     const body = await request.json()
+    console.log('📋 请求数据:', JSON.stringify(body, null, 2))
+    
     const { 
       username,
       archiveName, 
@@ -319,7 +321,7 @@ async function createArchive(request) {
   } catch (error) {
     console.error('❌ 创建档案错误:', error.message)
     console.error('错误堆栈:', error.stack)
-    return createErrorResponse('创建档案失败')
+    return createErrorResponse(`创建档案失败: ${error.message}`)
   } finally {
     // 确保 Prisma 连接被正确关闭
     if (prisma) {

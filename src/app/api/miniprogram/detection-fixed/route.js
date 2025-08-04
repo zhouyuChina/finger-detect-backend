@@ -110,18 +110,20 @@ async function createDetectionFixed(request) {
           subUserId: subUser.id,
           archiveName,
           bodyPart: detectionType,
-          activity: 'medium',
-          photoCount: 1,
-          detectionTime: new Date()
+          status: 'active',
+          startDate: new Date(),
+          totalDetections: 1,
+          lastDetectionTime: new Date()
         },
         select: {
           id: true,
           subUserId: true,
           archiveName: true,
           bodyPart: true,
-          activity: true,
-          photoCount: true,
-          detectionTime: true,
+          status: true,
+          startDate: true,
+          totalDetections: true,
+          lastDetectionTime: true,
           createdAt: true,
           updatedAt: true
         }
@@ -129,8 +131,8 @@ async function createDetectionFixed(request) {
       console.log('✅ 新档案创建成功')
     } catch (error) {
       if (error.code === 'P2002') {
-        // 档案已存在，更新照片数量
-        console.log('📝 档案已存在，更新照片数量')
+        // 档案已存在，更新检测数量
+        console.log('📝 档案已存在，更新检测数量')
         archive = await prisma.archive.update({
           where: {
             subUserId_archiveName: {
@@ -139,10 +141,10 @@ async function createDetectionFixed(request) {
             }
           },
           data: {
-            photoCount: {
+            totalDetections: {
               increment: 1
             },
-            detectionTime: new Date(),
+            lastDetectionTime: new Date(),
             updatedAt: new Date()
           },
           select: {
@@ -150,9 +152,10 @@ async function createDetectionFixed(request) {
             subUserId: true,
             archiveName: true,
             bodyPart: true,
-            activity: true,
-            photoCount: true,
-            detectionTime: true,
+            status: true,
+            startDate: true,
+            totalDetections: true,
+            lastDetectionTime: true,
             createdAt: true,
             updatedAt: true
           }
@@ -168,18 +171,19 @@ async function createDetectionFixed(request) {
     const newDetection = await prisma.detection.create({
       data: {
         subUserId: subUser.id,
-        archiveName,
+        archiveId: archive.id,
         detectionType,
         imageUrl,
         result: thirdPartyResult.data.result,
         confidence: thirdPartyResult.data.confidence,
         status: 'completed',
-        remark: `检测类型: ${detectionType}, 置信度: ${thirdPartyResult.data.confidence}`
+        remark: `检测类型: ${detectionType}, 置信度: ${thirdPartyResult.data.confidence}`,
+        detectionTime: new Date()
       },
       select: {
         id: true,
         subUserId: true,
-        archiveName: true,
+        archiveId: true,
         detectionType: true,
         imageUrl: true,
         result: true,
@@ -195,11 +199,14 @@ async function createDetectionFixed(request) {
 
     console.log('✅ 检测记录创建成功:', newDetection.id)
 
-    // 5. 更新子用户的检测数量
+    // 5. 更新子用户的检测数量和拍照数量
     await prisma.subUser.update({
       where: { id: subUser.id },
       data: {
         reports: {
+          increment: 1
+        },
+        photos: {
           increment: 1
         }
       }
@@ -211,7 +218,7 @@ async function createDetectionFixed(request) {
     const responseData = {
       detection: {
         id: newDetection.id,
-        archiveName: newDetection.archiveName,
+        archiveId: newDetection.archiveId,
         detectionType: newDetection.detectionType,
         imageUrl: newDetection.imageUrl,
         result: newDetection.result,
@@ -233,8 +240,8 @@ async function createDetectionFixed(request) {
       archive: {
         id: archive.id,
         archiveName: archive.archiveName,
-        photoCount: archive.photoCount,
-        detectionTime: archive.detectionTime,
+        totalDetections: archive.totalDetections,
+        lastDetectionTime: archive.lastDetectionTime,
         createdAt: archive.createdAt
       }
     }
