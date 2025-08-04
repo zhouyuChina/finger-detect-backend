@@ -118,13 +118,14 @@ async function createDetectionFixed(request) {
     const existingDetections = await prisma.detection.findMany({
       where: {
         subUserId: subUser.id,
-        archiveName: existingArchive.archiveName,
-        status: 'completed'
+        archiveName: existingArchive.archiveName
+        // 移除 status: 'completed' 条件，检查是否有任何检测记录
       },
       select: {
         id: true,
         result: true,
         confidence: true,
+        status: true,
         createdAt: true
       },
       orderBy: {
@@ -132,79 +133,19 @@ async function createDetectionFixed(request) {
       }
     })
 
+    console.log(`📋 找到 ${existingDetections.length} 条检测记录`)
+
     let archive
+    let isFirstReport = existingDetections.length === 0
 
-    // 检查是否已有报告
-    if (existingDetections.length > 0) {
-      // 已有报告，这是治疗过程中的拍照，不生成新报告
-      console.log('📸 档案已存在且有报告，这是治疗过程中的拍照')
-      
-      // 只更新档案的照片数量，不创建新的检测记录
-      archive = await prisma.archive.update({
-        where: {
-          id: archiveId
-        },
-        data: {
-          photoCount: {
-            increment: 1
-          },
-          detectionTime: new Date(),
-          updatedAt: new Date()
-        },
-        select: {
-          id: true,
-          subUserId: true,
-          archiveName: true,
-          bodyPart: true,
-          activity: true,
-          photoCount: true,
-          detectionTime: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      })
-
-      console.log('✅ 档案照片数量已更新:', archive.photoCount)
-
-      // 更新子用户的拍照数量
-      await prisma.subUser.update({
-        where: { id: subUser.id },
-        data: {
-          photos: {
-            increment: 1
-          }
-        }
-      })
-
-      // 构建响应数据（不包含检测结果）
-      const responseData = {
-        archive: {
-          id: archive.id,
-          archiveName: archive.archiveName,
-          photoCount: archive.photoCount,
-          detectionTime: archive.detectionTime,
-          updatedAt: archive.updatedAt
-        },
-        message: '治疗过程拍照完成，照片已保存',
-        isTreatmentPhoto: true
-      }
-
-      return createSuccessResponse(responseData, '治疗过程拍照完成')
+    // 每次拍照都创建检测记录，但只有第一次才生成报告
+    if (isFirstReport) {
+      console.log('📋 第一次检测，创建第一份报告')
     } else {
-      // 档案存在但没有检测记录，创建第一份报告
-      console.log('📋 档案存在但无报告，创建第一份报告')
+      console.log('📸 后续检测，创建治疗过程记录')
     }
 
-    // 5. 创建或更新档案记录（只有新档案或需要创建报告时才执行）
-    // 由于档案已存在且无报告，这里不需要额外创建或更新档案记录
-    // 只需要确保档案存在且有照片数量更新
-    archive = await prisma.archive.findFirst({
-      where: {
-        id: archiveId
-      }
-    })
-
-    // 6. 创建检测记录（第一份报告）
+    // 5. 创建检测记录（每次拍照都创建）
     const newDetection = await prisma.detection.create({
       data: {
         subUserId: subUser.id,
@@ -236,15 +177,42 @@ async function createDetectionFixed(request) {
 
     console.log('✅ 检测记录创建成功:', newDetection.id)
 
+    // 6. 更新档案信息
+    archive = await prisma.archive.update({
+      where: {
+        id: archiveId
+      },
+      data: {
+        photoCount: {
+          increment: 1
+        },
+        detectionTime: new Date(),
+        updatedAt: new Date()
+      },
+      select: {
+        id: true,
+        subUserId: true,
+        archiveName: true,
+        bodyPart: true,
+        activity: true,
+        photoCount: true,
+        detectionTime: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    console.log('✅ 档案照片数量已更新:', archive.photoCount)
+
     // 7. 更新子用户的检测数量和拍照数量
     await prisma.subUser.update({
       where: { id: subUser.id },
       data: {
         reports: {
-          increment: 1  // 只有创建报告时才增加
+          increment: isFirstReport ? 1 : 0  // 只有第一次才增加报告数
         },
         photos: {
-          increment: 1
+          increment: 1  // 每次拍照都增加照片数
         },
         archives: {
           increment: 0  // 档案已存在，不增加计数
@@ -252,9 +220,9 @@ async function createDetectionFixed(request) {
       }
     })
 
-    console.log('✅ 子用户检测数量已更新')
+    console.log('✅ 子用户数据已更新')
 
-    // 8. 构建响应数据（第一份报告）
+    // 8. 构建响应数据
     const responseData = {
       detection: {
         id: newDetection.id,
@@ -284,10 +252,11 @@ async function createDetectionFixed(request) {
         detectionTime: archive.detectionTime,
         createdAt: archive.createdAt
       },
-      isFirstReport: true
+      isFirstReport: isFirstReport,
+      message: isFirstReport ? '检测完成，报告已生成' : '治疗过程记录已保存'
     }
 
-    return createSuccessResponse(responseData, '检测完成，报告已生成')
+    return createSuccessResponse(responseData, isFirstReport ? '检测完成，报告已生成' : '治疗过程记录已保存')
 
   } catch (error) {
     console.error('❌ 创建检测记录错误:', error.message)
