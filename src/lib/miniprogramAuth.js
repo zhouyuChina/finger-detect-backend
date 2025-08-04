@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 
 // 微信小程序认证中间件
 export function miniprogramAuthMiddleware(handler) {
-  return async (request) => {
+  return async (request, context = {}) => {
     let prisma = null
     try {
       // 开发环境下临时跳过认证（用于测试）
@@ -255,7 +255,7 @@ export function miniprogramAuthMiddleware(handler) {
       request.user = userInfo
       
       // 调用实际的处理器
-      return handler(request)
+      return handler(request, context)
       
     } catch (error) {
       console.error('❌ 认证中间件错误:', error.message)
