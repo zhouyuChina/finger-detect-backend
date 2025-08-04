@@ -46,7 +46,7 @@ async function getArchives(request) {
     // 2. 计算分页参数
     const skip = (page - 1) * limit
 
-    // 3. 查询该子用户的档案列表
+    // 3. 查询该子用户的档案列表，同时获取每个档案的最新检测图片
     const [archives, total] = await Promise.all([
       prisma.archive.findMany({
         where: {
@@ -73,25 +73,52 @@ async function getArchives(request) {
       })
     ])
 
-    console.log('✅ 获取档案列表成功，数量:', archives.length)
+    // 4. 为每个档案获取最新的检测图片
+    const archivesWithImages = await Promise.all(
+      archives.map(async (archive) => {
+        // 查找该档案的最新检测记录
+        const latestDetection = await prisma.detection.findFirst({
+          where: {
+            subUserId: subUser.id,
+            archiveName: archive.archiveName
+          },
+          select: {
+            imageUrl: true,
+            result: true,
+            confidence: true,
+            detectionTime: true
+          },
+          orderBy: { createdAt: 'desc' }
+        })
 
-    // 4. 构建响应数据
+        return {
+          id: archive.id,
+          archiveName: archive.archiveName,
+          activity: archive.activity,
+          photoCount: archive.photoCount,
+          bodyPart: archive.bodyPart,
+          detectionTime: archive.detectionTime,
+          createdAt: archive.createdAt,
+          updatedAt: archive.updatedAt,
+          // 添加图片信息
+          imageUrl: latestDetection?.imageUrl || null,
+          result: latestDetection?.result || null,
+          confidence: latestDetection?.confidence || null,
+          latestDetectionTime: latestDetection?.detectionTime || null
+        }
+      })
+    )
+
+    console.log('✅ 获取档案列表成功，数量:', archivesWithImages.length)
+
+    // 5. 构建响应数据
     const responseData = {
       subUser: {
         id: subUser.id,
         username: subUser.username,
         realName: subUser.realName
       },
-      archives: archives.map(archive => ({
-        id: archive.id,
-        archiveName: archive.archiveName,
-        activity: archive.activity,
-        photoCount: archive.photoCount,
-        bodyPart: archive.bodyPart,
-        detectionTime: archive.detectionTime,
-        createdAt: archive.createdAt,
-        updatedAt: archive.updatedAt
-      })),
+      archives: archivesWithImages,
       pagination: {
         page,
         limit,
@@ -128,14 +155,31 @@ async function createArchive(request) {
     const { 
       username,
       archiveName, 
-      bodyPart = 'fingerprint',
+      bodyPart = 'left_hand_thumb',
       activity = 'medium',
-      photoCount = 0
+      photoCount = 0,
+      imageUrl
     } = body
 
     // 验证必填字段
-    if (!username || !archiveName) {
-      return createErrorResponse('用户名和档案名称为必填项', 400)
+    if (!username || !archiveName || !imageUrl) {
+      return createErrorResponse('用户名、档案名称和图片URL为必填项', 400)
+    }
+
+    // 验证检测类型
+    const validTypes = [
+      'left_hand_thumb', 'left_hand_index', 'left_hand_middle', 'left_hand_ring', 'left_hand_little',
+      'right_hand_thumb', 'right_hand_index', 'right_hand_middle', 'right_hand_ring', 'right_hand_little',
+      'left_foot_big', 'left_foot_second', 'left_foot_third', 'left_foot_fourth', 'left_foot_little',
+      'right_foot_big', 'right_foot_second', 'right_foot_third', 'right_foot_fourth', 'right_foot_little'
+    ]
+    if (!validTypes.includes(bodyPart)) {
+      return createErrorResponse('检测类型无效', 400)
+    }
+
+    // 验证图片URL格式
+    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/uploads/')) {
+      return createErrorResponse('图片URL格式不正确', 400)
     }
 
     // 验证档案名称长度
@@ -178,42 +222,77 @@ async function createArchive(request) {
       return createErrorResponse('档案名称已存在', 400)
     }
 
-    // 3. 创建新档案
-    const newArchive = await prisma.archive.create({
-      data: {
-        subUserId: subUser.id,
-        archiveName,
-        bodyPart,
-        activity,
-        photoCount,
-        detectionTime: new Date()
-      },
-      select: {
-        id: true,
-        subUserId: true,
-        archiveName: true,
-        bodyPart: true,
-        activity: true,
-        photoCount: true,
-        detectionTime: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    })
+    // 3. 创建新档案和检测记录
+    const [newArchive, newDetection] = await Promise.all([
+      prisma.archive.create({
+        data: {
+          subUserId: subUser.id,
+          archiveName,
+          bodyPart,
+          activity,
+          photoCount: 1, // 创建档案时至少有一张图片
+          detectionTime: new Date()
+        },
+        select: {
+          id: true,
+          subUserId: true,
+          archiveName: true,
+          bodyPart: true,
+          activity: true,
+          photoCount: true,
+          detectionTime: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }),
+      prisma.detection.create({
+        data: {
+          subUserId: subUser.id,
+          archiveName,
+          detectionType: bodyPart,
+          imageUrl,
+          result: 'normal', // 默认结果
+          confidence: 0.9, // 默认置信度
+          status: 'completed',
+          detectionTime: new Date()
+        },
+        select: {
+          id: true,
+          archiveName: true,
+          detectionType: true,
+          imageUrl: true,
+          result: true,
+          confidence: true,
+          status: true,
+          detectionTime: true,
+          createdAt: true
+        }
+      })
+    ])
 
-    // 4. 更新子用户的档案数量
+    // 4. 更新子用户的档案数量和拍照数量
     await prisma.subUser.update({
       where: { id: subUser.id },
       data: {
         archives: {
+          increment: 1
+        },
+        photos: {
           increment: 1
         }
       }
     })
 
     console.log('✅ 档案创建成功:', newArchive.archiveName)
+    console.log('✅ 检测记录创建成功:', newDetection.id)
 
-    return createSuccessResponse(newArchive, '档案创建成功')
+    // 5. 构建响应数据
+    const responseData = {
+      archive: newArchive,
+      detection: newDetection
+    }
+
+    return createSuccessResponse(responseData, '档案创建成功')
 
   } catch (error) {
     console.error('❌ 创建档案错误:', error.message)
