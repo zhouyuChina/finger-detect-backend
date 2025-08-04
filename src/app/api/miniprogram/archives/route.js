@@ -169,14 +169,12 @@ async function createArchive(request) {
       username,
       archiveName, 
       bodyPart = 'left_hand_thumb',
-      activity = 'medium',
-      photoCount = 0,
       imageUrl
     } = body
 
     // 验证必填字段
-    if (!username || !archiveName || !imageUrl) {
-      return createErrorResponse('用户名、档案名称和图片URL为必填项', 400)
+    if (!username || !archiveName) {
+      return createErrorResponse('用户名和档案名称为必填项', 400)
     }
 
     // 验证检测类型
@@ -190,8 +188,8 @@ async function createArchive(request) {
       return createErrorResponse('检测类型无效', 400)
     }
 
-    // 验证图片URL格式
-    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/uploads/')) {
+    // 验证图片URL格式（如果提供了的话）
+    if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('/uploads/')) {
       return createErrorResponse('图片URL格式不正确', 400)
     }
 
@@ -258,36 +256,41 @@ async function createArchive(request) {
       }
     })
 
-    // 4. 创建检测记录
-    const newDetection = await prisma.detection.create({
-      data: {
-        subUserId: subUser.id,
-        archiveId: newArchive.id,
-        detectionType: bodyPart,
-        imageUrl,
-        result: 'normal', // 默认结果
-        confidence: 0.9, // 默认置信度
-        status: 'completed',
-        detectionTime: new Date()
-      },
-      select: {
-        id: true,
-        archiveId: true,
-        detectionType: true,
-        imageUrl: true,
-        result: true,
-        confidence: true,
-        status: true,
-        detectionTime: true,
-        createdAt: true
-      }
-    })
+    // 4. 创建检测记录（如果提供了图片URL）
+    let newDetection = null
+    if (imageUrl) {
+      newDetection = await prisma.detection.create({
+        data: {
+          subUserId: subUser.id,
+          archiveId: newArchive.id,
+          detectionType: bodyPart,
+          imageUrl,
+          result: 'normal', // 默认结果
+          confidence: 0.9, // 默认置信度
+          status: 'completed',
+          detectionTime: new Date()
+        },
+        select: {
+          id: true,
+          archiveId: true,
+          detectionType: true,
+          imageUrl: true,
+          result: true,
+          confidence: true,
+          status: true,
+          detectionTime: true,
+          createdAt: true
+        }
+      })
+    }
 
-    // 5. 更新档案的最后检测时间
-    await prisma.archive.update({
-      where: { id: newArchive.id },
-      data: { lastDetectionTime: new Date() }
-    })
+    // 5. 更新档案的最后检测时间（如果有检测记录）
+    if (newDetection) {
+      await prisma.archive.update({
+        where: { id: newArchive.id },
+        data: { lastDetectionTime: new Date() }
+      })
+    }
 
     // 6. 更新子用户的档案数量和拍照数量
     await prisma.subUser.update({
@@ -297,7 +300,7 @@ async function createArchive(request) {
           increment: 1
         },
         photos: {
-          increment: 1
+          increment: newDetection ? 1 : 0
         }
       }
     })

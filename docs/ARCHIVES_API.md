@@ -103,8 +103,8 @@
 |--------|------|------|------|
 | username | string | 是 | 用户名 |
 | archiveName | string | 是 | 档案名称 |
-| bodyPart | string | 是 | 检测部位，可选值：left_hand_thumb, left_hand_index, left_hand_middle, left_hand_ring, left_hand_little, right_hand_thumb, right_hand_index, right_hand_middle, right_hand_ring, right_hand_little, left_foot_big, left_foot_second, left_foot_third, left_foot_fourth, left_foot_little, right_foot_big, right_foot_second, right_foot_third, right_foot_fourth, right_foot_little |
-| imageUrl | string | 是 | 检测图片URL，必须以http://、https://或/uploads/开头 |
+| bodyPart | string | 否 | 检测部位，可选值：left_hand_thumb, left_hand_index, left_hand_middle, left_hand_ring, left_hand_little, right_hand_thumb, right_hand_index, right_hand_middle, right_hand_ring, right_hand_little, left_foot_big, left_foot_second, left_foot_third, left_foot_fourth, left_foot_little, right_foot_big, right_foot_second, right_foot_third, right_foot_fourth, right_foot_little |
+| imageUrl | string | 否 | 检测图片URL，必须以http://、https://或/uploads/开头。如果提供，会同时创建检测记录 |
 
 #### 响应格式
 ```json
@@ -172,10 +172,11 @@
 ### 创建档案流程
 1. 验证用户权限和参数
 2. 检查档案名称是否重复
-3. 同时创建档案记录和初始检测记录
-4. 更新档案统计信息（总检测次数、最后检测时间）
-5. 更新用户统计信息
-6. 返回档案和检测记录信息
+3. 创建档案记录
+4. 如果提供了图片URL，同时创建检测记录
+5. 更新档案统计信息（总检测次数、最后检测时间）
+6. 更新用户统计信息
+7. 返回档案和检测记录信息（检测记录可能为null）
 
 ## 测试数据
 
@@ -194,7 +195,7 @@
 curl -X GET "http://localhost:3001/api/miniprogram/archives?username=%E6%B5%8B%E8%AF%95%E7%94%A8%E6%88%B7" \
   -H "x-openid: test_openid_123"
 
-# 创建新档案
+# 创建新档案（带图片）
 curl -X POST "http://localhost:3001/api/miniprogram/archives" \
   -H "x-openid: test_openid_123" \
   -H "Content-Type: application/json" \
@@ -203,6 +204,16 @@ curl -X POST "http://localhost:3001/api/miniprogram/archives" \
     "archiveName": "右脚大拇指",
     "bodyPart": "right_foot_big",
     "imageUrl": "http://example.com/images/右脚大拇指_1.jpg"
+  }'
+
+# 创建新档案（不带图片）
+curl -X POST "http://localhost:3001/api/miniprogram/archives" \
+  -H "x-openid: test_openid_123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "测试用户",
+    "archiveName": "左脚大拇指",
+    "bodyPart": "left_foot_big"
   }'
 ```
 
