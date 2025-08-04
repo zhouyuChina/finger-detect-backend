@@ -10,31 +10,31 @@ async function getArchiveDetections(request) {
     console.log('📋 当前微信用户openid:', request.user?.openid)
     
     const { searchParams } = new URL(request.url)
-    const archiveName = searchParams.get('archiveName')
-    const username = searchParams.get('username')
+    const archiveId = searchParams.get('archiveId')
+    const subUserId = searchParams.get('subUserId')
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 20
     
     // 验证必填参数
-    if (!archiveName) {
-      return createErrorResponse('请提供档案名称参数', 400)
+    if (!archiveId) {
+      return createErrorResponse('请提供档案ID参数', 400)
     }
     
-    if (!username) {
-      return createErrorResponse('请提供用户名参数', 400)
+    if (!subUserId) {
+      return createErrorResponse('请提供子用户ID参数', 400)
     }
 
     // 创建 PrismaClient 实例
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
 
-    // 1. 根据openid和用户名找到对应的子用户
-    console.log('🔍 查找子用户，微信用户ID:', request.user.id, '用户名:', username)
+    // 1. 验证子用户是否属于当前微信用户
+    console.log('🔍 验证子用户权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
     
     const subUser = await prisma.subUser.findFirst({
       where: {
+        id: subUserId,
         wechatUserId: request.user.id,
-        username: username,
         status: 'active'
       },
       select: {
@@ -45,7 +45,7 @@ async function getArchiveDetections(request) {
     })
 
     if (!subUser) {
-      console.log('❌ 子用户不存在，微信用户ID:', request.user.id, '用户名:', username)
+      console.log('❌ 子用户不存在或无权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
       
       // 检查所有子用户
       const allSubUsers = await prisma.subUser.findMany({
@@ -57,15 +57,15 @@ async function getArchiveDetections(request) {
       return createErrorResponse('用户不存在或无权限访问', 404)
     }
 
-    console.log('✅ 找到子用户:', subUser.realName)
+    console.log('✅ 验证子用户权限成功:', subUser.realName)
 
     // 2. 查找指定的档案
-    console.log('🔍 查找档案:', archiveName)
+    console.log('🔍 查找档案:', archiveId)
     
     const archive = await prisma.archive.findFirst({
       where: {
-        subUserId: subUser.id,
-        archiveName: archiveName
+        id: archiveId,
+        subUserId: subUserId
       },
       select: {
         id: true,
@@ -80,7 +80,7 @@ async function getArchiveDetections(request) {
     })
 
     if (!archive) {
-      console.log('❌ 档案不存在:', archiveName)
+      console.log('❌ 档案不存在:', archiveId)
       return createErrorResponse('档案不存在或无权限访问', 404)
     }
 
@@ -93,8 +93,8 @@ async function getArchiveDetections(request) {
     const [detections, total] = await Promise.all([
       prisma.detection.findMany({
         where: {
-          subUserId: subUser.id,
-          archiveName: archiveName
+          subUserId: subUserId,
+          archiveName: archive.archiveName
         },
         select: {
           id: true,
@@ -116,8 +116,8 @@ async function getArchiveDetections(request) {
       }),
       prisma.detection.count({
         where: {
-          subUserId: subUser.id,
-          archiveName: archiveName
+          subUserId: subUserId,
+          archiveName: archive.archiveName
         }
       })
     ])

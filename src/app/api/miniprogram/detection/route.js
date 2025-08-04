@@ -9,24 +9,24 @@ async function getDetections(request) {
     console.log('📋 当前微信用户ID:', request.user?.id)
     
     const { searchParams } = new URL(request.url)
-    const username = searchParams.get('username')
+    const subUserId = searchParams.get('subUserId')
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 10
     
     // 验证参数
-    if (!username) {
-      return createErrorResponse('请提供用户名参数', 400)
+    if (!subUserId) {
+      return createErrorResponse('请提供子用户ID参数', 400)
     }
 
     // 创建 PrismaClient 实例
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
 
-    // 1. 首先根据openid和用户名找到对应的子用户
+    // 1. 验证子用户是否属于当前微信用户
     const subUser = await prisma.subUser.findFirst({
       where: {
+        id: subUserId,
         wechatUserId: request.user.id,
-        username: username,
         status: 'active'
       },
       select: {
@@ -37,11 +37,11 @@ async function getDetections(request) {
     })
 
     if (!subUser) {
-      console.log('❌ 子用户不存在，微信用户ID:', request.user.id, '用户名:', username)
+      console.log('❌ 子用户不存在或无权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
       return createErrorResponse('用户不存在或无权限访问', 404)
     }
 
-    console.log('✅ 找到子用户:', subUser.realName)
+    console.log('✅ 验证子用户权限成功:', subUser.realName)
 
     // 2. 计算分页参数
     const skip = (page - 1) * limit
@@ -367,15 +367,15 @@ async function createDetection(request) {
     
     const body = await request.json()
     const { 
-      username,
-      archiveName, 
+      subUserId,
+      archiveId, 
       detectionType = 'left_hand_thumb',
       imageUrl
     } = body
 
     // 验证必填字段
-    if (!username || !archiveName || !imageUrl) {
-      return createErrorResponse('用户名、档案名称和图片URL为必填项', 400)
+    if (!subUserId || !archiveId || !imageUrl) {
+      return createErrorResponse('子用户ID、档案ID和图片URL为必填项', 400)
     }
 
     // 验证检测类型
@@ -398,11 +398,11 @@ async function createDetection(request) {
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
 
-    // 1. 根据openid和用户名找到对应的子用户
+    // 1. 验证子用户是否属于当前微信用户
     const subUser = await prisma.subUser.findFirst({
       where: {
+        id: subUserId,
         wechatUserId: request.user.id,
-        username: username,
         status: 'active'
       },
       select: {
@@ -413,9 +413,11 @@ async function createDetection(request) {
     })
 
     if (!subUser) {
-      console.log('❌ 子用户不存在，微信用户ID:', request.user.id, '用户名:', username)
+      console.log('❌ 子用户不存在或无权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
       return createErrorResponse('用户不存在或无权限操作', 404)
     }
+
+    console.log('✅ 验证子用户权限成功:', subUser.realName)
 
     // 2. 调用第三方检测服务（Mock）
     console.log('🔄 开始调用第三方检测服务...')
@@ -428,20 +430,25 @@ async function createDetection(request) {
     console.log('✅ 第三方检测服务调用成功')
 
     // 3. 检查档案是否已存在
-    const existingArchive = await prisma.archive.findUnique({
+    const existingArchive = await prisma.archive.findFirst({
       where: {
-        subUserId_archiveName: {
-          subUserId: subUser.id,
-          archiveName: archiveName
-        }
+        id: archiveId,
+        subUserId: subUser.id
       }
     })
+
+    if (!existingArchive) {
+      console.log('❌ 档案不存在或无权限访问:', archiveId)
+      return createErrorResponse('档案不存在或无权限访问', 404)
+    }
+
+    console.log('✅ 找到档案:', existingArchive.archiveName)
 
     // 4. 检查是否已有检测记录
     const existingDetections = await prisma.detection.findMany({
       where: {
         subUserId: subUser.id,
-        archiveName: archiveName,
+        archiveName: existingArchive.archiveName,
         status: 'completed'
       },
       select: {
@@ -455,110 +462,18 @@ async function createDetection(request) {
       }
     })
 
-    let isNewArchive = false
     let archive
 
-    if (existingArchive) {
-      // 档案已存在，检查是否已有报告
-      if (existingDetections.length > 0) {
-        // 已有报告，这是治疗过程中的拍照，不生成新报告
-        console.log('📸 档案已存在且有报告，这是治疗过程中的拍照')
-        
-        // 只更新档案的照片数量，不创建新的检测记录
-        archive = await prisma.archive.update({
-          where: {
-            subUserId_archiveName: {
-              subUserId: subUser.id,
-              archiveName: archiveName
-            }
-          },
-          data: {
-            photoCount: {
-              increment: 1
-            },
-            detectionTime: new Date(),
-            updatedAt: new Date()
-          },
-          select: {
-            id: true,
-            subUserId: true,
-            archiveName: true,
-            bodyPart: true,
-            activity: true,
-            photoCount: true,
-            detectionTime: true,
-            createdAt: true,
-            updatedAt: true
-          }
-        })
-
-        console.log('✅ 档案照片数量已更新:', archive.photoCount)
-
-        // 更新子用户的拍照数量
-        await prisma.subUser.update({
-          where: { id: subUser.id },
-          data: {
-            photos: {
-              increment: 1
-            }
-          }
-        })
-
-        // 构建响应数据（不包含检测结果）
-        const responseData = {
-          archive: {
-            id: archive.id,
-            archiveName: archive.archiveName,
-            photoCount: archive.photoCount,
-            detectionTime: archive.detectionTime,
-            updatedAt: archive.updatedAt
-          },
-          message: '治疗过程拍照完成，照片已保存',
-          isTreatmentPhoto: true
-        }
-
-        return createSuccessResponse(responseData, '治疗过程拍照完成')
-      } else {
-        // 档案存在但没有检测记录，创建第一份报告
-        console.log('📋 档案存在但无报告，创建第一份报告')
-        isNewArchive = false
-      }
-    } else {
-      // 新档案，创建第一份报告
-      console.log('🆕 新档案，创建第一份报告')
-      isNewArchive = true
-    }
-
-    // 4. 创建或更新档案记录（只有新档案或需要创建报告时才执行）
-    if (isNewArchive) {
-      archive = await prisma.archive.create({
-        data: {
-          subUserId: subUser.id,
-          archiveName,
-          bodyPart: detectionType,
-          activity: 'medium',
-          photoCount: 1,
-          detectionTime: new Date()
-        },
-        select: {
-          id: true,
-          subUserId: true,
-          archiveName: true,
-          bodyPart: true,
-          activity: true,
-          photoCount: true,
-          detectionTime: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      })
-    } else {
-      // 更新现有档案
+    if (existingDetections.length > 0) {
+      // 已有报告，这是治疗过程中的拍照，不生成新报告
+      console.log('📸 档案已存在且有报告，这是治疗过程中的拍照')
+      
+      // 只更新档案的照片数量，不创建新的检测记录
       archive = await prisma.archive.update({
         where: {
           subUserId_archiveName: {
             subUserId: subUser.id,
-            archiveName: archiveName
+            archiveName: existingArchive.archiveName
           }
         },
         data: {
@@ -580,13 +495,44 @@ async function createDetection(request) {
           updatedAt: true
         }
       })
+
+      console.log('✅ 档案照片数量已更新:', archive.photoCount)
+
+      // 更新子用户的拍照数量
+      await prisma.subUser.update({
+        where: { id: subUser.id },
+        data: {
+          photos: {
+            increment: 1
+          }
+        }
+      })
+
+      // 构建响应数据（不包含检测结果）
+      const responseData = {
+        archive: {
+          id: archive.id,
+          archiveName: archive.archiveName,
+          photoCount: archive.photoCount,
+          detectionTime: archive.detectionTime,
+          updatedAt: archive.updatedAt
+        },
+        message: '治疗过程拍照完成，照片已保存',
+        isTreatmentPhoto: true
+      }
+
+      return createSuccessResponse(responseData, '治疗过程拍照完成')
+    } else {
+      // 档案存在但没有检测记录，创建第一份报告
+      console.log('📋 档案存在但无报告，创建第一份报告')
+      archive = existingArchive
     }
 
     // 5. 创建检测记录（第一份报告）
     const newDetection = await prisma.detection.create({
       data: {
         subUserId: subUser.id,
-        archiveName,
+        archiveName: archive.archiveName,
         detectionType,
         imageUrl,
         result: thirdPartyResult.data.result,
@@ -619,7 +565,7 @@ async function createDetection(request) {
           increment: 1  // 只有创建报告时才增加
         },
         archives: {
-          increment: isNewArchive ? 1 : 0  // 只有新档案才增加计数
+          increment: 0  // 档案已存在，不增加计数
         }
       }
     })
