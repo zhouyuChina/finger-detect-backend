@@ -284,7 +284,7 @@ curl -X GET "http://localhost:3001/api/detections/cmdxi4qnv0025s6i8aqa7zii6" \
 - `subUserId`: 子用户ID (cuid)
 - `archiveName`: 档案名称
 - `detectionType`: 检测类型（具体部位）
-- `imageUrl`: 检测图片URL
+- `imageUrl`: 检测图片URL（支持 http://、https://、/uploads/、wxfile:// 格式）
 - `result`: 检测结果 (normal/abnormal)
 - `confidence`: 置信度 (0-1)
 - `status`: 检测状态 (pending/completed/failed)

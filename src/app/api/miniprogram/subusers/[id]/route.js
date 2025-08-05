@@ -221,6 +221,126 @@ async function updateSubUser(request, context) {
   }
 }
 
+// 删除子用户
+async function deleteSubUser(request, context) {
+  let prisma = null
+  try {
+    console.log('🗑️ 删除子用户接口被调用')
+    
+    // 从 URL 中提取子用户ID
+    const url = new URL(request.url)
+    const pathSegments = url.pathname.split('/')
+    const subUserId = pathSegments[pathSegments.length - 1]
+    const userId = request.user?.id
+    
+    if (!subUserId || !userId) {
+      return createErrorResponse('缺少必要参数', 400)
+    }
+
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
+
+    // 获取微信用户信息
+    const wechatUser = await prisma.wechatUser.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        nickname: true,
+        openid: true
+      }
+    })
+
+    if (!wechatUser) {
+      return createErrorResponse('微信用户不存在', 404)
+    }
+
+    // 检查子用户是否存在且属于当前微信用户
+    const subUser = await prisma.subUser.findFirst({
+      where: { 
+        id: subUserId,
+        wechatUserId: userId,
+        status: 'active'
+      }
+    })
+
+    if (!subUser) {
+      return createErrorResponse('子用户不存在或无权限访问', 404)
+    }
+
+    // 检查是否为默认用户（不能删除）
+    const isDefaultUser = 
+      subUser.username === wechatUser.nickname ||
+      subUser.realName === wechatUser.nickname ||
+      subUser.username === `user_${wechatUser.openid.slice(-6)}` ||
+      (wechatUser.nickname && subUser.username === wechatUser.nickname) ||
+      (wechatUser.nickname && subUser.realName === wechatUser.nickname)
+
+    if (isDefaultUser) {
+      return createErrorResponse('不能删除本人的默认用户', 400)
+    }
+
+    // 检查子用户是否有相关数据（档案、检测记录等）
+    const [archiveCount, detectionCount, feedbackCount] = await Promise.all([
+      prisma.archive.count({
+        where: { subUserId: subUserId }
+      }),
+      prisma.detection.count({
+        where: { subUserId: subUserId }
+      }),
+      prisma.feedback.count({
+        where: { subUserId: subUserId }
+      })
+    ])
+
+    if (archiveCount > 0 || detectionCount > 0 || feedbackCount > 0) {
+      return createErrorResponse('该子用户有关联的档案、检测记录或反馈，无法删除', 400)
+    }
+
+    // 软删除子用户（将状态设置为inactive）
+    const deletedSubUser = await prisma.subUser.update({
+      where: { id: subUserId },
+      data: {
+        status: 'inactive',
+        isActive: false,
+        updatedAt: new Date()
+      },
+      select: {
+        id: true,
+        username: true,
+        realName: true,
+        status: true,
+        updatedAt: true
+      }
+    })
+
+    console.log('✅ 子用户删除成功:', deletedSubUser.realName)
+
+    return createSuccessResponse({
+      id: deletedSubUser.id,
+      username: deletedSubUser.username,
+      realName: deletedSubUser.realName,
+      status: deletedSubUser.status,
+      deletedAt: deletedSubUser.updatedAt
+    }, '子用户删除成功')
+
+  } catch (error) {
+    console.error('❌ 删除子用户错误:', error.message)
+    console.error('错误堆栈:', error.stack)
+    return createErrorResponse('删除子用户失败')
+  } finally {
+    // 确保 Prisma 连接被正确关闭
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('关闭 Prisma 连接失败:', error)
+      }
+    }
+  }
+}
+
 // 使用微信小程序认证中间件
 export const GET = miniprogramAuthMiddleware(getSubUser)
-export const PUT = miniprogramAuthMiddleware(updateSubUser) 
+export const PUT = miniprogramAuthMiddleware(updateSubUser)
+export const DELETE = miniprogramAuthMiddleware(deleteSubUser) 

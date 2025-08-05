@@ -132,6 +132,16 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
 - `detectionType`: 检测类型（可选，默认fingerprint）
 - `imageUrl`: 图片URL（必填）
 
+### 支持的图片URL格式
+
+系统支持以下图片URL格式：
+
+- **HTTP/HTTPS URL**: `https://example.com/image.jpg`
+- **相对路径**: `/uploads/image.jpg`
+- **微信小程序临时文件**: `wxfile://tmp_xxxxxxxxxxxx.jpg`
+
+> **注意**: 在真机环境下，微信小程序会生成以 `wxfile://` 开头的临时文件URL，系统已支持此格式。
+
 ### 支持的检测类型
 
 #### 手部检测
