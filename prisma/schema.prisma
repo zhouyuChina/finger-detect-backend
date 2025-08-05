@@ -30,6 +30,7 @@ model WechatUser {
   subUsers     SubUser[]
   systemInfo   UserSystemInfo?
   verification WechatUserVerification?
+  feedbacks    Feedback[]
 
   @@map("wechat_users")
 }
@@ -54,7 +55,6 @@ model SubUser {
   isActive     Boolean      @default(true)
   archiveList  Archive[]
   detections   Detection[]
-  feedbacks    Feedback[]
   wechatUser   WechatUser   @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
   coupons      UserCoupon[]
 
@@ -201,18 +201,18 @@ model News {
 }
 
 model Feedback {
-  id        String    @id @default(cuid())
-  type      String
-  title     String
-  content   String
-  images    String[]
-  status    String    @default("pending")
-  reply     String?
-  repliedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  subUserId String
-  subUser   SubUser   @relation(fields: [subUserId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  type         String
+  title        String
+  content      String
+  images       String[]
+  status       String     @default("pending")
+  reply        String?
+  repliedAt    DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  wechatUserId String
+  wechatUser   WechatUser @relation(fields: [wechatUserId], references: [id], onDelete: Cascade)
 
   @@map("feedbacks")
 }

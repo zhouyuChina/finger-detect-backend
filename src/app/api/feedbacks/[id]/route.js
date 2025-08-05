@@ -20,12 +20,12 @@ export async function GET(request, { params }) {
     const feedback = await prisma.feedback.findUnique({
       where: { id },
       include: {
-        user: {
+        wechatUser: {
           select: {
             id: true,
             nickname: true,
             avatar: true,
-            phone: true
+            openid: true
           }
         }
       }
@@ -91,7 +91,7 @@ export async function PUT(request, { params }) {
         repliedAt: reply ? new Date() : null
       },
       include: {
-        user: {
+        wechatUser: {
           select: {
             id: true,
             nickname: true,

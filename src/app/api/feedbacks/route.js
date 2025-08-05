@@ -36,7 +36,7 @@ export async function GET(request) {
     }
     
     if (userId) {
-      where.userId = { contains: userId, mode: 'insensitive' }
+      where.wechatUserId = userId
     }
     
     // 查询反馈
@@ -47,12 +47,12 @@ export async function GET(request) {
         take: pageSize,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: {
+          wechatUser: {
             select: {
               id: true,
               nickname: true,
               avatar: true,
-              phone: true
+              openid: true
             }
           }
         }
@@ -101,11 +101,11 @@ export async function POST(request) {
     }
     
     // 检查用户是否存在
-    const user = await prisma.user.findUnique({
+    const wechatUser = await prisma.wechatUser.findUnique({
       where: { id: userId }
     })
     
-    if (!user) {
+    if (!wechatUser) {
       return NextResponse.json({
         success: false,
         message: '用户不存在'
@@ -124,14 +124,14 @@ export async function POST(request) {
     // 创建反馈
     const feedback = await prisma.feedback.create({
       data: {
-        userId,
+        wechatUserId: userId,
         type,
         title,
         content,
         images: images || []
       },
       include: {
-        user: {
+        wechatUser: {
           select: {
             id: true,
             nickname: true,
