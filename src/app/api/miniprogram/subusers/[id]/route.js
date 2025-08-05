@@ -281,20 +281,17 @@ async function deleteSubUser(request, context) {
     }
 
     // 检查子用户是否有相关数据（档案、检测记录等）
-    const [archiveCount, detectionCount, feedbackCount] = await Promise.all([
+    const [archiveCount, detectionCount] = await Promise.all([
       prisma.archive.count({
         where: { subUserId: subUserId }
       }),
       prisma.detection.count({
         where: { subUserId: subUserId }
-      }),
-      prisma.feedback.count({
-        where: { subUserId: subUserId }
       })
     ])
 
-    if (archiveCount > 0 || detectionCount > 0 || feedbackCount > 0) {
-      return createErrorResponse('该子用户有关联的档案、检测记录或反馈，无法删除', 400)
+    if (archiveCount > 0 || detectionCount > 0) {
+      return createErrorResponse('该子用户有关联的档案或检测记录，无法删除', 400)
     }
 
     // 软删除子用户（将状态设置为inactive）

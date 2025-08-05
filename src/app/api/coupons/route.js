@@ -177,16 +177,51 @@ export async function POST(request) {
       )
     }
 
+    // 数据类型转换
+    const numericValue = parseFloat(value)
+    const numericMinAmount = minAmount ? parseFloat(minAmount) : null
+    const numericMaxDiscount = maxDiscount ? parseFloat(maxDiscount) : null
+    const numericTotalCount = parseInt(totalCount)
+
+    // 验证数值字段
+    if (isNaN(numericValue) || numericValue <= 0) {
+      return NextResponse.json(
+        { success: false, message: '面值必须是大于0的数字' },
+        { status: 400 }
+      )
+    }
+
+    if (numericMinAmount !== null && (isNaN(numericMinAmount) || numericMinAmount < 0)) {
+      return NextResponse.json(
+        { success: false, message: '最低消费金额必须是大于等于0的数字' },
+        { status: 400 }
+      )
+    }
+
+    if (numericMaxDiscount !== null && (isNaN(numericMaxDiscount) || numericMaxDiscount < 0)) {
+      return NextResponse.json(
+        { success: false, message: '最大折扣金额必须是大于等于0的数字' },
+        { status: 400 }
+      )
+    }
+
+    if (isNaN(numericTotalCount) || numericTotalCount <= 0) {
+      return NextResponse.json(
+        { success: false, message: '总数量必须是大于0的整数' },
+        { status: 400 }
+      )
+    }
+
     // 创建优惠券
     const coupon = await prisma.coupon.create({
       data: {
         name,
         code,
         type,
-        value,
-        minAmount,
-        maxDiscount,
-        totalCount,
+        value: numericValue,
+        minAmount: numericMinAmount,
+        maxDiscount: numericMaxDiscount,
+        totalCount: numericTotalCount,
         startTime: start,
         endTime: end,
         channel,

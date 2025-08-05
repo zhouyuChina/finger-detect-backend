@@ -79,9 +79,52 @@
   }
   ```
 
-### 3. 文件上传
+### 3. 优惠券管理
 
-#### 3.1 上传文件
+#### 3.1 获取当前用户拥有的优惠券信息
+- **接口**: `GET /coupons`
+- **认证**: 需要Bearer Token
+- **请求参数**:
+  - `page`: 页码（可选，默认1）
+  - `pageSize`: 每页数量（可选，默认10）
+  - `status`: 状态筛选（可选，used/unused/expired）
+- **响应示例**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "data": [
+        {
+          "id": "user_coupon_id",
+          "couponId": "coupon_id",
+          "isUsed": false,
+          "status": "unused",
+          "coupon": {
+            "id": "coupon_id",
+            "name": "新用户专享券",
+            "type": "discount",
+            "value": 10,
+            "minAmount": 50,
+            "startTime": "2024-01-01T00:00:00Z",
+            "endTime": "2024-12-31T23:59:59Z",
+            "isExpired": false,
+            "isActive": true
+          }
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "pageSize": 10,
+        "total": 50,
+        "totalPages": 5
+      }
+    }
+  }
+  ```
+
+### 4. 文件上传
+
+#### 4.1 上传文件
 - **接口**: `POST /upload`
 - **认证**: 需要Bearer Token
 - **请求方式**: `multipart/form-data`
@@ -103,9 +146,36 @@
   }
   ```
 
-### 4. 检测记录
+### 4. 关于我们
 
-#### 4.1 获取检测记录列表
+#### 4.1 获取关于我们信息
+- **接口**: `GET /about`
+- **认证**: 需要Bearer Token 或 x-openid header
+- **描述**: 获取公司基本信息和应用版本信息
+- **响应示例**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "name": "指纹检测系统",
+      "logo": "/uploads/logo.png",
+      "description": "专业的指纹检测服务提供商",
+      "address": "北京市朝阳区xxx街道xxx号",
+      "phone": "400-123-4567",
+      "email": "contact@example.com",
+      "website": "https://www.example.com",
+      "wechat": "wechat_id",
+      "version": "1.0.0",
+      "copyright": "© 2024 指纹检测系统. All rights reserved."
+    },
+    "message": "获取关于我们信息成功",
+    "code": 200
+  }
+  ```
+
+### 5. 检测记录
+
+#### 5.1 获取检测记录列表
 - **接口**: `GET /detection`
 - **认证**: 需要Bearer Token
 - **查询参数**:
@@ -139,7 +209,7 @@
   }
   ```
 
-#### 4.2 创建检测记录
+#### 5.2 创建检测记录
 - **接口**: `POST /detection`
 - **认证**: 需要Bearer Token
 - **请求参数**:
@@ -208,6 +278,27 @@ const uploadFile = async (filePath) => {
       'Authorization': `Bearer ${token}`
     },
     body: formData
+  })
+  return await response.json()
+}
+
+// 获取关于我们信息
+const getAboutInfo = async () => {
+  const token = wx.getStorageSync('token')
+  const response = await fetch('/api/miniprogram/about', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+  return await response.json()
+}
+
+// 使用 openid 获取关于我们信息
+const getAboutInfoWithOpenid = async (openid) => {
+  const response = await fetch('/api/miniprogram/about', {
+    headers: {
+      'x-openid': openid
+    }
   })
   return await response.json()
 }
