@@ -21,14 +21,10 @@
     "baota:setup": "npm run db:generate && npm run db:deploy && npm run baota:init-db"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^11.0.0",
     "@prisma/client": "^6.12.0",
     "@tailwindcss/typography": "^0.5.16",
-    "@tiptap/extension-image": "^3.0.7",
-    "@tiptap/extension-link": "^3.0.7",
-    "@tiptap/extension-text-align": "^3.0.7",
-    "@tiptap/pm": "^3.0.7",
-    "@tiptap/react": "^3.0.7",
-    "@tiptap/starter-kit": "^3.0.7",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "express-rate-limit": "^8.0.1",

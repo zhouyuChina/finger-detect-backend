@@ -1,190 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
-import Link from '@tiptap/extension-link'
-import TextAlign from '@tiptap/extension-text-align'
-
-const MenuBar = ({ editor }) => {
-  if (!editor) {
-    return null
-  }
-
-  const addImage = async () => {
-    // 创建文件输入元素
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    
-    input.onchange = async (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-      
-      // 验证文件类型
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-      if (!allowedTypes.includes(file.type)) {
-        alert('不支持的文件类型，只支持 JPEG、PNG、GIF、WebP 格式')
-        return
-      }
-      
-      // 验证文件大小 (5MB)
-      const maxSize = 5 * 1024 * 1024
-      if (file.size > maxSize) {
-        alert('文件大小不能超过 5MB')
-        return
-      }
-      
-      try {
-        const formData = new FormData()
-        formData.append('file', file)
-        
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        })
-        
-        const result = await response.json()
-        
-        if (response.ok) {
-          editor.chain().focus().setImage({ src: result.data.url }).run()
-        } else {
-          alert(result.message || '上传失败')
-        }
-      } catch (err) {
-        alert('网络错误，请重试')
-      }
-    }
-    
-    input.click()
-  }
-
-  const setLink = () => {
-    const url = window.prompt('请输入链接URL')
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run()
-    }
-  }
-
-  return (
-    <div className="border-b border-gray-200 p-2 bg-gray-50 rounded-t-md">
-      <div className="flex flex-wrap gap-1">
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('bold') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          粗体
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('italic') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          斜体
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('strike') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          删除线
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('code') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          代码
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('heading', { level: 1 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          H1
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('heading', { level: 2 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          H2
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('heading', { level: 3 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          H3
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('bulletList') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          无序列表
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('orderedList') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          有序列表
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('blockquote') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          引用
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive({ textAlign: 'left' }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          左对齐
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive({ textAlign: 'center' }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          居中
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive({ textAlign: 'right' }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          右对齐
-        </button>
-        <button
-          type="button"
-          onClick={addImage}
-          className="px-2 py-1 text-sm rounded bg-white text-gray-700 hover:bg-gray-100"
-        >
-          插入图片
-        </button>
-        <button
-          type="button"
-          onClick={setLink}
-          className={`px-2 py-1 text-sm rounded ${editor.isActive('link') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          插入链接
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().unsetLink().run()}
-          className="px-2 py-1 text-sm rounded bg-white text-gray-700 hover:bg-gray-100"
-        >
-          移除链接
-        </button>
-      </div>
-    </div>
-  )
-}
+import { CKEditor } from '@ckeditor/ckeditor5-react'
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 
 export default function RichTextEditor({ value, onChange, placeholder = "请输入内容..." }) {
   const [isClient, setIsClient] = useState(false)
@@ -193,28 +10,148 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
     setIsClient(true)
   }, [])
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image,
-      Link.configure({
-        openOnClick: false,
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-    ],
-    content: value,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+  // 自定义上传适配器
+  const createUploadAdapter = (loader) => {
+    return {
+      upload: async () => {
+        const file = await loader.file
+        
+        // 验证文件类型
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if (!allowedTypes.includes(file.type)) {
+          throw new Error('不支持的文件类型，只支持 JPEG、PNG、GIF、WebP 格式')
+        }
+        
+        // 验证文件大小 (5MB)
+        const maxSize = 5 * 1024 * 1024
+        if (file.size > maxSize) {
+          throw new Error('文件大小不能超过 5MB')
+        }
+        
+        try {
+          const formData = new FormData()
+          formData.append('file', file)
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          })
+          
+          const result = await response.json()
+          
+          if (response.ok) {
+            return {
+              default: result.data.url
+            }
+          } else {
+            throw new Error(result.message || '上传失败')
+          }
+        } catch (err) {
+          throw new Error('网络错误，请重试')
+        }
+      }
+    }
+  }
+
+  // 编辑器配置
+  const editorConfig = {
+    placeholder: placeholder,
+    language: 'zh-cn',
+    toolbar: {
+      items: [
+        'undo', 'redo',
+        '|', 'heading',
+        '|', 'bold', 'italic', 'underline', 'strikethrough',
+        '|', 'fontSize', 'fontColor', 'fontBackgroundColor',
+        '|', 'alignment',
+        '|', 'numberedList', 'bulletedList',
+        '|', 'indent', 'outdent',
+        '|', 'link', 'blockQuote', 'insertTable', 'mediaEmbed',
+        '|', 'horizontalLine',
+        '|', 'removeFormat'
+      ]
     },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
-      },
+    heading: {
+      options: [
+        { model: 'paragraph', title: '段落', class: 'ck-heading_paragraph' },
+        { model: 'heading1', view: 'h1', title: '标题 1', class: 'ck-heading_heading1' },
+        { model: 'heading2', view: 'h2', title: '标题 2', class: 'ck-heading_heading2' },
+        { model: 'heading3', view: 'h3', title: '标题 3', class: 'ck-heading_heading3' },
+        { model: 'heading4', view: 'h4', title: '标题 4', class: 'ck-heading_heading4' },
+        { model: 'heading5', view: 'h5', title: '标题 5', class: 'ck-heading_heading5' },
+        { model: 'heading6', view: 'h6', title: '标题 6', class: 'ck-heading_heading6' }
+      ]
     },
-    immediatelyRender: false,
-  })
+    fontSize: {
+      options: [
+        8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72
+      ]
+    },
+    fontColor: {
+      colors: [
+        { color: '#000000', label: '黑色' },
+        { color: '#434343', label: '深灰' },
+        { color: '#666666', label: '灰色' },
+        { color: '#999999', label: '浅灰' },
+        { color: '#b7b7b7', label: '银灰' },
+        { color: '#cccccc', label: '淡灰' },
+        { color: '#d9d9d9', label: '极淡灰' },
+        { color: '#efefef', label: '近白' },
+        { color: '#f3f3f3', label: '淡白' },
+        { color: '#ffffff', label: '白色' },
+        { color: '#980000', label: '深红' },
+        { color: '#ff0000', label: '红色' },
+        { color: '#ff9900', label: '橙色' },
+        { color: '#ffff00', label: '黄色' },
+        { color: '#00ff00', label: '绿色' },
+        { color: '#00ffff', label: '青色' },
+        { color: '#4a86e8', label: '蓝色' },
+        { color: '#0000ff', label: '深蓝' },
+        { color: '#9900ff', label: '紫色' },
+        { color: '#ff00ff', label: '洋红' }
+      ]
+    },
+    fontBackgroundColor: {
+      colors: [
+        { color: '#000000', label: '黑色' },
+        { color: '#434343', label: '深灰' },
+        { color: '#666666', label: '灰色' },
+        { color: '#999999', label: '浅灰' },
+        { color: '#b7b7b7', label: '银灰' },
+        { color: '#cccccc', label: '淡灰' },
+        { color: '#d9d9d9', label: '极淡灰' },
+        { color: '#efefef', label: '近白' },
+        { color: '#f3f3f3', label: '淡白' },
+        { color: '#ffffff', label: '白色' },
+        { color: '#e6b8af', label: '浅红' },
+        { color: '#f4cccc', label: '淡红' },
+        { color: '#fce5cd', label: '浅橙' },
+        { color: '#fff2cc', label: '浅黄' },
+        { color: '#d9ead3', label: '浅绿' },
+        { color: '#d0e0e3', label: '浅青' },
+        { color: '#c9daf8', label: '浅蓝' },
+        { color: '#cfe2f3', label: '淡蓝' },
+        { color: '#d9d2e9', label: '浅紫' },
+        { color: '#ead1dc', label: '浅粉' }
+      ]
+    },
+    table: {
+      contentToolbar: [
+        'tableColumn',
+        'tableRow',
+        'mergeTableCells'
+      ]
+    },
+    image: {
+      upload: {
+        types: ['jpeg', 'png', 'gif', 'webp']
+      }
+    },
+    link: {
+      addTargetToExternalLinks: true,
+      defaultProtocol: 'https://'
+    }
+  }
 
   // 服务端渲染时显示占位符
   if (!isClient) {
@@ -238,11 +175,27 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
 
   return (
     <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
-      <MenuBar editor={editor} />
-      <EditorContent 
-        editor={editor} 
-        className="p-4 min-h-[300px] focus:outline-none prose prose-sm max-w-none text-black"
-        placeholder={placeholder}
+      <CKEditor
+        editor={ClassicEditor}
+        config={editorConfig}
+        data={value}
+        onReady={(editor) => {
+          // 添加自定义上传适配器
+          editor.plugins.get('FileRepository').createUploadAdapter = createUploadAdapter
+          
+          // 设置编辑器高度
+          editor.ui.view.element.style.minHeight = '300px'
+        }}
+        onChange={(event, editor) => {
+          const data = editor.getData()
+          onChange(data)
+        }}
+        onBlur={(event, editor) => {
+          // 编辑器失去焦点时的处理
+        }}
+        onFocus={(event, editor) => {
+          // 编辑器获得焦点时的处理
+        }}
       />
     </div>
   )

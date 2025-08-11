@@ -24,3 +24,218 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* CKEditor 自定义样式 */
+.ck-editor__editable {
+  min-height: 300px !important;
+  max-height: 600px !important;
+  overflow-y: auto !important;
+}
+
+.ck-editor__editable_inline {
+  border: none !important;
+  padding: 1rem !important;
+}
+
+.ck.ck-editor__main > .ck-editor__editable {
+  background-color: #ffffff !important;
+  color: #374151 !important;
+}
+
+.ck.ck-editor__main > .ck-editor__editable:not(.ck-focused) {
+  border-color: #d1d5db !important;
+}
+
+.ck.ck-editor__main > .ck-editor__editable.ck-focused {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.ck.ck-toolbar {
+  background-color: #f9fafb !important;
+  border-color: #d1d5db !important;
+  border-radius: 0.375rem 0.375rem 0 0 !important;
+}
+
+.ck.ck-toolbar .ck-toolbar__items {
+  gap: 0.25rem !important;
+}
+
+.ck.ck-button {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+  border-radius: 0.25rem !important;
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.ck.ck-button:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+
+.ck.ck-button.ck-on {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.ck.ck-button.ck-disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.ck.ck-dropdown .ck-button.ck-dropdown__button {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+}
+
+.ck.ck-dropdown .ck-button.ck-dropdown__button:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.ck.ck-dropdown .ck-button.ck-dropdown__button.ck-on {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.ck.ck-dropdown__panel {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.ck.ck-dropdown__panel .ck-button {
+  background-color: transparent !important;
+  border: none !important;
+  color: #374151 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0 !important;
+}
+
+.ck.ck-dropdown__panel .ck-button:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.ck.ck-dropdown__panel .ck-button.ck-on {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* 表格样式 */
+.ck-content table {
+  border-collapse: collapse !important;
+  margin: 1rem 0 !important;
+  width: 100% !important;
+}
+
+.ck-content table td,
+.ck-content table th {
+  border: 1px solid #d1d5db !important;
+  padding: 0.5rem !important;
+  text-align: left !important;
+}
+
+.ck-content table th {
+  background-color: #f9fafb !important;
+  font-weight: 600 !important;
+}
+
+/* 引用样式 */
+.ck-content blockquote {
+  border-left: 4px solid #3b82f6 !important;
+  margin: 1rem 0 !important;
+  padding: 0.5rem 1rem !important;
+  background-color: #f9fafb !important;
+  font-style: italic !important;
+}
+
+/* 代码样式 */
+.ck-content code {
+  background-color: #f3f4f6 !important;
+  padding: 0.125rem 0.25rem !important;
+  border-radius: 0.25rem !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 0.875em !important;
+}
+
+/* 分割线样式 */
+.ck-content hr {
+  border: none !important;
+  border-top: 1px solid #d1d5db !important;
+  margin: 1rem 0 !important;
+}
+
+/* 图片样式 */
+.ck-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.375rem !important;
+}
+
+/* 链接样式 */
+.ck-content a {
+  color: #3b82f6 !important;
+  text-decoration: underline !important;
+}
+
+.ck-content a:hover {
+  color: #2563eb !important;
+}
+
+/* 列表样式 */
+.ck-content ul,
+.ck-content ol {
+  padding-left: 1.5rem !important;
+  margin: 1rem 0 !important;
+}
+
+.ck-content li {
+  margin: 0.25rem 0 !important;
+}
+
+/* 标题样式 */
+.ck-content h1,
+.ck-content h2,
+.ck-content h3,
+.ck-content h4,
+.ck-content h5,
+.ck-content h6 {
+  margin: 1rem 0 0.5rem 0 !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+.ck-content h1 {
+  font-size: 2rem !important;
+}
+
+.ck-content h2 {
+  font-size: 1.5rem !important;
+}
+
+.ck-content h3 {
+  font-size: 1.25rem !important;
+}
+
+.ck-content h4 {
+  font-size: 1.125rem !important;
+}
+
+.ck-content h5 {
+  font-size: 1rem !important;
+}
+
+.ck-content h6 {
+  font-size: 0.875rem !important;
+}
+
+/* 段落样式 */
+.ck-content p {
+  margin: 0.5rem 0 !important;
+  line-height: 1.6 !important;
+}
