@@ -255,25 +255,19 @@ export default function UserIdsPage() {
             
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      微信名
-                    </th>
+                            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  序号
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  微信名
+                </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       身份
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       活跃状态
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      年龄
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      性别
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      地址
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       二级用户
@@ -296,8 +290,11 @@ export default function UserIdsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {currentWechatUsers.map((wechatUser) => (
+                  {currentWechatUsers.map((wechatUser, index) => (
                     <tr key={wechatUser.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {startIndex + index + 1}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{wechatUser.nickname || '未知用户'}</div>
                         <div className="text-sm text-gray-500">{wechatUser.openid}</div>
@@ -318,15 +315,7 @@ export default function UserIdsPage() {
                           {wechatUser.status === 'active' ? '活跃' : wechatUser.status === 'inactive' ? '非活跃' : '待审核'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        -
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {wechatUser.gender === '1' ? '男' : wechatUser.gender === '2' ? '女' : '未知'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {wechatUser.city || wechatUser.province || wechatUser.country || '-'}
-                      </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {wechatUser.subUsers?.length || 0}
                       </td>
@@ -347,11 +336,11 @@ export default function UserIdsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button 
                           onClick={() => {
-                            const wechatName = wechatUser.nickname || ''
-                            if (wechatName) {
-                              router.push(`/user-management?searchUserId=${encodeURIComponent(wechatName)}`)
+                            const openid = wechatUser.openid || ''
+                            if (openid) {
+                              router.push(`/user-management?searchUserId=${encodeURIComponent(openid)}`)
                             } else {
-                              alert('该用户没有微信名信息')
+                              alert('该用户没有openid信息')
                             }
                           }}
                           className="text-blue-600 hover:text-blue-900 mr-3"
@@ -360,11 +349,11 @@ export default function UserIdsPage() {
                         </button>
                         <button 
                           onClick={() => {
-                            const wechatName = wechatUser.nickname || ''
-                            if (wechatName) {
-                              router.push(`/archives?searchUserId=${encodeURIComponent(wechatName)}`)
+                            const openid = wechatUser.openid || ''
+                            if (openid) {
+                              router.push(`/archives?searchUserId=${encodeURIComponent(openid)}`)
                             } else {
-                              alert('该用户没有微信名信息')
+                              alert('该用户没有openid信息')
                             }
                           }}
                           className="text-green-600 hover:text-green-900 mr-3"
@@ -373,11 +362,11 @@ export default function UserIdsPage() {
                         </button>
                         <button 
                           onClick={() => {
-                            const wechatName = wechatUser.nickname || ''
-                            if (wechatName) {
-                              router.push(`/detections?searchUserId=${encodeURIComponent(wechatName)}`)
+                            const openid = wechatUser.openid || ''
+                            if (openid) {
+                              router.push(`/detections?searchUserId=${encodeURIComponent(openid)}`)
                             } else {
-                              alert('该用户没有微信名信息')
+                              alert('该用户没有openid信息')
                             }
                           }}
                           className="text-purple-600 hover:text-purple-900 mr-3"
