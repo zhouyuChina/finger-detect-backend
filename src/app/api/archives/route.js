@@ -134,7 +134,7 @@ export async function POST(request) {
       userId,
       userNickname,
       archiveName,
-      activity = 'medium',
+      activity = 'active',
       photoCount = 0,
       bodyPart = 'left_hand_thumb'
     } = body

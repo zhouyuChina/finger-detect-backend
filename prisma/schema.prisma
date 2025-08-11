@@ -152,7 +152,7 @@ model Detection {
 model Archive {
   id            String   @id @default(cuid())
   archiveName   String
-  activity      String   @default("medium")
+  activity      String   @default("active")
   photoCount    Int      @default(0)
   bodyPart      String   @default("left_hand_thumb")
   detectionTime DateTime @default(now())
