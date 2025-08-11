@@ -138,6 +138,21 @@ export async function POST(request) {
       )
     }
 
+    // 检查当前微信用户的子用户数量
+    const currentSubUserCount = await prisma.subUser.count({
+      where: { 
+        wechatUserId: wechatUserId
+      }
+    })
+
+    // 限制每个微信号最多50个用户账号（包括自己的默认账号）
+    if (currentSubUserCount >= 50) {
+      return NextResponse.json(
+        { success: false, message: '已达到最大用户数量限制（50个），无法创建更多用户账号' },
+        { status: 400 }
+      )
+    }
+
     // 检查用户名是否已存在
     const existingSubUser = await prisma.subUser.findFirst({
       where: { username }

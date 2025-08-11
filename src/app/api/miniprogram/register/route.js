@@ -144,6 +144,7 @@ export async function POST(request) {
       
       if (!hasSelfSubUser) {
         console.log('📝 创建代表用户本人的子用户...')
+        
         let selfUsername = nickname || wechatUser.nickname || `user_${finalOpenid.slice(-6)}`
         
         // 检查用户名是否已存在，如果存在则添加时间戳
