@@ -90,7 +90,9 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
         text-decoration: underline;
       }
     `,
+    // 中文语言配置
     language: 'zh_CN',
+    language_url: 'https://cdn.tiny.cloud/1/wv5ht0amieanuflleqiwvr1jq0sqhy6einysmxoak9jntoa0/tinymce/6.8.3/langs/zh_CN.js',
     placeholder: placeholder,
     branding: false,
     elementpath: false,
