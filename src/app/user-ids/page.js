@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
 import SimpleImage from '@/components/SimpleImage'
 import SafeDate from '@/components/SafeDate'
-import * as XLSX from 'xlsx'
+import ExcelExporter from '@/components/ExcelExporter'
 
 export default function UserIdsPage() {
   const router = useRouter()
@@ -77,72 +77,33 @@ export default function UserIdsPage() {
     setCurrentPage(1)
   }
 
-  // 导出Excel功能
-  const handleExportExcel = () => {
-    try {
-      // 准备表头数据
-      const headers = [
-        '序号',
-        '微信账号',
-        '微信名',
-        '活跃状态',
-        '二级用户',
-        '建档数量',
-        '报告数量',
-        '拍照数量',
-        '未读消息'
-      ]
+  // 准备Excel导出数据
+  const getExcelData = () => {
+    const headers = [
+      '序号',
+      '微信账号',
+      '微信名',
+      '活跃状态',
+      '二级用户',
+      '建档数量',
+      '报告数量',
+      '拍照数量',
+      '未读消息'
+    ]
 
-      // 准备表格数据
-      const excelData = filteredWechatUsers.map((wechatUser, index) => [
-        index + 1,
-        wechatUser.openid || '未知账号',
-        wechatUser.nickname || '未知用户',
-        wechatUser.status === 'active' ? '活跃' : '非活跃',
-        wechatUser.subUsers?.length || 0,
-        wechatUser.verification?.archives || 0,
-        wechatUser.verification?.reports || 0,
-        wechatUser.verification?.photos || 0,
-        wechatUser.verification?.unreadMessages || 0
-      ])
+    const data = filteredWechatUsers.map((wechatUser, index) => [
+      index + 1,
+      wechatUser.openid || '未知账号',
+      wechatUser.nickname || '未知用户',
+      wechatUser.status === 'active' ? '活跃' : '非活跃',
+      wechatUser.subUsers?.length || 0,
+      wechatUser.verification?.archives || 0,
+      wechatUser.verification?.reports || 0,
+      wechatUser.verification?.photos || 0,
+      wechatUser.verification?.unreadMessages || 0
+    ])
 
-      // 组合表头和数据
-      const worksheetData = [headers, ...excelData]
-
-      // 创建工作簿
-      const workbook = XLSX.utils.book_new()
-      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
-
-      // 设置列宽
-      const columnWidths = [
-        { wch: 8 },   // 序号
-        { wch: 30 },  // 微信账号
-        { wch: 20 },  // 微信名
-        { wch: 10 },  // 活跃状态
-        { wch: 10 },  // 二级用户
-        { wch: 10 },  // 建档数量
-        { wch: 10 },  // 报告数量
-        { wch: 10 },  // 拍照数量
-        { wch: 10 }   // 未读消息
-      ]
-      worksheet['!cols'] = columnWidths
-
-      // 添加工作表到工作簿
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'ID管理数据')
-
-      // 生成文件名
-      const now = new Date()
-      const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-')
-      const fileName = `ID管理数据_${timestamp}.xlsx`
-
-      // 导出文件
-      XLSX.writeFile(workbook, fileName)
-
-      alert('导出成功！')
-    } catch (error) {
-      console.error('导出失败:', error)
-      alert('导出失败，请重试')
-    }
+    return { headers, data }
   }
 
   const handleDelete = async (id) => {
@@ -185,12 +146,24 @@ export default function UserIdsPage() {
           <p className="text-gray-600">管理微信小程序用户身份认证信息</p>
         </div>
         <div className="flex space-x-3">
-          <button 
-            onClick={handleExportExcel}
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-          >
-            导出数据
-          </button>
+          <ExcelExporter
+            {...getExcelData()}
+            filename="ID管理数据"
+            sheetName="ID管理数据"
+            columnWidths={[
+              { wch: 8 },   // 序号
+              { wch: 30 },  // 微信账号
+              { wch: 20 },  // 微信名
+              { wch: 10 },  // 活跃状态
+              { wch: 10 },  // 二级用户
+              { wch: 10 },  // 建档数量
+              { wch: 10 },  // 报告数量
+              { wch: 10 },  // 拍照数量
+              { wch: 10 }   // 未读消息
+            ]}
+            buttonText="导出数据"
+            buttonClassName="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          />
         </div>
       </div>
 
