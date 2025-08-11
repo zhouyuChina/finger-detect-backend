@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '../../../../../src/generated/prisma/index.js'
+import { prisma } from '../../../../../src/lib/db.js'
 import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../../src/lib/middleware.js'
-
-const prisma = new PrismaClient()
 
 // 获取单个反馈信息
 export async function GET(request, { params }) {
