@@ -52,8 +52,12 @@ export default function UserManagementPage() {
       setSearchPhone(searchUserId)
       // 自动触发搜索
       setCurrentPage(1)
+      // 确保数据加载完成后再应用过滤
+      if (allUsers.length > 0) {
+        // 数据已加载，过滤会自动生效
+      }
     }
-  }, [searchParams])
+  }, [searchParams, allUsers])
   
   // 过滤用户数据
   const filteredUsers = allUsers.filter(user => {
@@ -63,6 +67,14 @@ export default function UserManagementPage() {
     const matchAge = !searchAge || user.age === parseInt(searchAge)
     const matchGender = !searchGender || user.gender === searchGender
     const matchRegion = !searchRegion || (user.address && user.address.includes(searchRegion))
+    
+    // 调试信息：当有searchPhone时，输出匹配信息
+    if (searchPhone) {
+      console.log('搜索ID:', searchPhone)
+      console.log('用户openid:', user.wechatUser?.openid)
+      console.log('匹配结果:', matchUserId)
+    }
+    
     return matchUsername && matchUserId && matchStatus && matchAge && matchGender && matchRegion
   })
   
