@@ -21,7 +21,6 @@ export async function GET(request) {
     const title = searchParams.get('title') || ''
     const type = searchParams.get('type') || ''
     const status = searchParams.get('status') || ''
-    const targetUsers = searchParams.get('targetUsers') || ''
 
     const skip = (page - 1) * pageSize
 
@@ -40,9 +39,7 @@ export async function GET(request) {
       where.status = status
     }
     
-    if (targetUsers) {
-      where.targetUsers = targetUsers
-    }
+
 
     // 查询数据
     const [systemReplies, total] = await Promise.all([
@@ -91,9 +88,8 @@ export async function POST(request) {
     const {
       title,
       type,
-      targetUsers = 'all',
       content,
-      status = 'draft'
+      status = 'unpublished'
     } = body
 
     // 验证必填字段
@@ -114,7 +110,7 @@ export async function POST(request) {
     }
 
     // 验证状态
-    const validStatuses = ['draft', 'published', 'expired', 'cancelled']
+    const validStatuses = ['unpublished', 'published']
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
         { success: false, message: '无效的状态' },
@@ -127,7 +123,7 @@ export async function POST(request) {
       data: {
         title,
         type,
-        targetUsers,
+        targetUsers: 'all', // 目前只针对所有微信账号
         content,
         status,
         publishedAt: status === 'published' ? new Date() : null

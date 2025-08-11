@@ -229,12 +229,29 @@ model SystemReply {
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
   readCount   Int       @default(0)
-  status      String    @default("draft")
+  status      String    @default("unpublished")
   targetUsers String    @default("all")
   title       String
   totalCount  Int       @default(0)
+  sendRecords SystemReplySendRecord[]
 
   @@map("system_replies")
+}
+
+model SystemReplySendRecord {
+  id             String      @id @default(cuid())
+  systemReplyId  String
+  targetOpenIds  String[]    // 目标微信账号的 openId 数组，为空表示发送给所有用户
+  sendImmediately Boolean     @default(false)
+  status         String      @default("pending") // pending, sent, failed
+  scheduledAt    DateTime?   // 计划发送时间
+  sentAt         DateTime?   // 实际发送时间
+  errorMessage   String?     // 错误信息
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  systemReply    SystemReply @relation(fields: [systemReplyId], references: [id], onDelete: Cascade)
+
+  @@map("system_reply_send_records")
 }
 
 model Coupon {

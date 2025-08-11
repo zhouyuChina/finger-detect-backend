@@ -58,7 +58,6 @@ export async function PUT(request, { params }) {
     const {
       title,
       type,
-      targetUsers,
       content,
       status
     } = body
@@ -81,7 +80,7 @@ export async function PUT(request, { params }) {
       data: {
         title,
         type,
-        targetUsers,
+        targetUsers: 'all', // 目前只针对所有微信账号
         content,
         status,
         publishedAt: status === 'published' && !existingSystemReply.publishedAt ? new Date() : existingSystemReply.publishedAt
