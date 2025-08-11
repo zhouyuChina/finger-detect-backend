@@ -22,20 +22,8 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
       .then(response => response.json())
       .then(result => {
         if (result.success) {
-          // 获取图片尺寸信息
-          const img = new Image()
-          img.onload = () => {
-            resolve({
-              location: result.data.url,
-              width: img.width,
-              height: img.height
-            })
-          }
-          img.onerror = () => {
-            // 如果无法获取尺寸，仍然返回URL
-            resolve(result.data.url)
-          }
-          img.src = result.data.url
+          // TinyMCE 需要直接返回URL字符串
+          resolve(result.data.url)
         } else {
           reject(result.message || '上传失败')
         }
