@@ -487,7 +487,7 @@ export default function UserManagementPage() {
                       onClick={() => {
                         const realName = user.realName || ''
                         if (realName) {
-                          router.push(`/archives?searchUserId=${encodeURIComponent(realName)}`)
+                          router.push(`/archives?searchUserName=${encodeURIComponent(realName)}`)
                         } else {
                           alert('该用户没有真实姓名信息')
                         }
