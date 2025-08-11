@@ -56,6 +56,13 @@ export default function NewsPage() {
     
     try {
       setPublishingId(news.id)
+      
+      // 从types数组解析出各个标记
+      const isTop = news.types && news.types.includes('置顶')
+      const isImportant = news.types && news.types.includes('重要')
+      const isSystem = news.types && news.types.includes('系统')
+      const isNotification = news.types && news.types.includes('通知')
+      
       const response = await fetch(`/api/news/${news.id}`, {
         method: 'PUT',
         headers: {
@@ -63,7 +70,17 @@ export default function NewsPage() {
           'Authorization': `Bearer ${getLocalStorage('token') || ''}`
         },
         body: JSON.stringify({
-          ...news,
+          title: news.title,
+          content: news.content,
+          summary: news.summary,
+          coverImage: news.coverImage,
+          author: news.author,
+          category: news.category,
+          tags: news.tags || [],
+          isTop,
+          isImportant,
+          isSystem,
+          isNotification,
           isPublished: !news.isPublished,
           status: !news.isPublished ? 'published' : 'unpublished'
         })
