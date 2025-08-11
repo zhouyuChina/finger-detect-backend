@@ -197,7 +197,6 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
   return (
     <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
       <Editor
-        apiKey="" // 免费版本不需要API key
         init={editorConfig}
         value={value}
         onEditorChange={(content, editor) => {
