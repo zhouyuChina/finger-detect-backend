@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import AdminLayout from '@/components/layout/AdminLayout'
 import ImageUpload from '@/components/ImageUpload'
 import RichTextEditor from '@/components/RichTextEditor'
+import NewsPreview from '@/components/NewsPreview'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
 
 export default function EditNewsPage() {
@@ -12,6 +13,7 @@ export default function EditNewsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -269,6 +271,13 @@ export default function EditNewsPage() {
             取消
           </button>
           <button
+            type="button"
+            onClick={() => setShowPreview(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          >
+            预览
+          </button>
+          <button
             type="submit"
             disabled={isSubmitting}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -277,6 +286,13 @@ export default function EditNewsPage() {
           </button>
         </div>
       </form>
+
+      {/* 预览弹窗 */}
+      <NewsPreview
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        newsData={formData}
+      />
     </div>
   )
 } 
