@@ -74,8 +74,15 @@ export default function ArchivesPage() {
   // 处理URL参数
   useEffect(() => {
     const searchUserIdParam = searchParams.get('searchUserId')
+    const searchUserNameParam = searchParams.get('searchUserName')
+    
     if (searchUserIdParam) {
-      setSearchUserNickname(searchUserIdParam)
+      setSearchUserId(searchUserIdParam)
+      setCurrentPage(1)
+    }
+    
+    if (searchUserNameParam) {
+      setSearchUserName(searchUserNameParam)
       setCurrentPage(1)
     }
   }, [searchParams])
