@@ -15,6 +15,7 @@ export default function EditBannerPage() {
     title: '',
     imageUrl: '',
     linkUrl: '',
+    position: 'middle',
     sort: 0,
     isActive: true,
     startTime: '',
@@ -36,6 +37,7 @@ export default function EditBannerPage() {
           title: banner.title || '',
           imageUrl: banner.imageUrl || '',
           linkUrl: banner.linkUrl || '',
+          position: banner.position || 'middle',
           sort: banner.sort || 0,
           isActive: banner.isActive,
           startTime: banner.startTime ? new Date(banner.startTime).toISOString().slice(0, 16) : '',
@@ -130,7 +132,7 @@ export default function EditBannerPage() {
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 基本信息 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 标题 <span className="text-red-500">*</span>
@@ -144,6 +146,22 @@ export default function EditBannerPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="请输入Banner标题"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                位置
+              </label>
+              <select
+                name="position"
+                value={formData.position}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              >
+                <option value="top">上</option>
+                <option value="middle">中</option>
+                <option value="bottom">下</option>
+              </select>
             </div>
 
             <div>
@@ -252,6 +270,7 @@ export default function EditBannerPage() {
                   </div>
                   <div className="mt-3 text-sm text-gray-600">
                     <p><strong>标题:</strong> {formData.title || '未设置'}</p>
+                    <p><strong>位置:</strong> {formData.position === 'top' ? '上' : formData.position === 'middle' ? '中' : '下'}</p>
                     <p><strong>链接:</strong> {formData.linkUrl || '无'}</p>
                     <p><strong>状态:</strong> {formData.isActive ? '启用' : '禁用'}</p>
                   </div>

@@ -17,6 +17,7 @@ export async function GET(request) {
     if (isActive !== null && isActive !== undefined) {
       where.isActive = isActive === 'true'
     }
+    // 位置筛选已取消，返回全部位置
     
     // 查询轮播图
     const [banners, total] = await Promise.all([
@@ -53,7 +54,7 @@ export async function POST(request) {
     if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
     
     const body = await request.json()
-    const { title, imageUrl, linkUrl, sort, isActive, startTime, endTime } = body
+    const { title, imageUrl, linkUrl, position, sort, isActive, startTime, endTime } = body
     
     // 验证必填字段
     if (!title || !imageUrl) {
@@ -63,12 +64,21 @@ export async function POST(request) {
       }, { status: 400 })
     }
     
+    // 验证位置字段
+    if (position && !['top', 'middle', 'bottom'].includes(position)) {
+      return NextResponse.json({
+        success: false,
+        message: '位置必须是 top、middle 或 bottom'
+      }, { status: 400 })
+    }
+    
     // 创建轮播图
     const banner = await prisma.banner.create({
       data: {
         title,
         imageUrl,
         linkUrl,
+        position: position || 'middle',
         sort: sort || 0,
         isActive: isActive !== undefined ? isActive : true,
         startTime: startTime ? new Date(startTime) : null,

@@ -1,4 +1,5 @@
-import { PrismaClient } from '../generated/prisma'
+import { PrismaClient } from '../generated/prisma/index.js'
+import process from 'node:process'
 
 const globalForPrisma = globalThis
 
@@ -40,12 +41,23 @@ export function handleDatabaseError(error) {
   console.error('数据库错误:', error)
   
   if (error.code === 'P2002') {
-    return { success: false, message: '数据已存在，请检查唯一字段' }
+    return withDevDetail({ success: false, message: '数据已存在，请检查唯一字段' }, error)
   }
   
   if (error.code === 'P2025') {
-    return { success: false, message: '记录不存在' }
+    return withDevDetail({ success: false, message: '记录不存在' }, error)
   }
   
-  return { success: false, message: '数据库操作失败' }
+  return withDevDetail({ success: false, message: '数据库操作失败' }, error)
 } 
+
+function withDevDetail(base, error) {
+  if (process.env.NODE_ENV !== 'production') {
+    return {
+      ...base,
+      code: error.code || 'UNKNOWN',
+      detail: error.message || String(error)
+    }
+  }
+  return base
+}

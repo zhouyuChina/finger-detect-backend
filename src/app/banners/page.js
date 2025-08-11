@@ -135,9 +135,12 @@ export default function BannersPage() {
   }
 
   useEffect(() => {
+    setIsLoading(true)
     fetchBanners()
     fetchConfig()
   }, [])
+
+  
 
   if (isLoading) {
     return (
@@ -259,6 +262,9 @@ export default function BannersPage() {
                     标题
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    位置
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     链接地址
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -290,6 +296,18 @@ export default function BannersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{banner.title}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          banner.position === 'top' ? 'bg-blue-100 text-blue-800' :
+                          banner.position === 'middle' ? 'bg-green-100 text-green-800' :
+                          'bg-purple-100 text-purple-800'
+                        }`}>
+                          {banner.position === 'top' ? '上' : 
+                           banner.position === 'middle' ? '中' : '下'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">

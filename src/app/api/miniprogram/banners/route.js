@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse as _NextResponse } from 'next/server'
 import { createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
 
 // 获取Banner列表（小程序专用）- 公开接口，无需认证
@@ -7,33 +7,41 @@ async function getBanners(request) {
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit')) || 5
+    const position = searchParams.get('position')
     
     // 创建 PrismaClient 实例
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
     
     // 从数据库获取活跃的Banner
+    const where = {
+      isActive: true,
+      AND: [
+        {
+          OR: [
+            { startTime: null },
+            { startTime: { lte: new Date() } },
+          ],
+        },
+        {
+          OR: [
+            { endTime: null },
+            { endTime: { gte: new Date() } },
+          ],
+        },
+      ],
+    }
+
+    // 可选：按位置筛选（top|middle|bottom）
+    if (position && ['top', 'middle', 'bottom'].includes(position)) {
+      where.position = position
+    }
+
     const banners = await prisma.banner.findMany({
-      where: {
-        isActive: true,
-        AND: [
-          { 
-            OR: [
-              { startTime: null },
-              { startTime: { lte: new Date() } }
-            ]
-          },
-          { 
-            OR: [
-              { endTime: null },
-              { endTime: { gte: new Date() } }
-            ]
-          }
-        ]
-      },
+      where,
       orderBy: [
         { sort: 'asc' },
-        { createdAt: 'desc' }
+        { createdAt: 'desc' },
       ],
       take: limit,
       select: {
@@ -41,8 +49,9 @@ async function getBanners(request) {
         title: true,
         imageUrl: true,
         linkUrl: true,
-        sort: true
-      }
+        position: true,
+        sort: true,
+      },
     })
 
     // 从数据库获取Banner配置
