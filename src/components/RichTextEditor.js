@@ -5,17 +5,39 @@ import dynamic from 'next/dynamic'
 // 动态导入CKEditor，禁用SSR
 const CKEditor = dynamic(
   () => import('@ckeditor/ckeditor5-react').then(mod => ({ default: mod.CKEditor })),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="border border-gray-300 rounded-md overflow-hidden">
+        <div className="border-b border-gray-200 p-2 bg-gray-50 rounded-t-md">
+          <div className="flex flex-wrap gap-1">
+            <div className="px-2 py-1 text-sm rounded bg-gray-200 text-gray-400">加载中...</div>
+          </div>
+        </div>
+        <div className="p-4 min-h-[300px] bg-gray-50">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 )
 
-const DecoupledEditor = dynamic(
-  () => import('@ckeditor/ckeditor5-build-decoupled-document'),
-  { ssr: false }
+const ClassicEditor = dynamic(
+  () => import('@ckeditor/ckeditor5-build-classic'),
+  { 
+    ssr: false,
+    loading: () => null
+  }
 )
 
 export default function RichTextEditor({ value, onChange, placeholder = "请输入内容..." }) {
   const [isClient, setIsClient] = useState(false)
   const [editor, setEditor] = useState(null)
+  const [isEditorReady, setIsEditorReady] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
@@ -182,7 +204,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
   }
 
   // 服务端渲染时显示占位符
-  if (!isClient) {
+  if (!isClient || !isEditorReady) {
     return (
       <div className="border border-gray-300 rounded-md overflow-hidden">
         <div className="border-b border-gray-200 p-2 bg-gray-50 rounded-t-md">
@@ -204,7 +226,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
   return (
     <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
       <CKEditor
-        editor={DecoupledEditor}
+        editor={ClassicEditor}
         config={editorConfig}
         data={value}
         onReady={(editor) => {
@@ -217,11 +239,6 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
           // 保存编辑器实例
           setEditor(editor)
           
-          // 将工具栏插入到DOM中
-          const toolbarElement = editor.ui.view.toolbar.element
-          const editorElement = editor.ui.view.element.parentElement
-          editorElement.insertBefore(toolbarElement, editorElement.firstChild)
-          
           // 隐藏许可证警告
           const consoleWarn = console.warn
           console.warn = function(...args) {
@@ -230,6 +247,9 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
             }
             consoleWarn.apply(console, args)
           }
+          
+          // 标记编辑器已准备就绪
+          setIsEditorReady(true)
         }}
         onChange={(event, editor) => {
           const data = editor.getData()
