@@ -13,6 +13,7 @@ export default function NewsPage() {
   const [searchTitle, setSearchTitle] = useState('')
   const [searchType, setSearchType] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
+  const [publishingId, setPublishingId] = useState(null)
   const [allNews, setAllNews] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -48,6 +49,45 @@ export default function NewsPage() {
     const matchStatus = !searchStatus || news.status === searchStatus
     return matchTitle && matchType && matchStatus
   })
+  
+  // 处理发布/取消发布
+  const handlePublish = async (news) => {
+    if (!confirm(`确定要${news.isPublished ? '取消发布' : '发布'}这条资讯吗？`)) return
+    
+    try {
+      setPublishingId(news.id)
+      const response = await fetch(`/api/news/${news.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify({
+          ...news,
+          isPublished: !news.isPublished,
+          status: !news.isPublished ? 'published' : 'unpublished'
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert(result.message || '操作成功')
+        fetchNews() // 重新获取数据
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          alert(result.message || '操作失败')
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试')
+    } finally {
+      setPublishingId(null)
+    }
+  }
   
   const totalNews = filteredNews.length
   const totalPages = Math.ceil(totalNews / pageSize)
@@ -122,7 +162,7 @@ export default function NewsPage() {
 
   const getStatusText = (status) => {
     const statusMap = {
-      draft: '草稿',
+      draft: '未发布',
       unpublished: '未发布',
       published: '已发布',
       cancelled: '已作废'
@@ -181,9 +221,7 @@ export default function NewsPage() {
             >
               <option value="">全部类型</option>
               <option value="置顶">置顶</option>
-              <option value="重要">重要</option>
-              <option value="系统">系统</option>
-              <option value="通知">通知</option>
+              <option value="普通">普通</option>
             </select>
           </div>
           <div>
@@ -194,10 +232,8 @@ export default function NewsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
               <option value="">全部状态</option>
-              <option value="draft">草稿</option>
               <option value="unpublished">未发布</option>
               <option value="published">已发布</option>
-              <option value="cancelled">已作废</option>
             </select>
           </div>
           <div className="flex items-end space-x-2">
@@ -329,6 +365,9 @@ export default function NewsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  序号
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   标题
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -358,8 +397,11 @@ export default function NewsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentNews.map((news) => (
+              {currentNews.map((news, index) => (
                 <tr key={news.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {startIndex + index + 1}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900 max-w-xs truncate" title={news.title}>
                       {news.title}
@@ -412,16 +454,20 @@ export default function NewsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
-                      onClick={() => openViewModal(news)}
-                      className="text-green-600 hover:text-green-900 mr-3"
-                    >
-                      查看
-                    </button>
-                    <button 
                       onClick={() => router.push(`/news/edit/${news.id}`)}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
                       编辑
+                    </button>
+                    <button 
+                      onClick={() => handlePublish(news)}
+                      disabled={publishingId === news.id}
+                      className={`mr-3 ${news.isPublished 
+                        ? 'text-orange-600 hover:text-orange-900' 
+                        : 'text-green-600 hover:text-green-900'
+                      } ${publishingId === news.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {publishingId === news.id ? '处理中...' : (news.isPublished ? '取消发布' : '发布')}
                     </button>
                     <button 
                       onClick={() => handleDelete(news.id)}
