@@ -319,6 +319,41 @@ export default function ArchivesPage() {
           <h1 className="text-2xl font-bold text-gray-900">档案管理</h1>
           <p className="text-gray-600">管理用户档案信息和数据</p>
         </div>
+        <div className="flex space-x-3">
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch('/api/archives/export-all-images', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+                  }
+                })
+
+                if (response.ok) {
+                  const blob = await response.blob()
+                  const url = window.URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `全部图片_按用户分类_${new Date().toISOString().split('T')[0]}.zip`
+                  document.body.appendChild(a)
+                  a.click()
+                  window.URL.revokeObjectURL(url)
+                  document.body.removeChild(a)
+                } else {
+                  const result = await response.json()
+                  alert(result.message || '导出失败')
+                }
+              } catch (err) {
+                alert('导出失败，请重试')
+              }
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          >
+            全部图片导出
+          </button>
+        </div>
       </div>
 
       {/* 搜索条件 */}
@@ -571,13 +606,57 @@ export default function ArchivesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
-                      onClick={() => console.log('查看图片功能待实现')}
+                      onClick={() => {
+                        const archiveName = archive.archiveName || ''
+                        if (archiveName) {
+                          router.push(`/archives/images?archiveName=${encodeURIComponent(archiveName)}&userId=${encodeURIComponent(archive.userId || '')}`)
+                        } else {
+                          alert('该档案没有档案名称信息')
+                        }
+                      }}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
                       查看图片
                     </button>
                     <button 
-                      onClick={() => console.log('导出图片功能待实现')}
+                      onClick={async () => {
+                        const archiveName = archive.archiveName || ''
+                        if (!archiveName) {
+                          alert('该档案没有档案名称信息')
+                          return
+                        }
+                        
+                        try {
+                          const response = await fetch('/api/archives/export-images', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+                            },
+                            body: JSON.stringify({
+                              archiveName: archiveName,
+                              userId: archive.userId || ''
+                            })
+                          })
+
+                          if (response.ok) {
+                            const blob = await response.blob()
+                            const url = window.URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url
+                            a.download = `${archive.userNickname || archive.userId || 'unknown'}_${archiveName}_${new Date().toISOString().split('T')[0]}.zip`
+                            document.body.appendChild(a)
+                            a.click()
+                            window.URL.revokeObjectURL(url)
+                            document.body.removeChild(a)
+                          } else {
+                            const result = await response.json()
+                            alert(result.message || '导出失败')
+                          }
+                        } catch (err) {
+                          alert('导出失败，请重试')
+                        }
+                      }}
                       className="text-green-600 hover:text-green-900 mr-3"
                     >
                       导出图片
