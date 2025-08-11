@@ -22,12 +22,16 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
       .then(response => response.json())
       .then(result => {
         if (result.success) {
-          resolve(result.data.url)
+          // TinyMCE 需要返回包含 location 属性的对象
+          resolve({
+            location: result.data.url
+          })
         } else {
           reject(result.message || '上传失败')
         }
       })
       .catch(error => {
+        console.error('图片上传错误:', error)
         reject('网络错误，请重试')
       })
     })
