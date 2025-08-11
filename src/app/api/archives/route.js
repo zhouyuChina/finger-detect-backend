@@ -18,41 +18,62 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
     const pageSize = parseInt(searchParams.get('pageSize')) || 10
-    const userId = searchParams.get('userId') || ''
-    const userNickname = searchParams.get('userNickname') || ''
-    const archiveName = searchParams.get('archiveName') || ''
-    const activity = searchParams.get('activity') || ''
-    const bodyPart = searchParams.get('bodyPart') || ''
+    const searchUserId = searchParams.get('searchUserId') || ''
+    const searchUserName = searchParams.get('searchUserName') || ''
+    const searchArchiveName = searchParams.get('searchArchiveName') || ''
+    const searchActivity = searchParams.get('searchActivity') || ''
+    const searchBodyPartType = searchParams.get('searchBodyPartType') || ''
+    const searchBodyPartDetail = searchParams.get('searchBodyPartDetail') || ''
 
     const skip = (page - 1) * pageSize
 
     // 构建查询条件
-    const where = {}
-    
-    if (userId) {
-      where.userId = { contains: userId, mode: 'insensitive' }
+    const where = {
+      subUser: {
+        wechatUser: {}
+      }
     }
     
-    if (userNickname) {
-      where.userNickname = { contains: userNickname, mode: 'insensitive' }
+    if (searchUserId) {
+      where.subUser.wechatUser.openid = { contains: searchUserId, mode: 'insensitive' }
     }
     
-    if (archiveName) {
-      where.archiveName = { contains: archiveName, mode: 'insensitive' }
+    if (searchUserName) {
+      where.subUser.realName = { contains: searchUserName, mode: 'insensitive' }
     }
     
-    if (activity) {
-      where.activity = activity
+    if (searchArchiveName) {
+      where.archiveName = { contains: searchArchiveName, mode: 'insensitive' }
     }
     
-    if (bodyPart) {
-      where.bodyPart = bodyPart
+    if (searchActivity) {
+      where.activity = searchActivity
+    }
+    
+    if (searchBodyPartType) {
+      where.bodyPart = { startsWith: searchBodyPartType, mode: 'insensitive' }
+    }
+    
+    if (searchBodyPartDetail) {
+      where.bodyPart = { contains: searchBodyPartDetail, mode: 'insensitive' }
     }
 
     // 查询数据
     const [archives, total] = await Promise.all([
       prisma.archive.findMany({
         where,
+        include: {
+          subUser: {
+            include: {
+              wechatUser: {
+                select: {
+                  openid: true,
+                  nickname: true
+                }
+              }
+            }
+          }
+        },
         orderBy: { createdAt: 'desc' },
         skip,
         take: pageSize
@@ -60,10 +81,26 @@ export async function GET(request) {
       prisma.archive.count({ where })
     ])
 
+    // 处理数据格式
+    const formattedArchives = archives.map(archive => ({
+      id: archive.id,
+      archiveName: archive.archiveName,
+      activity: archive.activity,
+      photoCount: archive.photoCount,
+      bodyPart: archive.bodyPart,
+      detectionTime: archive.detectionTime,
+      createdAt: archive.createdAt,
+      updatedAt: archive.updatedAt,
+      // 用户信息
+      userId: archive.subUser.wechatUser.openid,
+      userNickname: archive.subUser.realName || archive.subUser.wechatUser.nickname,
+      subUserId: archive.subUserId
+    }))
+
     return NextResponse.json({
       success: true,
       data: {
-        data: archives,
+        data: formattedArchives,
         pagination: {
           page,
           pageSize,
@@ -99,7 +136,7 @@ export async function POST(request) {
       archiveName,
       activity = 'medium',
       photoCount = 0,
-      bodyPart = 'finger'
+      bodyPart = 'left_hand_thumb'
     } = body
 
     // 验证必填字段
@@ -110,15 +147,31 @@ export async function POST(request) {
       )
     }
 
+    // 查找对应的 subUser
+    const subUser = await prisma.subUser.findFirst({
+      where: {
+        wechatUser: {
+          openid: userId
+        },
+        realName: userNickname
+      }
+    })
+
+    if (!subUser) {
+      return NextResponse.json(
+        { success: false, message: '用户不存在' },
+        { status: 400 }
+      )
+    }
+
     // 创建档案记录
     const archive = await prisma.archive.create({
       data: {
-        userId,
-        userNickname,
         archiveName,
         activity,
         photoCount,
-        bodyPart
+        bodyPart,
+        subUserId: subUser.id
       }
     })
 

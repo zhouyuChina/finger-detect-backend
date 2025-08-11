@@ -12,10 +12,11 @@ export default function ArchivesPage() {
   const [editingArchive, setEditingArchive] = useState(null)
   const [viewingArchive, setViewingArchive] = useState(null)
   const [searchUserId, setSearchUserId] = useState('')
-  const [searchUserNickname, setSearchUserNickname] = useState('')
+  const [searchUserName, setSearchUserName] = useState('')
   const [searchArchiveName, setSearchArchiveName] = useState('')
   const [searchActivity, setSearchActivity] = useState('')
-  const [searchBodyPart, setSearchBodyPart] = useState('')
+  const [searchBodyPartType, setSearchBodyPartType] = useState('')
+  const [searchBodyPartDetail, setSearchBodyPartDetail] = useState('')
   const [allArchives, setAllArchives] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -27,7 +28,7 @@ export default function ArchivesPage() {
     archiveName: '',
     activity: 'high',
     photoCount: 0,
-    bodyPart: 'finger'
+    bodyPart: 'left_hand_thumb'
   })
 
   // 从数据库获取档案数据
@@ -37,11 +38,12 @@ export default function ArchivesPage() {
       const params = new URLSearchParams({
         page: currentPage,
         pageSize,
-        userId: searchUserId,
-        userNickname: searchUserNickname,
-        archiveName: searchArchiveName,
-        activity: searchActivity,
-        bodyPart: searchBodyPart
+        searchUserId: searchUserId,
+        searchUserName: searchUserName,
+        searchArchiveName: searchArchiveName,
+        searchActivity: searchActivity,
+        searchBodyPartType: searchBodyPartType,
+        searchBodyPartDetail: searchBodyPartDetail
       })
       
       const response = await fetch(`/api/archives?${params}`)
@@ -67,7 +69,7 @@ export default function ArchivesPage() {
   // 使用useEffect获取数据
   useEffect(() => {
     fetchArchives()
-  }, [currentPage, pageSize, searchUserId, searchUserNickname, searchArchiveName, searchActivity, searchBodyPart])
+  }, [currentPage, pageSize, searchUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail])
 
   // 处理URL参数
   useEffect(() => {
@@ -99,10 +101,11 @@ export default function ArchivesPage() {
 
   const handleReset = () => {
     setSearchUserId('')
-    setSearchUserNickname('')
+    setSearchUserName('')
     setSearchArchiveName('')
     setSearchActivity('')
-    setSearchBodyPart('')
+    setSearchBodyPartType('')
+    setSearchBodyPartDetail('')
     setCurrentPage(1)
   }
 
@@ -115,7 +118,7 @@ export default function ArchivesPage() {
         archiveName: archive.archiveName || '',
         activity: archive.activity || 'high',
         photoCount: archive.photoCount || 0,
-        bodyPart: archive.bodyPart || 'finger'
+        bodyPart: archive.bodyPart || 'left_hand_thumb'
       })
     } else {
       setEditingArchive(null)
@@ -125,7 +128,7 @@ export default function ArchivesPage() {
         archiveName: '',
         activity: 'high',
         photoCount: 0,
-        bodyPart: 'finger'
+        bodyPart: 'left_hand_thumb'
       })
     }
     setShowModal(true)
@@ -145,7 +148,7 @@ export default function ArchivesPage() {
       archiveName: '',
       activity: 'high',
       photoCount: 0,
-      bodyPart: 'finger'
+      bodyPart: 'left_hand_thumb'
     })
   }
 
@@ -240,26 +243,63 @@ export default function ArchivesPage() {
     return colorMap[activity] || 'bg-gray-100 text-gray-800'
   }
 
-  const getBodyPartText = (bodyPart) => {
-    const bodyPartMap = {
-      finger: '指纹',
-      palm: '掌纹',
-      face: '人脸',
-      iris: '虹膜',
-      voice: '声纹'
+
+
+  // 检测部位选项配置
+  const bodyPartOptions = {
+    hand: {
+      label: '手部',
+      options: [
+        { value: 'left_hand_thumb', label: '左手拇指' },
+        { value: 'left_hand_index', label: '左手食指' },
+        { value: 'left_hand_middle', label: '左手中指' },
+        { value: 'left_hand_ring', label: '左手无名指' },
+        { value: 'left_hand_little', label: '左手小指' },
+        { value: 'right_hand_thumb', label: '右手拇指' },
+        { value: 'right_hand_index', label: '右手食指' },
+        { value: 'right_hand_middle', label: '右手中指' },
+        { value: 'right_hand_ring', label: '右手无名指' },
+        { value: 'right_hand_little', label: '右手小指' },
+        { value: 'left_palm', label: '左手掌' },
+        { value: 'right_palm', label: '右手掌' }
+      ]
+    },
+    foot: {
+      label: '脚部',
+      options: [
+        { value: 'left_foot_big', label: '左脚大脚趾' },
+        { value: 'left_foot_index', label: '左脚二脚趾' },
+        { value: 'left_foot_middle', label: '左脚中脚趾' },
+        { value: 'left_foot_ring', label: '左脚四脚趾' },
+        { value: 'left_foot_little', label: '左脚小脚趾' },
+        { value: 'right_foot_big', label: '右脚大脚趾' },
+        { value: 'right_foot_index', label: '右脚二脚趾' },
+        { value: 'right_foot_middle', label: '右脚中脚趾' },
+        { value: 'right_foot_ring', label: '右脚四脚趾' },
+        { value: 'right_foot_little', label: '右脚小脚趾' },
+        { value: 'left_foot_sole', label: '左脚脚掌' },
+        { value: 'right_foot_sole', label: '右脚脚掌' }
+      ]
     }
-    return bodyPartMap[bodyPart] || bodyPart
+  }
+
+  // 获取检测部位显示文本
+  const getBodyPartText = (bodyPart) => {
+    const allOptions = [
+      ...bodyPartOptions.hand.options,
+      ...bodyPartOptions.foot.options
+    ]
+    const option = allOptions.find(opt => opt.value === bodyPart)
+    return option ? option.label : bodyPart
   }
 
   const getBodyPartColor = (bodyPart) => {
-    const colorMap = {
-      finger: 'bg-blue-100 text-blue-800',
-      palm: 'bg-purple-100 text-purple-800',
-      face: 'bg-pink-100 text-pink-800',
-      iris: 'bg-indigo-100 text-indigo-800',
-      voice: 'bg-teal-100 text-teal-800'
+    if (bodyPart.startsWith('left_hand') || bodyPart.startsWith('right_hand') || bodyPart.includes('palm')) {
+      return 'bg-blue-100 text-blue-800'
+    } else if (bodyPart.startsWith('left_foot') || bodyPart.startsWith('right_foot') || bodyPart.includes('sole')) {
+      return 'bg-green-100 text-green-800'
     }
-    return colorMap[bodyPart] || 'bg-gray-100 text-gray-800'
+    return 'bg-gray-100 text-gray-800'
   }
 
   // 获取localStorage的辅助函数
@@ -283,36 +323,43 @@ export default function ArchivesPage() {
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        
+        {/* 第一排：检测部位和活跃度 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
-            <input
-              type="text"
-              value={searchUserId}
-              onChange={(e) => setSearchUserId(e.target.value)}
-              placeholder="请输入所属ID"
+            <label className="block text-sm font-medium text-gray-700 mb-2">检测部位类型</label>
+            <select
+              value={searchBodyPartType}
+              onChange={(e) => {
+                setSearchBodyPartType(e.target.value)
+                setSearchBodyPartDetail('') // 清空具体部位选择
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
+            >
+              <option value="">全部类型</option>
+              <option value="left_hand">左手</option>
+              <option value="right_hand">右手</option>
+              <option value="left_foot">左脚</option>
+              <option value="right_foot">右脚</option>
+            </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
-            <input
-              type="text"
-              value={searchUserNickname}
-              onChange={(e) => setSearchUserNickname(e.target.value)}
-              placeholder="请输入用户昵称"
+            <label className="block text-sm font-medium text-gray-700 mb-2">具体部位</label>
+            <select
+              value={searchBodyPartDetail}
+              onChange={(e) => setSearchBodyPartDetail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">档案名称</label>
-            <input
-              type="text"
-              value={searchArchiveName}
-              onChange={(e) => setSearchArchiveName(e.target.value)}
-              placeholder="请输入档案名称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
+              disabled={!searchBodyPartType}
+            >
+              <option value="">请先选择类型</option>
+              {searchBodyPartType && bodyPartOptions[searchBodyPartType.includes('hand') ? 'hand' : 'foot']?.options
+                .filter(option => option.value.startsWith(searchBodyPartType))
+                .map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">活跃度</label>
@@ -328,21 +375,6 @@ export default function ArchivesPage() {
               <option value="inactive">不活跃</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">检测部位</label>
-            <select
-              value={searchBodyPart}
-              onChange={(e) => setSearchBodyPart(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            >
-              <option value="">全部部位</option>
-              <option value="finger">指纹</option>
-              <option value="palm">掌纹</option>
-              <option value="face">人脸</option>
-              <option value="iris">虹膜</option>
-              <option value="voice">声纹</option>
-            </select>
-          </div>
           <div className="flex items-end space-x-2">
             <button
               onClick={handleSearch}
@@ -356,6 +388,40 @@ export default function ArchivesPage() {
             >
               重置
             </button>
+          </div>
+        </div>
+
+        {/* 第二排：所属ID、用户名称、档案名称 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
+            <input
+              type="text"
+              value={searchUserId}
+              onChange={(e) => setSearchUserId(e.target.value)}
+              placeholder="请输入所属ID"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
+            <input
+              type="text"
+              value={searchUserName}
+              onChange={(e) => setSearchUserName(e.target.value)}
+              placeholder="请输入用户名称"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">档案名称</label>
+            <input
+              type="text"
+              value={searchArchiveName}
+              onChange={(e) => setSearchArchiveName(e.target.value)}
+              placeholder="请输入档案名称"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
           </div>
         </div>
       </div>
@@ -449,10 +515,13 @@ export default function ArchivesPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  序号
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   所属ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  用户昵称
+                  用户名称
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   档案名称
@@ -464,9 +533,6 @@ export default function ArchivesPage() {
                   拍照数量
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  检测部位
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   检测时间
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -475,8 +541,11 @@ export default function ArchivesPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentArchives.map((archive) => (
+              {currentArchives.map((archive, index) => (
                 <tr key={archive.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {startIndex + index + 1}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{archive.userId || '未知'}</div>
                   </td>
@@ -493,11 +562,6 @@ export default function ArchivesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {(archive.photoCount || 0).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(archive.bodyPart || 'finger')}`}>
-                      {getBodyPartText(archive.bodyPart || 'finger')}
-                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {archive.detectionTime ? new Date(archive.detectionTime).toLocaleString('zh-CN') : '未知时间'}
@@ -611,13 +675,13 @@ export default function ArchivesPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
                   <input
                     type="text"
                     value={formData.userNickname}
                     onChange={(e) => handleInputChange('userNickname', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                    placeholder="请输入用户昵称"
+                    placeholder="请输入用户名称"
                   />
                 </div>
                 
@@ -665,11 +729,30 @@ export default function ArchivesPage() {
                     onChange={(e) => handleInputChange('bodyPart', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
-                    <option value="finger">指纹</option>
-                    <option value="palm">掌纹</option>
-                    <option value="face">人脸</option>
-                    <option value="iris">虹膜</option>
-                    <option value="voice">声纹</option>
+                    <option value="left_hand_thumb">左手拇指</option>
+                    <option value="left_hand_index">左手食指</option>
+                    <option value="left_hand_middle">左手中指</option>
+                    <option value="left_hand_ring">左手无名指</option>
+                    <option value="left_hand_little">左手小指</option>
+                    <option value="right_hand_thumb">右手拇指</option>
+                    <option value="right_hand_index">右手食指</option>
+                    <option value="right_hand_middle">右手中指</option>
+                    <option value="right_hand_ring">右手无名指</option>
+                    <option value="right_hand_little">右手小指</option>
+                    <option value="left_palm">左手掌</option>
+                    <option value="right_palm">右手掌</option>
+                    <option value="left_foot_big">左脚大脚趾</option>
+                    <option value="left_foot_index">左脚二脚趾</option>
+                    <option value="left_foot_middle">左脚中脚趾</option>
+                    <option value="left_foot_ring">左脚四脚趾</option>
+                    <option value="left_foot_little">左脚小脚趾</option>
+                    <option value="right_foot_big">右脚大脚趾</option>
+                    <option value="right_foot_index">右脚二脚趾</option>
+                    <option value="right_foot_middle">右脚中脚趾</option>
+                    <option value="right_foot_ring">右脚四脚趾</option>
+                    <option value="right_foot_little">右脚小脚趾</option>
+                    <option value="left_foot_sole">左脚脚掌</option>
+                    <option value="right_foot_sole">右脚脚掌</option>
                   </select>
                 </div>
               </div>
@@ -709,7 +792,7 @@ export default function ArchivesPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
                     {viewingArchive.userNickname || '未知'}
                   </div>
@@ -741,8 +824,8 @@ export default function ArchivesPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">检测部位</label>
                   <div className="px-3 py-2">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(viewingArchive.bodyPart || 'finger')}`}>
-                      {getBodyPartText(viewingArchive.bodyPart || 'finger')}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(viewingArchive.bodyPart || 'left_hand_thumb')}`}>
+                      {getBodyPartText(viewingArchive.bodyPart || 'left_hand_thumb')}
                     </span>
                   </div>
                 </div>
