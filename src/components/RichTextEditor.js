@@ -58,6 +58,10 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
   const editorConfig = {
     placeholder: placeholder,
     language: 'zh-cn',
+    // 添加开源许可证配置
+    licenseKey: 'GPL-2.0-or-later',
+    // 禁用商业功能警告
+    removePlugins: ['CKFinderUploadAdapter', 'CKFinder', 'EasyImage', 'CloudServices'],
     toolbar: {
       items: [
         'undo', 'redo',
@@ -207,6 +211,15 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
           const toolbarElement = editor.ui.view.toolbar.element
           const editorElement = editor.ui.view.element.parentElement
           editorElement.insertBefore(toolbarElement, editorElement.firstChild)
+          
+          // 隐藏许可证警告
+          const consoleWarn = console.warn
+          console.warn = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('license-key-missing')) {
+              return
+            }
+            consoleWarn.apply(console, args)
+          }
         }}
         onChange={(event, editor) => {
           const data = editor.getData()
