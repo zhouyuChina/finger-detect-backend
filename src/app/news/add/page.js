@@ -10,20 +10,14 @@ export default function AddNewsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     summary: '',
     coverImage: '',
     author: '',
-    category: '',
-    tags: '',
-    status: 'draft',
-    isTop: false,
-    isImportant: false,
-    isSystem: false,
-    isNotification: false
+    category: 'default',
+    isTop: false
   })
 
   const handleInputChange = (field, value) => {
@@ -33,7 +27,7 @@ export default function AddNewsPage() {
     }))
   }
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!formData.title.trim()) {
@@ -45,9 +39,6 @@ export default function AddNewsPage() {
     setError('')
 
     try {
-      // 处理标签
-      const tags = formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
-      
       const response = await fetch('/api/news', {
         method: 'POST',
         headers: {
@@ -56,7 +47,8 @@ export default function AddNewsPage() {
         },
         body: JSON.stringify({
           ...formData,
-          tags
+          status: 'draft', // 默认状态为草稿
+          tags: [] // 空标签数组
         })
       })
 
@@ -98,28 +90,28 @@ export default function AddNewsPage() {
         </button>
       </div>
 
-              {/* 错误提示 */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
+      {/* 错误提示 */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* 表单 */}
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
         {/* 基本信息 */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">基本信息</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 标题 <span className="text-red-500">*</span>
@@ -151,27 +143,13 @@ export default function AddNewsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 分类
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                placeholder="请输入分类"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                标签
-              </label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => handleInputChange('tags', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                placeholder="请输入标签，用逗号分隔"
-              />
-              <p className="text-xs text-gray-500 mt-1">多个标签用逗号分隔，如：技术,安全,AI</p>
+              >
+                <option value="default">默认分类</option>
+              </select>
             </div>
           </div>
         </div>
@@ -221,65 +199,20 @@ export default function AddNewsPage() {
         {/* 设置 */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">设置</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                状态
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              类型标记
+            </label>
+            <div className="space-y-2 text-gray-700">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.isTop}
+                  onChange={(e) => handleInputChange('isTop', e.target.checked)}
+                  className="mr-2"
+                />
+                <span className="text-sm">置顶</span>
               </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleInputChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-              >
-                <option value="draft">草稿</option>
-                <option value="unpublished">未发布</option>
-                <option value="published">已发布</option>
-                <option value="cancelled">已作废</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                类型标记
-              </label>
-              <div className="space-y-2 text-gray-700">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.isTop}
-                    onChange={(e) => handleInputChange('isTop', e.target.checked)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">置顶</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.isImportant}
-                    onChange={(e) => handleInputChange('isImportant', e.target.checked)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">重要</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.isSystem}
-                    onChange={(e) => handleInputChange('isSystem', e.target.checked)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">系统</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.isNotification}
-                    onChange={(e) => handleInputChange('isNotification', e.target.checked)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">通知</span>
-                </label>
-              </div>
             </div>
           </div>
         </div>

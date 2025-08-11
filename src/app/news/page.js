@@ -16,8 +16,6 @@ export default function NewsPage() {
   const [allNews, setAllNews] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  
-
 
   // 从数据库获取资讯数据
   const fetchNews = async () => {
@@ -82,21 +80,15 @@ export default function NewsPage() {
     setCurrentPage(1)
   }
 
-
-
   const openViewModal = (news) => {
     setViewingNews(news)
     setShowViewModal(true)
   }
 
-
-
   const closeViewModal = () => {
     setShowViewModal(false)
     setViewingNews(null)
   }
-
-
 
   const handleDelete = async (id) => {
     if (!confirm('确定要删除这条资讯吗？')) return
