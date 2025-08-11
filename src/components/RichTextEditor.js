@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
+import DecoupledEditor from '@ckeditor/ckeditor5-build-decoupled-document'
 
 export default function RichTextEditor({ value, onChange, placeholder = "请输入内容..." }) {
   const [isClient, setIsClient] = useState(false)
+  const [editor, setEditor] = useState(null)
 
   useEffect(() => {
     setIsClient(true)
@@ -66,7 +67,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
         '|', 'alignment',
         '|', 'numberedList', 'bulletedList',
         '|', 'indent', 'outdent',
-        '|', 'link', 'blockQuote', 'insertTable', 'mediaEmbed',
+        '|', 'link', 'blockQuote', 'imageUpload', 'mediaEmbed',
         '|', 'horizontalLine',
         '|', 'removeFormat'
       ]
@@ -135,21 +136,34 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
         { color: '#ead1dc', label: '浅粉' }
       ]
     },
-    table: {
-      contentToolbar: [
-        'tableColumn',
-        'tableRow',
-        'mergeTableCells'
-      ]
-    },
     image: {
       upload: {
         types: ['jpeg', 'png', 'gif', 'webp']
-      }
+      },
+      toolbar: [
+        'imageStyle:inline',
+        'imageStyle:block',
+        'imageStyle:side',
+        '|',
+        'toggleImageCaption',
+        'imageTextAlternative',
+        '|',
+        'linkImage'
+      ],
+      styles: [
+        'full',
+        'side',
+        'alignLeft',
+        'alignCenter',
+        'alignRight'
+      ]
     },
     link: {
       addTargetToExternalLinks: true,
       defaultProtocol: 'https://'
+    },
+    mediaEmbed: {
+      previewsInData: true
     }
   }
 
@@ -176,7 +190,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
   return (
     <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
       <CKEditor
-        editor={ClassicEditor}
+        editor={DecoupledEditor}
         config={editorConfig}
         data={value}
         onReady={(editor) => {
@@ -185,6 +199,14 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
           
           // 设置编辑器高度
           editor.ui.view.element.style.minHeight = '300px'
+          
+          // 保存编辑器实例
+          setEditor(editor)
+          
+          // 将工具栏插入到DOM中
+          const toolbarElement = editor.ui.view.toolbar.element
+          const editorElement = editor.ui.view.element.parentElement
+          editorElement.insertBefore(toolbarElement, editorElement.firstChild)
         }}
         onChange={(event, editor) => {
           const data = editor.getData()
