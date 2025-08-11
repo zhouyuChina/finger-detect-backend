@@ -325,7 +325,7 @@ export default function ArchivesPage() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
         
         {/* 第一排：检测部位和活跃度 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">检测部位类型</label>
             <select
@@ -375,20 +375,22 @@ export default function ArchivesPage() {
               <option value="inactive">不活跃</option>
             </select>
           </div>
-          <div className="flex items-end space-x-2">
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              搜索
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-            >
-              重置
-            </button>
-          </div>
+        </div>
+
+        {/* 操作按钮行 */}
+        <div className="flex justify-center space-x-4 mb-4">
+          <button
+            onClick={handleSearch}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            搜索
+          </button>
+          <button
+            onClick={handleReset}
+            className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition-colors"
+          >
+            重置
+          </button>
         </div>
 
         {/* 第二排：所属ID、用户名称、档案名称 */}
