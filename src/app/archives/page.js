@@ -276,9 +276,7 @@ export default function ArchivesPage() {
         { value: 'right_foot_index', label: '右脚二脚趾' },
         { value: 'right_foot_middle', label: '右脚中脚趾' },
         { value: 'right_foot_ring', label: '右脚四脚趾' },
-        { value: 'right_foot_little', label: '右脚小脚趾' },
-        { value: 'left_foot_sole', label: '左脚脚掌' },
-        { value: 'right_foot_sole', label: '右脚脚掌' }
+        { value: 'right_foot_little', label: '右脚小脚趾' }
       ]
     }
   }
@@ -377,24 +375,10 @@ export default function ArchivesPage() {
           </div>
         </div>
 
-        {/* 操作按钮行 */}
-        <div className="flex justify-center space-x-4 mb-4">
-          <button
-            onClick={handleSearch}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            搜索
-          </button>
-          <button
-            onClick={handleReset}
-            className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition-colors"
-          >
-            重置
-          </button>
-        </div>
+
 
         {/* 第二排：所属ID、用户名称、档案名称 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
@@ -425,6 +409,22 @@ export default function ArchivesPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
+        </div>
+
+        {/* 操作按钮 */}
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={handleSearch}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            搜索
+          </button>
+          <button
+            onClick={handleReset}
+            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+          >
+            重置
+          </button>
         </div>
       </div>
 
@@ -753,8 +753,6 @@ export default function ArchivesPage() {
                     <option value="right_foot_middle">右脚中脚趾</option>
                     <option value="right_foot_ring">右脚四脚趾</option>
                     <option value="right_foot_little">右脚小脚趾</option>
-                    <option value="left_foot_sole">左脚脚掌</option>
-                    <option value="right_foot_sole">右脚脚掌</option>
                   </select>
                 </div>
               </div>
