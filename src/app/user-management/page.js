@@ -217,27 +217,9 @@ export default function UserManagementPage() {
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
-            <input
-              type="text"
-              value={searchUsername}
-              onChange={(e) => setSearchUsername(e.target.value)}
-              placeholder="请输入用户名称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
-            <input
-              type="text"
-              value={searchPhone || ''}
-              onChange={(e) => setSearchPhone(e.target.value)}
-              placeholder="请输入所属ID"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
-          </div>
+        
+        {/* 第一排：年龄、性别、地域 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">年龄</label>
             <input
@@ -270,6 +252,30 @@ export default function UserManagementPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
+        </div>
+
+        {/* 第二排：用户名称、所属ID、活跃状态 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
+            <input
+              type="text"
+              value={searchUsername}
+              onChange={(e) => setSearchUsername(e.target.value)}
+              placeholder="请输入用户名称"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
+            <input
+              type="text"
+              value={searchPhone || ''}
+              onChange={(e) => setSearchPhone(e.target.value)}
+              placeholder="请输入所属ID"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">活跃状态</label>
             <select
@@ -285,7 +291,9 @@ export default function UserManagementPage() {
             </select>
           </div>
         </div>
-        <div className="flex justify-end space-x-2 mt-4">
+
+        {/* 操作按钮 */}
+        <div className="flex justify-end space-x-2">
           <button
             onClick={handleSearch}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
