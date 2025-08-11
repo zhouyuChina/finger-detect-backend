@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
+import ExcelExporter from '@/components/ExcelExporter'
 
 export default function UserManagementPage() {
   const router = useRouter()
@@ -11,6 +12,9 @@ export default function UserManagementPage() {
   const [searchUsername, setSearchUsername] = useState('')
   const [searchPhone, setSearchPhone] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
+  const [searchAge, setSearchAge] = useState('')
+  const [searchGender, setSearchGender] = useState('')
+  const [searchRegion, setSearchRegion] = useState('')
   const [allUsers, setAllUsers] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
@@ -53,10 +57,13 @@ export default function UserManagementPage() {
   
   // 过滤用户数据
   const filteredUsers = allUsers.filter(user => {
-    const matchUsername = !searchUsername || (user.username && user.username.toLowerCase().includes(searchUsername.toLowerCase()))
-    const matchUserId = !searchPhone || (user.userId && user.userId.includes(searchPhone)) || (user.nickname && user.nickname.includes(searchPhone))
+    const matchUsername = !searchUsername || (user.realName && user.realName.toLowerCase().includes(searchUsername.toLowerCase()))
+    const matchUserId = !searchPhone || (user.wechatUser?.openid && user.wechatUser.openid.includes(searchPhone))
     const matchStatus = !searchStatus || user.status === searchStatus
-    return matchUsername && matchUserId && matchStatus
+    const matchAge = !searchAge || user.age === parseInt(searchAge)
+    const matchGender = !searchGender || user.gender === searchGender
+    const matchRegion = !searchRegion || (user.address && user.address.includes(searchRegion))
+    return matchUsername && matchUserId && matchStatus && matchAge && matchGender && matchRegion
   })
   
   const totalUsers = filteredUsers.length
@@ -82,7 +89,41 @@ export default function UserManagementPage() {
     setSearchUsername('')
     setSearchPhone('')
     setSearchStatus('')
+    setSearchAge('')
+    setSearchGender('')
+    setSearchRegion('')
     setCurrentPage(1)
+  }
+
+  // 准备Excel导出数据
+  const getExcelData = () => {
+    const headers = [
+      '序号',
+      '用户名称',
+      '所属ID',
+      '活跃状态',
+      '年龄',
+      '性别',
+      '地址',
+      '建档数量',
+      '拍照数量',
+      '报告数量'
+    ]
+
+    const data = filteredUsers.map((user, index) => [
+      index + 1,
+      user.realName || '未知用户',
+      user.wechatUser?.openid || '未知ID',
+      user.status === 'active' ? '活跃' : user.status === 'inactive' ? '非活跃' : user.status === 'pending' ? '待审核' : '已禁用',
+      user.age || '-',
+      user.gender || '-',
+      user.address || '-',
+      user.archives || 0,
+      user.photos || 0,
+      user.reports || 0
+    ])
+
+    return { headers, data }
   }
 
   const handleViewUser = (user) => {
@@ -151,16 +192,32 @@ export default function UserManagementPage() {
           <p className="text-gray-600">管理ID建立的用户信息和数据</p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-            导出数据
-          </button>
+          <ExcelExporter
+            {...getExcelData()}
+            filename="用户管理数据"
+            sheetName="用户管理数据"
+            columnWidths={[
+              { wch: 8 },   // 序号
+              { wch: 15 },  // 用户名称
+              { wch: 30 },  // 所属ID
+              { wch: 10 },  // 活跃状态
+              { wch: 8 },   // 年龄
+              { wch: 8 },   // 性别
+              { wch: 20 },  // 地址
+              { wch: 10 },  // 建档数量
+              { wch: 10 },  // 拍照数量
+              { wch: 10 }   // 报告数量
+            ]}
+            buttonText="导出数据"
+            buttonClassName="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          />
         </div>
       </div>
 
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
             <input
@@ -182,6 +239,38 @@ export default function UserManagementPage() {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">年龄</label>
+            <input
+              type="number"
+              value={searchAge}
+              onChange={(e) => setSearchAge(e.target.value)}
+              placeholder="请输入年龄"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">性别</label>
+            <select
+              value={searchGender}
+              onChange={(e) => setSearchGender(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            >
+              <option value="">全部性别</option>
+              <option value="男">男</option>
+              <option value="女">女</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">地域</label>
+            <input
+              type="text"
+              value={searchRegion}
+              onChange={(e) => setSearchRegion(e.target.value)}
+              placeholder="请输入地域"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">活跃状态</label>
             <select
               value={searchStatus}
@@ -195,20 +284,20 @@ export default function UserManagementPage() {
               <option value="banned">已禁用</option>
             </select>
           </div>
-          <div className="flex items-end space-x-2">
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              搜索
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-            >
-              重置
-            </button>
-          </div>
+        </div>
+        <div className="flex justify-end space-x-2 mt-4">
+          <button
+            onClick={handleSearch}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            搜索
+          </button>
+          <button
+            onClick={handleReset}
+            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+          >
+            重置
+          </button>
         </div>
       </div>
 
@@ -308,6 +397,9 @@ export default function UserManagementPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  序号
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   用户名称
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -340,14 +432,16 @@ export default function UserManagementPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentUsers.map((user) => (
+              {currentUsers.map((user, index) => (
                 <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {startIndex + index + 1}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                    <div className="text-sm text-gray-500">{user.realName}</div>
+                    <div className="text-sm font-medium text-gray-900">{user.realName || '未知用户'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.userId}
+                    {user.wechatUser?.openid || '未知ID'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(user.status)}
@@ -373,11 +467,11 @@ export default function UserManagementPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
                       onClick={() => {
-                        const username = user.username || ''
-                        if (username) {
-                          router.push(`/archives?searchUserId=${encodeURIComponent(username)}`)
+                        const realName = user.realName || ''
+                        if (realName) {
+                          router.push(`/archives?searchUserId=${encodeURIComponent(realName)}`)
                         } else {
-                          alert('该用户没有用户名称信息')
+                          alert('该用户没有真实姓名信息')
                         }
                       }}
                       className="text-blue-600 hover:text-blue-900 mr-3"
@@ -386,11 +480,11 @@ export default function UserManagementPage() {
                     </button>
                     <button 
                       onClick={() => {
-                        const username = user.username || ''
-                        if (username) {
-                          router.push(`/detections?searchUserId=${encodeURIComponent(username)}`)
+                        const realName = user.realName || ''
+                        if (realName) {
+                          router.push(`/detections?searchUserId=${encodeURIComponent(realName)}`)
                         } else {
-                          alert('该用户没有用户名称信息')
+                          alert('该用户没有真实姓名信息')
                         }
                       }}
                       className="text-purple-600 hover:text-purple-900 mr-3"
