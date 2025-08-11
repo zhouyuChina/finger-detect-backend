@@ -218,54 +218,61 @@ export default function NewsPage() {
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">标题</label>
-            <input
-              type="text"
-              value={searchTitle}
-              onChange={(e) => setSearchTitle(e.target.value)}
-              placeholder="请输入标题"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
+        <div className="space-y-4">
+          {/* 第一行：搜索字段 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">标题</label>
+              <input
+                type="text"
+                value={searchTitle}
+                onChange={(e) => setSearchTitle(e.target.value)}
+                placeholder="请输入标题"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">类型</label>
+              <select
+                value={searchType}
+                onChange={(e) => setSearchType(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              >
+                <option value="">全部类型</option>
+                <option value="置顶">置顶</option>
+                <option value="普通">普通</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
+              <select
+                value={searchStatus}
+                onChange={(e) => setSearchStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              >
+                <option value="">全部状态</option>
+                <option value="unpublished">未发布</option>
+                <option value="published">已发布</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">类型</label>
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            >
-              <option value="">全部类型</option>
-              <option value="置顶">置顶</option>
-              <option value="普通">普通</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
-            <select
-              value={searchStatus}
-              onChange={(e) => setSearchStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            >
-              <option value="">全部状态</option>
-              <option value="unpublished">未发布</option>
-              <option value="published">已发布</option>
-            </select>
-          </div>
-          <div className="flex items-end space-x-2">
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              搜索
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-            >
-              重置
-            </button>
+          
+          {/* 第二行：按钮区域 */}
+          <div className="flex justify-end">
+            <div className="flex space-x-2">
+              <button
+                onClick={handleSearch}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                搜索
+              </button>
+              <button
+                onClick={handleReset}
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+              >
+                重置
+              </button>
+            </div>
           </div>
         </div>
       </div>

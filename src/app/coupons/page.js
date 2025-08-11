@@ -422,6 +422,7 @@ export default function CouponsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">序号</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">优惠券名称</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">渠道</th>
@@ -437,19 +438,20 @@ export default function CouponsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-4 text-center text-gray-500">加载中...</td>
+                  <td colSpan="10" className="px-6 py-4 text-center text-gray-500">加载中...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-4 text-center text-red-600">{error}</td>
+                  <td colSpan="10" className="px-6 py-4 text-center text-red-600">{error}</td>
                 </tr>
               ) : currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-4 text-center text-gray-500">暂无优惠券</td>
+                  <td colSpan="10" className="px-6 py-4 text-center text-gray-500">暂无优惠券</td>
                 </tr>
               ) : (
-                currentData.map((coupon) => (
+                currentData.map((coupon, index) => (
                   <tr key={coupon.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{startIndex + index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{coupon.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{getTypeBadge(coupon.type)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{getChannelBadge(coupon.channel)}</td>

@@ -262,9 +262,9 @@ export default function SystemRepliesPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">序号</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布时间</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布状态</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">已读百分比</th>
@@ -274,19 +274,20 @@ export default function SystemRepliesPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">加载中...</td>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">加载中...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-red-600">{error}</td>
+                  <td colSpan="7" className="px-6 py-4 text-center text-red-600">{error}</td>
                 </tr>
               ) : currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">暂无系统消息</td>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">暂无系统消息</td>
                 </tr>
               ) : (
-                currentData.map((reply) => (
+                currentData.map((reply, index) => (
                   <tr key={reply.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{startIndex + index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{reply.title}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{getTypeBadge(reply.type)}</td>
 

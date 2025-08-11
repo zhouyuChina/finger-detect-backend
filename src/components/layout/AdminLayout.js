@@ -17,10 +17,11 @@ export default function AdminLayout({ children }) {
     { name: 'ID管理', icon: '🆔', href: '/user-ids' },
     { name: '用户管理', icon: '👥', href: '/user-management' },
     { name: '档案管理', icon: '📁', href: '/archives' },
-    { name: '检测记录', icon: '🔍', href: '/detections' },
+    { name: '报告管理', icon: '📋', href: '/detections' },
     { name: '留言管理', icon: '💌', href: '/feedback' },
     { name: '系统消息', icon: '📢', href: '/system-replies' },
     { name: '优惠券管理', icon: '🎫', href: '/coupons' },
+    { name: '数据分析', icon: '📈', href: '/analytics' },
     { name: '企业介绍', icon: '🏢', href: '/company' },
     { name: '系统设置', icon: '⚙️', href: '/settings' },
   ]

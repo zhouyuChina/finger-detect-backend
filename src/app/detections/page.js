@@ -202,50 +202,57 @@ export default function DetectionsPage() {
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
-            <input
-              type="text"
-              value={searchOpenid}
-              onChange={(e) => setSearchOpenid(e.target.value)}
-              placeholder="请输入所属ID"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
+        <div className="space-y-4">
+          {/* 第一行：搜索字段 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
+              <input
+                type="text"
+                value={searchOpenid}
+                onChange={(e) => setSearchOpenid(e.target.value)}
+                placeholder="请输入所属ID"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
+              <input
+                type="text"
+                value={searchUserName}
+                onChange={(e) => setSearchUserName(e.target.value)}
+                placeholder="请输入用户名称"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">档案ID</label>
+              <input
+                type="text"
+                value={searchArchiveId}
+                onChange={(e) => setSearchArchiveId(e.target.value)}
+                placeholder="请输入档案ID"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
-            <input
-              type="text"
-              value={searchUserName}
-              onChange={(e) => setSearchUserName(e.target.value)}
-              placeholder="请输入用户名称"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">档案ID</label>
-            <input
-              type="text"
-              value={searchArchiveId}
-              onChange={(e) => setSearchArchiveId(e.target.value)}
-              placeholder="请输入档案ID"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
-          </div>
-          <div className="flex items-end space-x-2">
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              搜索
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-            >
-              重置
-            </button>
+          
+          {/* 第二行：按钮区域 */}
+          <div className="flex justify-end">
+            <div className="flex space-x-2">
+              <button
+                onClick={handleSearch}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                搜索
+              </button>
+              <button
+                onClick={handleReset}
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+              >
+                重置
+              </button>
+            </div>
           </div>
         </div>
       </div>
