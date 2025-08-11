@@ -19,14 +19,8 @@ export default function EditNewsPage() {
     content: '',
     coverImage: '',
     author: '',
-    category: '',
-    tags: '',
-    isPublished: false,
-    isTop: false,
-    isImportant: false,
-    isSystem: false,
-    isNotification: false,
-    status: 'draft'
+    category: 'default',
+    isTop: false
   })
 
   // 获取资讯数据
@@ -44,14 +38,8 @@ export default function EditNewsPage() {
           content: news.content || '',
           coverImage: news.coverImage || '',
           author: news.author || '',
-          category: news.category || '',
-          tags: news.tags ? news.tags.join(', ') : '',
-          isPublished: news.isPublished || false,
-          isTop: news.types ? news.types.includes('置顶') : false,
-          isImportant: news.types ? news.types.includes('重要') : false,
-          isSystem: news.types ? news.types.includes('系统') : false,
-          isNotification: news.types ? news.types.includes('通知') : false,
-          status: news.status || 'draft'
+          category: news.category || 'default',
+          isTop: news.types ? news.types.includes('置顶') : false
         })
       } else {
         setError(result.message || '获取资讯失败')
@@ -82,9 +70,6 @@ export default function EditNewsPage() {
     setError('')
 
     try {
-      // 处理标签
-      const tags = formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
-
       const response = await fetch(`/api/news/${params.id}`, {
         method: 'PUT',
         headers: {
@@ -93,7 +78,8 @@ export default function EditNewsPage() {
         },
         body: JSON.stringify({
           ...formData,
-          tags
+          status: 'draft', // 默认状态为草稿
+          tags: [] // 空标签数组
         })
       })
 
@@ -167,7 +153,7 @@ export default function EditNewsPage() {
         {/* 基本信息 */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">基本信息</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 标题 <span className="text-red-500">*</span>
@@ -199,27 +185,13 @@ export default function EditNewsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 分类
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                placeholder="请输入分类"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                标签
-              </label>
-              <input
-                type="text"
-                value={formData.tags}
-                onChange={(e) => handleInputChange('tags', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                placeholder="请输入标签，用逗号分隔"
-              />
-              <p className="text-xs text-gray-500 mt-1">多个标签用逗号分隔，如：技术,安全,AI</p>
+              >
+                <option value="default">默认分类</option>
+              </select>
             </div>
           </div>
         </div>
@@ -263,85 +235,26 @@ export default function EditNewsPage() {
             onChange={(url) => handleInputChange('coverImage', url)}
             placeholder="点击上传或拖拽图片到此处"
           />
+          <p className="text-xs text-gray-500 mt-1">建议尺寸 800x400，支持 JPG、PNG、GIF、WebP 格式</p>
         </div>
 
         {/* 设置 */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">设置</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                状态
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleInputChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-              >
-                <option value="draft">草稿</option>
-                <option value="unpublished">未发布</option>
-                <option value="published">已发布</option>
-                <option value="cancelled">已作废</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                发布状态
-              </label>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.isPublished}
-                  onChange={(e) => handleInputChange('isPublished', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 text-sm text-gray-700">立即发布</label>
-              </div>
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              特殊标记
+              类型标记
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center">
+            <div className="space-y-2 text-gray-700">
+              <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.isTop}
                   onChange={(e) => handleInputChange('isTop', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="mr-2"
                 />
-                <label className="ml-2 text-sm text-gray-700">置顶</label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.isImportant}
-                  onChange={(e) => handleInputChange('isImportant', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 text-sm text-gray-700">重要</label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.isSystem}
-                  onChange={(e) => handleInputChange('isSystem', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 text-sm text-gray-700">系统</label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.isNotification}
-                  onChange={(e) => handleInputChange('isNotification', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 text-sm text-gray-700">通知</label>
-              </div>
+                <span className="text-sm">置顶</span>
+              </label>
             </div>
           </div>
         </div>
