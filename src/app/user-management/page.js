@@ -10,7 +10,7 @@ export default function UserManagementPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchUsername, setSearchUsername] = useState('')
-  const [searchPhone, setSearchPhone] = useState('')
+  const [searchUserId, setSearchUserId] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
   const [searchAge, setSearchAge] = useState('')
   const [searchGender, setSearchGender] = useState('')
@@ -49,7 +49,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     const searchUserId = searchParams.get('searchUserId')
     if (searchUserId) {
-      setSearchPhone(searchUserId)
+      setSearchUserId(searchUserId)
       // 自动触发搜索
       setCurrentPage(1)
       // 确保数据加载完成后再应用过滤
@@ -62,15 +62,15 @@ export default function UserManagementPage() {
   // 过滤用户数据
   const filteredUsers = allUsers.filter(user => {
     const matchUsername = !searchUsername || (user.realName && user.realName.toLowerCase().includes(searchUsername.toLowerCase()))
-    const matchUserId = !searchPhone || (user.wechatUser?.openid && user.wechatUser.openid.includes(searchPhone))
+    const matchUserId = !searchUserId || (user.wechatUser?.openid && user.wechatUser.openid.includes(searchUserId))
     const matchStatus = !searchStatus || user.status === searchStatus
     const matchAge = !searchAge || user.age === parseInt(searchAge)
     const matchGender = !searchGender || user.gender === searchGender
     const matchRegion = !searchRegion || (user.address && user.address.includes(searchRegion))
     
-    // 调试信息：当有searchPhone时，输出匹配信息
-    if (searchPhone) {
-      console.log('搜索ID:', searchPhone)
+    // 调试信息：当有searchUserId时，输出匹配信息
+    if (searchUserId) {
+      console.log('搜索ID:', searchUserId)
       console.log('用户openid:', user.wechatUser?.openid)
       console.log('匹配结果:', matchUserId)
     }
@@ -99,7 +99,7 @@ export default function UserManagementPage() {
 
   const handleReset = () => {
     setSearchUsername('')
-    setSearchPhone('')
+    setSearchUserId('')
     setSearchStatus('')
     setSearchAge('')
     setSearchGender('')
@@ -282,8 +282,8 @@ export default function UserManagementPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
-              value={searchPhone || ''}
-              onChange={(e) => setSearchPhone(e.target.value)}
+              value={searchUserId || ''}
+              onChange={(e) => setSearchUserId(e.target.value)}
               placeholder="请输入所属ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
