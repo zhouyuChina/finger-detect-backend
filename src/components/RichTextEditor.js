@@ -1,7 +1,17 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { CKEditor } from '@ckeditor/ckeditor5-react'
-import DecoupledEditor from '@ckeditor/ckeditor5-build-decoupled-document'
+import dynamic from 'next/dynamic'
+
+// 动态导入CKEditor，禁用SSR
+const CKEditor = dynamic(
+  () => import('@ckeditor/ckeditor5-react').then(mod => ({ default: mod.CKEditor })),
+  { ssr: false }
+)
+
+const DecoupledEditor = dynamic(
+  () => import('@ckeditor/ckeditor5-build-decoupled-document'),
+  { ssr: false }
+)
 
 export default function RichTextEditor({ value, onChange, placeholder = "请输入内容..." }) {
   const [isClient, setIsClient] = useState(false)
