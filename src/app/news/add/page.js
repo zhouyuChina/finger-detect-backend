@@ -253,8 +253,4 @@ export default function AddNewsPage() {
       />
     </div>
   )
-}
-      </form>
-    </div>
-  )
 } 
