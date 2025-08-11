@@ -96,19 +96,6 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
     elementpath: false,
     resize: false,
     statusbar: false,
-    // 禁用设置弹窗和初始化向导
-    setup: (editor) => {
-      // 禁用设置弹窗
-      editor.on('init', () => {
-        // 移除任何可能的设置弹窗
-        const modals = document.querySelectorAll('.tox-dialog, .tox-dialog-wrap, .tox-dialog-container');
-        modals.forEach(modal => {
-          if (modal.style.display !== 'none') {
-            modal.style.display = 'none';
-          }
-        });
-      });
-    },
     // 图片上传配置
     images_upload_handler: handleImageUpload,
     images_upload_credentials: false,
@@ -210,6 +197,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
   return (
     <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
       <Editor
+        apiKey="wv5ht0amieanuflleqiwvr1jq0sqhy6einysmxoak9jntoa0"
         init={editorConfig}
         value={value}
         onEditorChange={(content, editor) => {
@@ -217,15 +205,6 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
         }}
         onInit={(evt, editor) => {
           console.log('TinyMCE 编辑器已初始化')
-          // 初始化后立即移除设置弹窗
-          setTimeout(() => {
-            const modals = document.querySelectorAll('.tox-dialog, .tox-dialog-wrap, .tox-dialog-container');
-            modals.forEach(modal => {
-              if (modal.style.display !== 'none') {
-                modal.style.display = 'none';
-              }
-            });
-          }, 100);
         }}
         onBlur={(evt, editor) => {
           // 编辑器失去焦点时的处理
