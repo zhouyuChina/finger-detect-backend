@@ -298,8 +298,6 @@ export default function UserManagementPage() {
               <option value="">全部状态</option>
               <option value="active">活跃</option>
               <option value="inactive">非活跃</option>
-              <option value="pending">待审核</option>
-              <option value="banned">已禁用</option>
             </select>
           </div>
         </div>

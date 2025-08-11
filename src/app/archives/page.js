@@ -26,7 +26,7 @@ export default function ArchivesPage() {
     userId: '',
     userNickname: '',
     archiveName: '',
-    activity: 'high',
+    activity: 'active',
     photoCount: 0,
     bodyPart: 'left_hand_thumb'
   })
@@ -116,7 +116,7 @@ export default function ArchivesPage() {
         userId: archive.userId || '',
         userNickname: archive.userNickname || '',
         archiveName: archive.archiveName || '',
-        activity: archive.activity || 'high',
+        activity: archive.activity || 'active',
         photoCount: archive.photoCount || 0,
         bodyPart: archive.bodyPart || 'left_hand_thumb'
       })
@@ -126,7 +126,7 @@ export default function ArchivesPage() {
         userId: '',
         userNickname: '',
         archiveName: '',
-        activity: 'high',
+        activity: 'active',
         photoCount: 0,
         bodyPart: 'left_hand_thumb'
       })
@@ -146,7 +146,7 @@ export default function ArchivesPage() {
       userId: '',
       userNickname: '',
       archiveName: '',
-      activity: 'high',
+      activity: 'active',
       photoCount: 0,
       bodyPart: 'left_hand_thumb'
     })
@@ -225,19 +225,15 @@ export default function ArchivesPage() {
 
   const getActivityText = (activity) => {
     const activityMap = {
-      high: '高活跃',
-      medium: '中活跃',
-      low: '低活跃',
-      inactive: '不活跃'
+      active: '活跃',
+      inactive: '非活跃'
     }
     return activityMap[activity] || activity
   }
 
   const getActivityColor = (activity) => {
     const colorMap = {
-      high: 'bg-green-100 text-green-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      low: 'bg-orange-100 text-orange-800',
+      active: 'bg-green-100 text-green-800',
       inactive: 'bg-gray-100 text-gray-800'
     }
     return colorMap[activity] || 'bg-gray-100 text-gray-800'
@@ -366,11 +362,9 @@ export default function ArchivesPage() {
               onChange={(e) => setSearchActivity(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
-              <option value="">全部活跃度</option>
-              <option value="high">高活跃</option>
-              <option value="medium">中活跃</option>
-              <option value="low">低活跃</option>
-              <option value="inactive">不活跃</option>
+              <option value="">全部状态</option>
+              <option value="active">活跃</option>
+              <option value="inactive">非活跃</option>
             </select>
           </div>
         </div>
@@ -452,9 +446,9 @@ export default function ArchivesPage() {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">高活跃档案</p>
+              <p className="text-sm font-medium text-gray-500">活跃档案</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {allArchives.filter(a => a.activity === 'high').length}
+                {allArchives.filter(a => a.activity === 'active').length}
               </p>
             </div>
           </div>
@@ -486,7 +480,7 @@ export default function ArchivesPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">活跃用户</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {new Set(allArchives.filter(a => a.activity !== 'inactive').map(a => a.userId)).size}
+                {new Set(allArchives.filter(a => a.activity === 'active').map(a => a.userId)).size}
               </p>
             </div>
           </div>
@@ -529,7 +523,7 @@ export default function ArchivesPage() {
                   档案名称
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  档案活跃度
+                  档案状态
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   拍照数量
@@ -699,16 +693,14 @@ export default function ArchivesPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">档案活跃度</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">档案状态</label>
                   <select
                     value={formData.activity}
                     onChange={(e) => handleInputChange('activity', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
-                    <option value="high">高活跃</option>
-                    <option value="medium">中活跃</option>
-                    <option value="low">低活跃</option>
-                    <option value="inactive">不活跃</option>
+                    <option value="active">活跃</option>
+                    <option value="inactive">非活跃</option>
                   </select>
                 </div>
                 
@@ -806,7 +798,7 @@ export default function ArchivesPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">档案活跃度</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">档案状态</label>
                   <div className="px-3 py-2">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActivityColor(viewingArchive.activity || 'inactive')}`}>
                       {getActivityText(viewingArchive.activity || 'inactive')}
