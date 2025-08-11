@@ -31,6 +31,12 @@ export function verifyToken(token) {
 
 // 管理员认证中间件
 export async function adminAuthMiddleware(request) {
+  // 开发环境下跳过认证
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 开发环境：跳过管理员认证')
+    return { userId: 'admin', role: 'admin' }
+  }
+  
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   
   if (!token) {

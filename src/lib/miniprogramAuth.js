@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
+import { prisma } from './db.js'
 
 // 微信小程序认证中间件
 export function miniprogramAuthMiddleware(handler) {
   return async (request, context = {}) => {
-    let prisma = null
     try {
       // 开发环境下临时跳过认证（用于测试）
       if (process.env.NODE_ENV === 'development') {
         console.log('🔧 开发环境：临时跳过认证')
-        
-        const { PrismaClient } = await import('../generated/prisma/index.js')
-        prisma = new PrismaClient()
         
         // 从请求头获取 openid
         const openidHeader = request.headers.get('x-openid')
@@ -100,9 +97,6 @@ export function miniprogramAuthMiddleware(handler) {
       if (process.env.NODE_ENV === 'production') {
         console.log('🔧 生产环境：跳过认证，使用 openid 查找用户')
         
-        const { PrismaClient } = await import('../generated/prisma/index.js')
-        prisma = new PrismaClient()
-        
         // 从请求头获取 openid
         const openidHeader = request.headers.get('x-openid')
         
@@ -159,9 +153,6 @@ export function miniprogramAuthMiddleware(handler) {
         console.log('🔐 使用 openid 认证:', openidHeader)
         
         // 根据 openid 查找微信用户
-        const { PrismaClient } = await import('../generated/prisma/index.js')
-        prisma = new PrismaClient()
-        
         const wechatUser = await prisma.wechatUser.findUnique({
           where: { openid: openidHeader }
         })
@@ -202,9 +193,6 @@ export function miniprogramAuthMiddleware(handler) {
           const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
           
           // 根据 token 中的信息查找微信用户
-          const { PrismaClient } = await import('../generated/prisma/index.js')
-          prisma = new PrismaClient()
-          
           const wechatUser = await prisma.wechatUser.findUnique({
             where: { id: decoded.userId }
           })
@@ -265,15 +253,6 @@ export function miniprogramAuthMiddleware(handler) {
         { error: '认证失败', code: 500 },
         { status: 500 }
       )
-    } finally {
-      // 确保 Prisma 连接被正确关闭
-      if (prisma) {
-        try {
-          await prisma.$disconnect()
-        } catch (error) {
-          console.error('关闭 Prisma 连接失败:', error)
-        }
-      }
     }
   }
 }

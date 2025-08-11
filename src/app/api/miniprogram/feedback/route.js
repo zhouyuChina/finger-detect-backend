@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '../../../../../src/generated/prisma/index.js'
+import { prisma } from '../../../../../src/lib/db.js'
 import { rateLimitMiddleware } from '../../../../../src/lib/middleware.js'
 import { miniprogramAuthMiddleware } from '../../../../../src/lib/miniprogramAuth.js'
-
-const prisma = new PrismaClient()
 
 // 提交反馈
 async function submitFeedback(request, context) {
@@ -103,14 +101,6 @@ async function submitFeedback(request, context) {
       { success: false, message: '提交失败，请稍后重试' },
       { status: 500 }
     )
-  } finally {
-    if (prisma) {
-      try {
-        await prisma.$disconnect()
-      } catch (error) {
-        console.error('关闭 Prisma 连接失败:', error)
-      }
-    }
   }
 }
 
@@ -203,14 +193,6 @@ async function getFeedbackList(request, context) {
       { success: false, message: '获取数据失败' },
       { status: 500 }
     )
-  } finally {
-    if (prisma) {
-      try {
-        await prisma.$disconnect()
-      } catch (error) {
-        console.error('关闭 Prisma 连接失败:', error)
-      }
-    }
   }
 }
 
