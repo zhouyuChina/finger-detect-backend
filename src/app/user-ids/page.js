@@ -143,10 +143,9 @@ export default function UserIdsPage() {
               onChange={(e) => setSearchStatus(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             >
-              <option value="">全部状态</option>
+              <option value="">全部</option>
               <option value="active">活跃</option>
               <option value="inactive">非活跃</option>
-              <option value="pending">待审核</option>
             </select>
           </div>
           <div className="flex items-end space-x-2">
@@ -305,11 +304,9 @@ export default function UserIdsPage() {
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           wechatUser.status === 'active' 
                             ? 'bg-green-100 text-green-800' 
-                            : wechatUser.status === 'inactive'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
                         }`}>
-                          {wechatUser.status === 'active' ? '活跃' : wechatUser.status === 'inactive' ? '非活跃' : '待审核'}
+                          {wechatUser.status === 'active' ? '活跃' : '非活跃'}
                         </span>
                       </td>
 
