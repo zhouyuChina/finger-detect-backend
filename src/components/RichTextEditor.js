@@ -22,10 +22,8 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
       .then(response => response.json())
       .then(result => {
         if (result.success) {
-          // TinyMCE 需要返回包含 location 属性的对象
-          resolve({
-            location: result.data.url
-          })
+          // TinyMCE 需要直接返回URL字符串
+          resolve(result.data.url)
         } else {
           reject(result.message || '上传失败')
         }
