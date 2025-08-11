@@ -260,12 +260,12 @@ export default function UserIdsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   序号
                 </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  微信账号
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   微信名
                 </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      身份
-                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       活跃状态
                     </th>
@@ -296,13 +296,10 @@ export default function UserIdsPage() {
                         {startIndex + index + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{wechatUser.nickname || '未知用户'}</div>
-                        <div className="text-sm text-gray-500">{wechatUser.openid}</div>
+                        <div className="text-sm font-medium text-gray-900">{wechatUser.openid || '未知账号'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                          微信用户
-                        </span>
+                        <div className="text-sm font-medium text-gray-900">{wechatUser.nickname || '未知用户'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
