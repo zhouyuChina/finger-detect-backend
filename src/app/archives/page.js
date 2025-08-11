@@ -663,11 +663,11 @@ export default function ArchivesPage() {
                     </button>
                     <button 
                       onClick={() => {
-                        const archiveName = archive.archiveName || ''
-                        if (archiveName) {
-                          router.push(`/detections?searchUserId=${encodeURIComponent(archiveName)}`)
+                        const archiveId = archive.id || ''
+                        if (archiveId) {
+                          router.push(`/detections?archiveId=${encodeURIComponent(archiveId)}`)
                         } else {
-                          alert('该档案没有档案名称信息')
+                          alert('该档案没有档案ID信息')
                         }
                       }}
                       className="text-purple-600 hover:text-purple-900 mr-3"

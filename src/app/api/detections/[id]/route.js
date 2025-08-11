@@ -4,7 +4,7 @@ import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../../src/lib
 
 const prisma = new PrismaClient()
 
-// 获取单个检测记录信息
+// 获取单个检测报告详情
 export async function GET(request, { params }) {
   try {
     // 速率限制
@@ -17,8 +17,23 @@ export async function GET(request, { params }) {
 
     const { id } = await params
 
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: '缺少检测记录ID' },
+        { status: 400 }
+      )
+    }
+
+    // 查询检测记录详情
     const detection = await prisma.detection.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        subUser: {
+          include: {
+            wechatUser: true
+          }
+        }
+      }
     })
 
     if (!detection) {
@@ -28,80 +43,33 @@ export async function GET(request, { params }) {
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      data: detection
-    })
-  } catch (error) {
-    console.error('获取检测记录信息失败:', error)
-    return NextResponse.json(
-      { success: false, message: '获取数据失败' },
-      { status: 500 }
-    )
-  }
-}
-
-// 更新检测记录信息
-export async function PUT(request, { params }) {
-  try {
-    // 速率限制
-    const rateLimitResult = await rateLimitMiddleware(request)
-    if (rateLimitResult) return rateLimitResult
-
-    // 管理员认证
-    const authResult = await adminAuthMiddleware(request)
-    if (authResult && authResult.error) return authResult
-
-    const { id } = await params
-    const body = await request.json()
-
-    const {
-      userId,
-      userNickname,
-      archiveName,
-      bodyPart,
-      imageUrl,
-      result,
-      confidence,
-      status
-    } = body
-
-    // 检查检测记录是否存在
-    const existingDetection = await prisma.detection.findUnique({
-      where: { id }
-    })
-
-    if (!existingDetection) {
-      return NextResponse.json(
-        { success: false, message: '检测记录不存在' },
-        { status: 404 }
-      )
+    // 转换数据格式
+    const formattedDetection = {
+      id: detection.id,
+      openid: detection.subUser?.wechatUser?.openid || '未知',
+      userName: detection.subUser?.realName || detection.subUser?.wechatUser?.nickname || '未知',
+      archiveName: detection.archiveName,
+      archiveId: detection.archiveId || '未知',
+      imageUrl: detection.imageUrl,
+      result: detection.result,
+      confidence: detection.confidence,
+      status: detection.status,
+      detectionTime: detection.detectionTime,
+      createdAt: detection.createdAt,
+      updatedAt: detection.updatedAt,
+      remark: detection.remark,
+      detectionType: detection.detectionType,
+      errorMsg: detection.errorMsg
     }
 
-    // 更新检测记录信息
-    const updatedDetection = await prisma.detection.update({
-      where: { id },
-      data: {
-        userId,
-        userNickname,
-        archiveName,
-        bodyPart,
-        imageUrl,
-        result,
-        confidence,
-        status
-      }
-    })
-
     return NextResponse.json({
       success: true,
-      message: '检测记录信息更新成功',
-      data: updatedDetection
+      data: formattedDetection
     })
   } catch (error) {
-    console.error('更新检测记录信息失败:', error)
+    console.error('获取检测记录详情失败:', error)
     return NextResponse.json(
-      { success: false, message: '更新失败' },
+      { success: false, message: '获取数据失败' },
       { status: 500 }
     )
   }
@@ -119,6 +87,13 @@ export async function DELETE(request, { params }) {
     if (authResult && authResult.error) return authResult
 
     const { id } = await params
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: '缺少检测记录ID' },
+        { status: 400 }
+      )
+    }
 
     // 检查检测记录是否存在
     const existingDetection = await prisma.detection.findUnique({

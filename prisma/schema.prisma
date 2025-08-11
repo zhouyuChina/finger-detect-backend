@@ -140,9 +140,11 @@ model Detection {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   archiveName   String
+  archiveId     String?
   detectionTime DateTime @default(now())
   detectionType String   @default("left_hand_thumb")
   remark        String?
+  isFirstReport Boolean  @default(false)
   subUserId     String
   subUser       SubUser  @relation(fields: [subUserId], references: [id], onDelete: Cascade)
 

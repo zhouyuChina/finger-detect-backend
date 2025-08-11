@@ -18,36 +18,35 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
     const pageSize = parseInt(searchParams.get('pageSize')) || 10
-    const userId = searchParams.get('userId') || ''
-    const userNickname = searchParams.get('userNickname') || ''
-    const archiveName = searchParams.get('archiveName') || ''
-    const bodyPart = searchParams.get('bodyPart') || ''
+    const openid = searchParams.get('openid') || ''
+    const userName = searchParams.get('userName') || ''
+    const archiveId = searchParams.get('archiveId') || ''
 
     const skip = (page - 1) * pageSize
 
     // 构建查询条件
-    const where = {}
-    
-    if (archiveName) {
-      where.archiveName = { contains: archiveName, mode: 'insensitive' }
+    const where = {
+      isFirstReport: true  // 只查询有检测报告的记录
     }
     
-    if (bodyPart) {
-      where.detectionType = bodyPart
+    if (archiveId) {
+      where.archiveId = archiveId
     }
 
-    // 如果搜索用户ID或昵称，需要关联查询
-    if (userId || userNickname) {
+    // 如果搜索 openid 或 userName，需要关联查询
+    if (openid || userName) {
       where.subUser = {}
-      if (userId) {
-        where.subUser.username = { contains: userId, mode: 'insensitive' }
+      if (openid) {
+        where.subUser.wechatUser = {
+          openid: { contains: openid, mode: 'insensitive' }
+        }
       }
-      if (userNickname) {
-        where.subUser.realName = { contains: userNickname, mode: 'insensitive' }
+      if (userName) {
+        where.subUser.realName = { contains: userName, mode: 'insensitive' }
       }
     }
 
-    // 查询数据，包含关联的用户信息
+    // 查询数据，包含关联的用户信息和档案信息
     const [detections, total] = await Promise.all([
       prisma.detection.findMany({
         where,
@@ -68,17 +67,18 @@ export async function GET(request) {
     // 转换数据格式以匹配前端期望
     const formattedDetections = detections.map(detection => ({
       id: detection.id,
-      userId: detection.subUser?.username || '未知',
-      userNickname: detection.subUser?.realName || '未知',
+      openid: detection.subUser?.wechatUser?.openid || '未知',
+      userName: detection.subUser?.realName || detection.subUser?.wechatUser?.nickname || '未知',
       archiveName: detection.archiveName,
-      bodyPart: detection.detectionType,
+      archiveId: detection.archiveId || '未知',
       imageUrl: detection.imageUrl,
       result: detection.result,
       confidence: detection.confidence,
       status: detection.status,
       detectionTime: detection.detectionTime,
       createdAt: detection.createdAt,
-      updatedAt: detection.updatedAt
+      updatedAt: detection.updatedAt,
+      isFirstReport: detection.isFirstReport
     }))
 
     return NextResponse.json({
@@ -137,6 +137,9 @@ export async function POST(request) {
     let subUser = await prisma.subUser.findFirst({
       where: {
         username: userId
+      },
+      include: {
+        wechatUser: true
       }
     })
 
@@ -283,11 +286,13 @@ export async function POST(request) {
       data: {
         subUserId: subUser.id,
         archiveName,
+        archiveId: archive.id,
         detectionType: bodyPart,
         imageUrl: imageUrl || '',
         result: result || '',
         confidence: confidence || 0,
-        status: status || 'completed'
+        status: status || 'completed',
+        isFirstReport: true  // 标记为首次报告
       }
     })
 
@@ -310,10 +315,10 @@ export async function POST(request) {
     // 转换数据格式
     const formattedDetection = {
       id: detection.id,
-      userId: subUser.username,
-      userNickname: subUser.realName,
+      openid: subUser.wechatUser?.openid || '未知',
+      userName: subUser.realName || subUser.wechatUser?.nickname || '未知',
       archiveName: detection.archiveName,
-      bodyPart: detection.detectionType,
+      archiveId: detection.archiveId || '未知',
       imageUrl: detection.imageUrl,
       result: detection.result,
       confidence: detection.confidence,

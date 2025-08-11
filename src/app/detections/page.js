@@ -7,13 +7,13 @@ export default function DetectionsPage() {
   const searchParams = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [searchUserId, setSearchUserId] = useState('')
-  const [searchUserNickname, setSearchUserNickname] = useState('')
-  const [searchArchiveName, setSearchArchiveName] = useState('')
-  const [searchBodyPart, setSearchBodyPart] = useState('')
+  const [searchOpenid, setSearchOpenid] = useState('')
+  const [searchUserName, setSearchUserName] = useState('')
+  const [searchArchiveId, setSearchArchiveId] = useState('')
   const [allDetections, setAllDetections] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
   
   // 从数据库获取检测记录数据
   const fetchDetections = async () => {
@@ -22,10 +22,9 @@ export default function DetectionsPage() {
       const params = new URLSearchParams({
         page: currentPage,
         pageSize,
-        userId: searchUserId,
-        userNickname: searchUserNickname,
-        archiveName: searchArchiveName,
-        bodyPart: searchBodyPart
+        openid: searchOpenid,
+        userName: searchUserName,
+        archiveId: searchArchiveId
       })
       
       const response = await fetch(`/api/detections?${params}`)
@@ -51,13 +50,26 @@ export default function DetectionsPage() {
   // 使用useEffect获取数据
   useEffect(() => {
     fetchDetections()
-  }, [currentPage, pageSize, searchUserId, searchUserNickname, searchArchiveName, searchBodyPart])
+  }, [currentPage, pageSize, searchOpenid, searchUserName, searchArchiveId])
 
   // 处理URL参数
   useEffect(() => {
-    const searchUserIdParam = searchParams.get('searchUserId')
-    if (searchUserIdParam) {
-      setSearchUserNickname(searchUserIdParam)
+    const searchOpenidParam = searchParams.get('searchOpenid')
+    const userNameParam = searchParams.get('userName')
+    const archiveIdParam = searchParams.get('archiveId')
+    
+    if (searchOpenidParam) {
+      setSearchOpenid(searchOpenidParam)
+      setCurrentPage(1)
+    }
+    
+    if (userNameParam) {
+      setSearchUserName(userNameParam)
+      setCurrentPage(1)
+    }
+    
+    if (archiveIdParam) {
+      setSearchArchiveId(archiveIdParam)
       setCurrentPage(1)
     }
   }, [searchParams])
@@ -82,10 +94,9 @@ export default function DetectionsPage() {
   }
 
   const handleReset = () => {
-    setSearchUserId('')
-    setSearchUserNickname('')
-    setSearchArchiveName('')
-    setSearchBodyPart('')
+    setSearchOpenid('')
+    setSearchUserName('')
+    setSearchArchiveId('')
     setCurrentPage(1)
   }
 
@@ -118,27 +129,57 @@ export default function DetectionsPage() {
     }
   }
 
-  const getBodyPartText = (bodyPart) => {
-    const bodyPartMap = {
-      finger: '指纹',
-      palm: '掌纹',
-      face: '人脸',
-      iris: '虹膜',
-      voice: '声纹'
+  const handleExportReport = async (detectionId) => {
+    try {
+      const response = await fetch('/api/detections/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getLocalStorage('token') || ''}`
+        },
+        body: JSON.stringify({
+          detectionId: detectionId
+        })
+      })
+
+      if (response.ok) {
+        // 获取文件名
+        const contentDisposition = response.headers.get('Content-Disposition')
+        let filename = '检测报告.zip'
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+          if (filenameMatch) {
+            filename = filenameMatch[1]
+          }
+        }
+
+        // 下载文件
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        alert('导出成功！')
+      } else {
+        const result = await response.json()
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          alert(result.message || '导出失败')
+        }
+      }
+    } catch (err) {
+      alert('网络错误，请重试')
     }
-    return bodyPartMap[bodyPart] || bodyPart
   }
 
-  const getBodyPartColor = (bodyPart) => {
-    const colorMap = {
-      finger: 'bg-blue-100 text-blue-800',
-      palm: 'bg-purple-100 text-purple-800',
-      face: 'bg-pink-100 text-pink-800',
-      iris: 'bg-indigo-100 text-indigo-800',
-      voice: 'bg-teal-100 text-teal-800'
-    }
-    return colorMap[bodyPart] || 'bg-gray-100 text-gray-800'
-  }
+
 
   // 获取localStorage的辅助函数
   const getLocalStorage = (key) => {
@@ -153,59 +194,44 @@ export default function DetectionsPage() {
       {/* 页面标题 */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">检测记录</h1>
-          <p className="text-gray-600">管理用户检测记录信息</p>
+          <h1 className="text-2xl font-bold text-gray-900">检测报告</h1>
+          <p className="text-gray-600">管理用户检测报告信息（每个档案的首次检测报告）</p>
         </div>
       </div>
 
       {/* 搜索条件 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">搜索条件</h3>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
-              value={searchUserId}
-              onChange={(e) => setSearchUserId(e.target.value)}
+              value={searchOpenid}
+              onChange={(e) => setSearchOpenid(e.target.value)}
               placeholder="请输入所属ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">用户昵称</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">用户名称</label>
             <input
               type="text"
-              value={searchUserNickname}
-              onChange={(e) => setSearchUserNickname(e.target.value)}
-              placeholder="请输入用户昵称"
+              value={searchUserName}
+              onChange={(e) => setSearchUserName(e.target.value)}
+              placeholder="请输入用户名称"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">档案名称</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">档案ID</label>
             <input
               type="text"
-              value={searchArchiveName}
-              onChange={(e) => setSearchArchiveName(e.target.value)}
-              placeholder="请输入档案名称"
+              value={searchArchiveId}
+              onChange={(e) => setSearchArchiveId(e.target.value)}
+              placeholder="请输入档案ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">检测部位</label>
-            <select
-              value={searchBodyPart}
-              onChange={(e) => setSearchBodyPart(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            >
-              <option value="">全部部位</option>
-              <option value="finger">指纹</option>
-              <option value="palm">掌纹</option>
-              <option value="face">人脸</option>
-              <option value="iris">虹膜</option>
-              <option value="voice">声纹</option>
-            </select>
           </div>
           <div className="flex items-end space-x-2">
             <button
@@ -230,11 +256,11 @@ export default function DetectionsPage() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                <span className="text-white text-lg">🔍</span>
+                <span className="text-white text-lg">📋</span>
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">总检测数</p>
+              <p className="text-sm font-medium text-gray-500">总报告数</p>
               <p className="text-2xl font-semibold text-gray-900">{totalDetections}</p>
             </div>
           </div>
@@ -250,7 +276,7 @@ export default function DetectionsPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">活跃用户</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {new Set(allDetections.map(d => d.userId)).size}
+                {new Set(allDetections.map(d => d.openid)).size}
               </p>
             </div>
           </div>
@@ -261,7 +287,7 @@ export default function DetectionsPage() {
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">检测记录列表</h2>
+            <h2 className="text-lg font-semibold text-gray-900">检测报告列表</h2>
             <div className="flex items-center space-x-4">
               <select
                 value={pageSize}
@@ -281,16 +307,19 @@ export default function DetectionsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  序号
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   所属ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  用户昵称
+                  用户名称
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   档案名称
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  检测部位
+                  档案ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   检测时间
@@ -301,47 +330,48 @@ export default function DetectionsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {isLoading ? (
+                            {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">加载中...</td>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">加载中...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-red-600">{error}</td>
+                  <td colSpan="7" className="px-6 py-4 text-center text-red-600">{error}</td>
                 </tr>
               ) : currentDetections.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">暂无检测记录</td>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">暂无检测报告</td>
                 </tr>
               ) : (
-                currentDetections.map((detection) => (
-                  <tr key={detection.id} className="hover:bg-gray-50">
+              currentDetections.map((detection, index) => (
+                <tr key={detection.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{startIndex + index + 1}</div>
+                  </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{detection.userId}</div>
+                      <div className="text-sm font-medium text-gray-900">{detection.openid}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{detection.userNickname}</div>
+                      <div className="text-sm text-gray-900">{detection.userName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{detection.archiveName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(detection.bodyPart)}`}>
-                        {getBodyPartText(detection.bodyPart)}
-                      </span>
+                      <div className="text-sm font-medium text-gray-900">{detection.archiveId}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(detection.detectionTime).toLocaleString('zh-CN')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button 
-                        onClick={() => console.log('查看报告功能待实现')}
+                        onClick={() => router.push(`/detections/${detection.id}`)}
                         className="text-blue-600 hover:text-blue-900 mr-3"
                       >
                         查看报告
                       </button>
                       <button 
-                        onClick={() => console.log('导出报告功能待实现')}
+                        onClick={() => handleExportReport(detection.id)}
                         className="text-green-600 hover:text-green-900 mr-3"
                       >
                         导出报告
