@@ -205,6 +205,7 @@ async function createArchive(request) {
     prisma = new PrismaClient()
 
     // 1. 验证子用户是否属于当前微信用户
+    
     const subUser = await prisma.subUser.findFirst({
       where: {
         id: subUserId,

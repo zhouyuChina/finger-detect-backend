@@ -10,6 +10,8 @@ async function getNews(request) {
     const limit = parseInt(searchParams.get('limit')) || 10
     const category = searchParams.get('category')
     const search = searchParams.get('search') || ''
+    const isTop = searchParams.get('isTop')
+    const types = searchParams.get('types')
     
     // 创建 PrismaClient 实例
     const { PrismaClient } = await import('../../../../generated/prisma/index.js')
@@ -31,6 +33,27 @@ async function getNews(request) {
       ]
     }
     
+    // 处理置顶筛选
+    if (isTop === 'true') {
+      where.types = {
+        has: '置顶'
+      }
+    }
+    
+    // 处理types筛选
+    if (types) {
+      try {
+        const typesArray = JSON.parse(decodeURIComponent(types))
+        if (Array.isArray(typesArray) && typesArray.length > 0) {
+          where.types = {
+            hasSome: typesArray
+          }
+        }
+      } catch (error) {
+        console.log('解析types参数失败:', error.message)
+      }
+    }
+    
     // 从数据库获取已发布的资讯
     const [news, total] = await Promise.all([
       prisma.news.findMany({
@@ -49,6 +72,7 @@ async function getNews(request) {
           author: true,
           category: true,
           tags: true,
+          types: true,
           viewCount: true,
           isPublished: true,
           publishedAt: true,
@@ -67,11 +91,23 @@ async function getNews(request) {
       author: item.author,
       category: item.category,
       tags: item.tags || [],
+      types: item.types || [], // 返回实际的types字段
       readCount: item.viewCount || 0, // 兼容字段名
-      types: [], // 暂时为空数组，后续可以添加类型字段
       publishedAt: item.publishedAt?.toISOString(),
       createdAt: item.createdAt?.toISOString()
     }))
+    
+    // 对结果进行排序：置顶的排在前面
+    processedNews.sort((a, b) => {
+      const aIsTop = a.types.includes('置顶')
+      const bIsTop = b.types.includes('置顶')
+      
+      if (aIsTop && !bIsTop) return -1
+      if (!aIsTop && bIsTop) return 1
+      
+      // 如果都是置顶或都不是置顶，按发布时间排序
+      return new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt)
+    })
 
     const totalPages = Math.ceil(total / limit)
 

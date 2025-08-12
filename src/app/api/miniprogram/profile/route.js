@@ -101,4 +101,7 @@ async function getUserProfile(request) {
 }
 
 // 使用微信小程序认证中间件
-export const GET = miniprogramAuthMiddleware(getUserProfile) 
+export const GET = miniprogramAuthMiddleware(getUserProfile)
+
+// 添加POST方法支持（与GET方法功能相同）
+export const POST = miniprogramAuthMiddleware(getUserProfile) 

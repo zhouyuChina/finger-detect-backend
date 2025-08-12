@@ -162,7 +162,8 @@ export async function POST(request) {
             wechatUserId: wechatUser.id,
             username: selfUsername,
             realName: nickname || wechatUser.nickname || '微信用户',
-            status: 'active'
+            status: 'active',
+            isDefault: true
           }
         })
         
@@ -247,7 +248,8 @@ export async function POST(request) {
         wechatUserId: wechatUser.id,
         username: selfUsername,
         realName: nickname || '微信用户',
-        status: 'active'
+        status: 'active',
+        isDefault: true
       }
     })
 

@@ -46,6 +46,7 @@ model SubUser {
   gender       String?
   address      String?
   status       String       @default("active")
+  isDefault    Boolean      @default(false)
   archives     Int          @default(0)
   photos       Int          @default(0)
   reports      Int          @default(0)
