@@ -67,6 +67,40 @@ async function convertImageToBase64(imageUrl) {
   }
 }
 
+// 保存base64图片到服务器
+async function saveBase64Image(base64Data, subUserId, detectionType) {
+  try {
+    const { writeFile, mkdir } = await import('node:fs/promises')
+    const { join } = await import('node:path')
+    
+    // 创建上传目录
+    const uploadDir = join(process.cwd(), 'public', 'uploads', 'detections')
+    try {
+      await mkdir(uploadDir, { recursive: true })
+    } catch (error) {
+      console.log('上传目录已存在')
+    }
+    
+    // 生成文件名
+    const timestamp = Date.now()
+    const fileName = `detection_${subUserId}_${detectionType}_${timestamp}.jpg`
+    const filePath = join(uploadDir, fileName)
+    
+    // 将base64转换为buffer并写入文件
+    const buffer = Buffer.from(base64Data, 'base64')
+    await writeFile(filePath, buffer)
+    
+    // 生成可访问的URL
+    const imageUrl = `/uploads/detections/${fileName}`
+    
+    console.log('✅ base64图片保存成功:', imageUrl)
+    return imageUrl
+  } catch (error) {
+    console.error('❌ 保存base64图片失败:', error)
+    throw error
+  }
+}
+
 // 创建真实检测记录
 async function createRealDetection(request) {
   let prisma = null
@@ -144,11 +178,20 @@ async function createRealDetection(request) {
 
     // 3. 获取base64图片
     let base64Img
+    let savedImageUrl = imageUrl // 默认使用原始URL
+    
     if (base64Image) {
       console.log('🔄 使用直接传递的base64图片...')
       // 移除data:image/jpeg;base64,前缀（如果存在）
       base64Img = base64Image.replace(/^data:image\/[a-z]+;base64,/, '')
       console.log('✅ base64图片处理完成，长度:', base64Img.length)
+      
+      // 如果是base64图片，需要保存到服务器
+      if (shouldSaveToDatabase) {
+        console.log('💾 保存base64图片到服务器...')
+        savedImageUrl = await saveBase64Image(base64Img, subUserId, detectionType)
+        console.log('✅ 图片保存成功:', savedImageUrl)
+      }
     } else {
       console.log('🔄 开始转换图片URL为base64...')
       base64Img = await convertImageToBase64(imageUrl)
@@ -228,7 +271,7 @@ async function createRealDetection(request) {
           archiveId: archive.id,
           archiveName: archive.archiveName,
           detectionType: detectionType,
-          imageUrl: imageUrl,
+          imageUrl: savedImageUrl, // 使用保存后的图片URL
           result: finalResult,
           confidence: parseFloat(detectionResult.model_results?.fusion?.confidence?.replace('%', '') || '0') / 100,
           status: 'completed',
@@ -260,7 +303,7 @@ async function createRealDetection(request) {
       thirdPartyResult: {
         final_result: finalResult,
         model_results: detectionResult.model_results,
-        imageUrl: imageUrl,
+        imageUrl: savedImageUrl, // 使用保存后的图片URL
         detectionType: detectionType,
         timestamp: new Date().toISOString()
       },
