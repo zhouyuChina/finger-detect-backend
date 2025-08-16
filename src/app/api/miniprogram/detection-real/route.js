@@ -40,6 +40,11 @@ async function callRealDetectionService(base64Img) {
 // 将图片URL转换为base64
 async function convertImageToBase64(imageUrl) {
   try {
+    // 检查是否是微信小程序临时文件
+    if (imageUrl.startsWith('wxfile://') || imageUrl.startsWith('http://tmp/')) {
+      throw new Error('微信小程序临时文件无法从服务器访问，请使用base64Image参数')
+    }
+    
     // 使用配置文件获取完整的图片URL
     const fullUrl = config.getImageUrl(imageUrl)
     
@@ -73,12 +78,17 @@ async function createRealDetection(request) {
       subUserId,
       archiveId, 
       detectionType = 'left_hand_thumb',
-      imageUrl
+      imageUrl,      // 方式1：图片URL
+      base64Image    // 方式2：直接base64图片
     } = body
 
     // 验证必填字段
-    if (!subUserId || !archiveId || !imageUrl) {
-      return createErrorResponse('子用户ID、档案ID和图片URL为必填项', 400)
+    if (!subUserId || !archiveId) {
+      return createErrorResponse('子用户ID和档案ID为必填项', 400)
+    }
+    
+    if (!imageUrl && !base64Image) {
+      return createErrorResponse('图片URL或base64图片为必填项', 400)
     }
 
     // 验证检测类型
@@ -132,10 +142,18 @@ async function createRealDetection(request) {
 
     console.log('✅ 找到档案:', existingArchive.archiveName)
 
-    // 3. 转换图片为base64
-    console.log('🔄 开始转换图片为base64...')
-    const base64Img = await convertImageToBase64(imageUrl)
-    console.log('✅ 图片转换完成')
+    // 3. 获取base64图片
+    let base64Img
+    if (base64Image) {
+      console.log('🔄 使用直接传递的base64图片...')
+      // 移除data:image/jpeg;base64,前缀（如果存在）
+      base64Img = base64Image.replace(/^data:image\/[a-z]+;base64,/, '')
+      console.log('✅ base64图片处理完成，长度:', base64Img.length)
+    } else {
+      console.log('🔄 开始转换图片URL为base64...')
+      base64Img = await convertImageToBase64(imageUrl)
+      console.log('✅ 图片转换完成')
+    }
 
     // 4. 调用第三方检测服务
     console.log('🔄 开始调用第三方检测服务...')
