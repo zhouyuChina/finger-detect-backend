@@ -258,7 +258,7 @@ export async function POST(request) {
           archiveName,
           bodyPart: bodyPart,
           activity: 'medium',
-          photoCount: 1,
+          photoCount: 0,
           detectionTime: new Date()
         }
       })

@@ -253,7 +253,7 @@ async function createArchive(request) {
         archiveName,
         bodyPart,
         activity: 'high', // 使用 activity 替代 status
-        photoCount: 1, // 使用 photoCount 替代 totalDetections
+        photoCount: 0, // 使用 photoCount 替代 totalDetections
         detectionTime: new Date() // 使用 detectionTime 替代 startDate
       },
       select: {
@@ -297,11 +297,14 @@ async function createArchive(request) {
       })
     }
 
-    // 5. 更新档案的最后检测时间（如果有检测记录）
+    // 5. 更新档案的最后检测时间和照片数量（如果有检测记录）
     if (newDetection) {
       await prisma.archive.update({
         where: { id: newArchive.id },
-        data: { detectionTime: new Date() }
+        data: { 
+          detectionTime: new Date(),
+          photoCount: 1 // 创建检测记录后，照片数量为1
+        }
       })
     }
 

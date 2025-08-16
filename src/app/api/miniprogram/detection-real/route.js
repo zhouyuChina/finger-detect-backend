@@ -186,7 +186,9 @@ async function createRealDetection(request) {
         archive = await prisma.archive.update({
           where: { id: existingArchive.id },
           data: {
-            photoCount: existingDetections.length + 1,
+            photoCount: {
+              increment: 1
+            },
             detectionTime: new Date()
           }
         })
@@ -195,7 +197,7 @@ async function createRealDetection(request) {
         archive = await prisma.archive.update({
           where: { id: existingArchive.id },
           data: {
-            photoCount: 1,
+            photoCount: 1, // 创建第一个检测记录，照片数量为1
             detectionTime: new Date()
           }
         })

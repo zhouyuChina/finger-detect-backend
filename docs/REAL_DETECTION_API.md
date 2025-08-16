@@ -154,7 +154,7 @@
     "archive": {
       "id": "cmdw3r532000splzxlhr67jtc",
       "archiveName": "张三检测1",
-      "photoCount": 1,
+              "photoCount": 1, // 创建第一个检测记录后，照片数量为1
       "detectionTime": "2024-01-15T10:30:00.000Z",
       "createdAt": "2024-01-15T10:30:00.000Z"
     },
