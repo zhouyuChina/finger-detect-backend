@@ -1,0 +1,278 @@
+import { NextResponse } from 'next/server'
+import { miniprogramAuthMiddleware, createSuccessResponse, createErrorResponse } from '../../../../lib/miniprogramAuth.js'
+import config from '../../../../lib/config.js'
+
+// 调用真实的第三方检测服务
+async function callRealDetectionService(base64Img) {
+  console.log('🤖 调用真实第三方检测服务')
+  
+  try {
+    const response = await fetch(config.detectionService.fullUrl(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        base64_img: base64Img
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const result = await response.json()
+    console.log('✅ 第三方检测服务返回结果:', result)
+    
+    return {
+      success: true,
+      data: result
+    }
+  } catch (error) {
+    console.error('❌ 调用第三方检测服务失败:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// 将图片URL转换为base64
+async function convertImageToBase64(imageUrl) {
+  try {
+    // 使用配置文件获取完整的图片URL
+    const fullUrl = config.getImageUrl(imageUrl)
+    
+    console.log('🔄 开始转换图片为base64:', fullUrl)
+    
+    const response = await fetch(fullUrl)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status}`)
+    }
+    
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const base64 = buffer.toString('base64')
+    
+    console.log('✅ 图片转换为base64成功，长度:', base64.length)
+    return base64
+  } catch (error) {
+    console.error('❌ 图片转换base64失败:', error)
+    throw error
+  }
+}
+
+// 创建真实检测记录
+async function createRealDetection(request) {
+  let prisma = null
+  try {
+    console.log('➕ 创建真实检测记录接口被调用')
+    
+    const body = await request.json()
+    const { 
+      subUserId,
+      archiveId, 
+      detectionType = 'left_hand_thumb',
+      imageUrl
+    } = body
+
+    // 验证必填字段
+    if (!subUserId || !archiveId || !imageUrl) {
+      return createErrorResponse('子用户ID、档案ID和图片URL为必填项', 400)
+    }
+
+    // 验证检测类型
+    const validTypes = [
+      'left_hand_thumb', 'left_hand_index', 'left_hand_middle', 'left_hand_ring', 'left_hand_little',
+      'right_hand_thumb', 'right_hand_index', 'right_hand_middle', 'right_hand_ring', 'right_hand_little',
+      'left_foot_big', 'left_foot_second', 'left_foot_third', 'left_foot_fourth', 'left_foot_little',
+      'right_foot_big', 'right_foot_second', 'right_foot_third', 'right_foot_fourth', 'right_foot_little'
+    ]
+    if (!validTypes.includes(detectionType)) {
+      return createErrorResponse('检测类型无效', 400)
+    }
+
+    // 创建 PrismaClient 实例
+    const { PrismaClient } = await import('../../../../generated/prisma/index.js')
+    prisma = new PrismaClient()
+
+    // 1. 验证子用户是否属于当前微信用户
+    const subUser = await prisma.subUser.findFirst({
+      where: {
+        id: subUserId,
+        wechatUserId: request.user.id,
+        status: 'active'
+      },
+      select: {
+        id: true,
+        username: true,
+        realName: true
+      }
+    })
+
+    if (!subUser) {
+      console.log('❌ 子用户不存在或无权限，微信用户ID:', request.user.id, '子用户ID:', subUserId)
+      return createErrorResponse('用户不存在或无权限操作', 404)
+    }
+
+    console.log('✅ 验证子用户权限成功:', subUser.realName)
+
+    // 2. 检查档案是否已存在
+    const existingArchive = await prisma.archive.findFirst({
+      where: {
+        id: archiveId,
+        subUserId: subUser.id
+      }
+    })
+
+    if (!existingArchive) {
+      console.log('❌ 档案不存在或无权限访问:', archiveId)
+      return createErrorResponse('档案不存在或无权限访问', 404)
+    }
+
+    console.log('✅ 找到档案:', existingArchive.archiveName)
+
+    // 3. 转换图片为base64
+    console.log('🔄 开始转换图片为base64...')
+    const base64Img = await convertImageToBase64(imageUrl)
+    console.log('✅ 图片转换完成')
+
+    // 4. 调用第三方检测服务
+    console.log('🔄 开始调用第三方检测服务...')
+    const thirdPartyResult = await callRealDetectionService(base64Img)
+    
+    if (!thirdPartyResult.success) {
+      return createErrorResponse(`第三方检测服务调用失败: ${thirdPartyResult.error}`, 500)
+    }
+
+    console.log('✅ 第三方检测服务调用成功')
+
+    // 5. 处理检测结果
+    const detectionResult = thirdPartyResult.data
+    const finalResult = detectionResult.final_result
+    
+    console.log('📊 检测结果:', finalResult)
+    console.log('📊 模型结果:', detectionResult.model_results)
+
+    // 6. 判断是否需要落库
+    const shouldSaveToDatabase = finalResult === 'onychomycosis'
+    
+    let newDetection = null
+    let archive = null
+
+    if (shouldSaveToDatabase) {
+      console.log('💾 检测结果为灰指甲，需要落库')
+      
+      // 检查是否已有检测记录
+      const existingDetections = await prisma.detection.findMany({
+        where: {
+          subUserId: subUser.id,
+          archiveName: existingArchive.archiveName,
+          status: 'completed'
+        },
+        select: {
+          id: true,
+          result: true,
+          confidence: true,
+          createdAt: true
+        },
+        orderBy: {
+          createdAt: 'asc'
+        }
+      })
+
+      if (existingDetections.length > 0) {
+        // 更新档案信息
+        archive = await prisma.archive.update({
+          where: { id: existingArchive.id },
+          data: {
+            photoCount: existingDetections.length + 1,
+            detectionTime: new Date()
+          }
+        })
+      } else {
+        // 创建新档案
+        archive = await prisma.archive.update({
+          where: { id: existingArchive.id },
+          data: {
+            photoCount: 1,
+            detectionTime: new Date()
+          }
+        })
+      }
+
+      // 创建检测记录
+      newDetection = await prisma.detection.create({
+        data: {
+          subUserId: subUser.id,
+          archiveId: archive.id,
+          archiveName: archive.archiveName,
+          detectionType: detectionType,
+          imageUrl: imageUrl,
+          result: finalResult,
+          confidence: parseFloat(detectionResult.model_results?.fusion?.confidence?.replace('%', '') || '0') / 100,
+          status: 'completed',
+          remark: `检测类型: ${detectionType}, 最终结果: ${finalResult}, 融合模型置信度: ${detectionResult.model_results?.fusion?.confidence || 'N/A'}`,
+          detectionTime: new Date(),
+          isFirstReport: existingDetections.length === 0
+        }
+      })
+
+      console.log('✅ 检测记录创建成功:', newDetection.archiveName)
+    } else {
+      console.log('📤 检测结果不需要落库，直接返回给前端')
+    }
+
+    // 7. 构建响应数据
+    const responseData = {
+      detection: newDetection ? {
+        id: newDetection.id,
+        archiveName: newDetection.archiveName,
+        detectionType: newDetection.detectionType,
+        imageUrl: newDetection.imageUrl,
+        result: newDetection.result,
+        confidence: newDetection.confidence,
+        status: newDetection.status,
+        remark: newDetection.remark,
+        detectionTime: newDetection.detectionTime,
+        createdAt: newDetection.createdAt
+      } : null,
+      thirdPartyResult: {
+        final_result: finalResult,
+        model_results: detectionResult.model_results,
+        imageUrl: imageUrl,
+        detectionType: detectionType,
+        timestamp: new Date().toISOString()
+      },
+      archive: archive ? {
+        id: archive.id,
+        archiveName: archive.archiveName,
+        photoCount: archive.photoCount,
+        detectionTime: archive.detectionTime,
+        createdAt: archive.createdAt
+      } : null,
+      isFirstReport: newDetection ? newDetection.isFirstReport : false,
+      shouldSaveToDatabase: shouldSaveToDatabase
+    }
+
+    const message = shouldSaveToDatabase ? '检测完成，报告已生成' : '检测完成，结果已返回'
+    return createSuccessResponse(responseData, message)
+
+  } catch (error) {
+    console.error('❌ 创建真实检测记录错误:', error.message)
+    console.error('错误堆栈:', error.stack)
+    return createErrorResponse('创建检测记录失败')
+  } finally {
+    // 确保 Prisma 连接被正确关闭
+    if (prisma) {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('关闭 Prisma 连接失败:', error)
+      }
+    }
+  }
+}
+
+// 使用微信小程序认证中间件
+export const POST = miniprogramAuthMiddleware(createRealDetection)
