@@ -4,7 +4,7 @@
 `POST /api/miniprogram/detection-real`
 
 ## 功能说明
-调用真实的第三方AI检测服务进行指甲检测，支持两种图片输入方式。
+调用真实的第三方AI检测服务进行指甲检测，支持两种图片输入方式和检测模式。
 
 ## 请求参数
 
@@ -18,6 +18,19 @@
 
 ### 可选参数
 - `detectionType` (string): 检测类型，默认为 `left_hand_thumb`
+- `needDetection` (boolean): 是否需要调用第三方AI检测服务，默认为 `true`
+
+## 检测模式说明
+
+### 模式1：AI检测模式（needDetection: true）
+- 调用第三方AI检测服务
+- 返回真实的检测结果
+- 根据检测结果决定是否保存到数据库
+
+### 模式2：仅保存模式（needDetection: false）
+- 不调用第三方AI检测服务
+- 仅保存图片到服务器
+- 直接保存到数据库
 
 ## 支持的检测类型
 ```javascript
@@ -31,29 +44,42 @@
 
 ## 请求示例
 
-### 方式1：使用base64图片（推荐）
+### 方式1：AI检测模式（推荐首次检测）
 ```javascript
 {
   "subUserId": "cmedr5wi80006ef3amvqxgpl4",
   "archiveId": "cmeewh1dz002mplcdfl0gekys",
   "detectionType": "right_hand_index",
-  "base64Image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+  "base64Image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+  "needDetection": true  // 调用AI检测
 }
 ```
 
-### 方式2：使用图片URL
+### 方式2：仅保存模式（推荐后续拍照）
 ```javascript
 {
   "subUserId": "cmedr5wi80006ef3amvqxgpl4",
   "archiveId": "cmeewh1dz002mplcdfl0gekys",
   "detectionType": "right_hand_index",
-  "imageUrl": "http://47.76.126.85:4000/uploads/actual_image.jpg"
+  "base64Image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...",
+  "needDetection": false  // 仅保存图片
+}
+```
+
+### 方式3：使用图片URL
+```javascript
+{
+  "subUserId": "cmedr5wi80006ef3amvqxgpl4",
+  "archiveId": "cmeewh1dz002mplcdfl0gekys",
+  "detectionType": "right_hand_index",
+  "imageUrl": "http://47.76.126.85:4000/uploads/actual_image.jpg",
+  "needDetection": true
 }
 ```
 
 ## 响应格式
 
-### 成功响应
+### AI检测模式响应
 ```javascript
 {
   "success": true,
@@ -62,11 +88,11 @@
       "id": "detection_id",
       "archiveName": "档案名称",
       "detectionType": "right_hand_index",
-      "imageUrl": "图片URL",
+      "imageUrl": "/uploads/detections/detection_xxx_xxx_xxx.jpg",
       "result": "onychomycosis",
       "confidence": 0.95,
       "status": "completed",
-      "remark": "检测备注",
+      "remark": "检测类型: right_hand_index, 最终结果: onychomycosis, 融合模型置信度: 95%",
       "detectionTime": "2025-08-16T15:30:00.000Z",
       "createdAt": "2025-08-16T15:30:00.000Z"
     },
@@ -77,7 +103,7 @@
           "confidence": "95%"
         }
       },
-      "imageUrl": "图片URL",
+      "imageUrl": "/uploads/detections/detection_xxx_xxx_xxx.jpg",
       "detectionType": "right_hand_index",
       "timestamp": "2025-08-16T15:30:00.000Z"
     },
@@ -95,94 +121,101 @@
 }
 ```
 
-### 失败响应
+### 仅保存模式响应
 ```javascript
 {
-  "success": false,
-  "data": null,
-  "message": "错误信息",
-  "code": 400
+  "success": true,
+  "data": {
+    "detection": {
+      "id": "detection_id",
+      "archiveName": "档案名称",
+      "detectionType": "right_hand_index",
+      "imageUrl": "/uploads/detections/detection_xxx_xxx_xxx.jpg",
+      "result": "photo_only",
+      "confidence": 0,
+      "status": "completed",
+      "remark": "检测类型: right_hand_index, 仅保存图片，未进行AI检测",
+      "detectionTime": "2025-08-16T15:30:00.000Z",
+      "createdAt": "2025-08-16T15:30:00.000Z"
+    },
+    "thirdPartyResult": {
+      "final_result": "photo_only",
+      "model_results": null,
+      "imageUrl": "/uploads/detections/detection_xxx_xxx_xxx.jpg",
+      "detectionType": "right_hand_index",
+      "timestamp": "2025-08-16T15:30:00.000Z",
+      "message": "仅保存图片，未进行AI检测"
+    },
+    "archive": {
+      "id": "archive_id",
+      "archiveName": "档案名称",
+      "photoCount": 2,
+      "detectionTime": "2025-08-16T15:30:00.000Z",
+      "createdAt": "2025-08-16T15:30:00.000Z"
+    },
+    "isFirstReport": false,
+    "shouldSaveToDatabase": true
+  },
+  "message": "图片保存完成"
 }
 ```
 
 ## 检测结果说明
 
-### 第三方服务返回结果
+### 第三方服务返回结果（AI检测模式）
 - `Normal`: 正常
 - `onychomycosis`: 灰指甲
 - `blurred`: 模糊图片
 - `UNKNOWN`: 无法识别
 
+### 仅保存模式结果
+- `photo_only`: 仅保存图片，未进行AI检测
+
 ### 数据库保存规则
-- 只有 `onychomycosis` 结果会保存到数据库
-- 其他结果只返回给前端，不保存
+- AI检测模式：只有 `onychomycosis` 结果会保存到数据库
+- 仅保存模式：所有图片都会保存到数据库
 
-## 微信小程序使用建议
+## 使用建议
 
-### 1. 直接使用base64（推荐）
+### 前端调用策略
 ```javascript
-// 获取图片base64
-wx.chooseImage({
-  success: function(res) {
-    const tempFilePath = res.tempFilePaths[0]
-    
-    // 转换为base64
-    wx.getFileSystemManager().readFile({
-      filePath: tempFilePath,
-      encoding: 'base64',
-      success: function(base64Res) {
-        const base64Image = 'data:image/jpeg;base64,' + base64Res.data
-        
-        // 调用检测接口
-        wx.request({
-          url: '/api/miniprogram/detection-real',
-          method: 'POST',
-          data: {
-            subUserId: 'xxx',
-            archiveId: 'xxx',
-            detectionType: 'right_hand_index',
-            base64Image: base64Image
-          },
-          success: function(res) {
-            console.log('检测结果:', res.data)
-          }
-        })
-      }
-    })
-  }
-})
+// 首次检测：使用AI检测模式
+const firstDetection = async (base64Image) => {
+  const response = await wx.request({
+    url: '/api/miniprogram/detection-real',
+    method: 'POST',
+    data: {
+      subUserId: 'xxx',
+      archiveId: 'xxx',
+      detectionType: 'right_hand_index',
+      base64Image: base64Image,
+      needDetection: true  // 首次检测
+    }
+  });
+  return response.data;
+};
+
+// 后续拍照：使用仅保存模式
+const savePhoto = async (base64Image) => {
+  const response = await wx.request({
+    url: '/api/miniprogram/detection-real',
+    method: 'POST',
+    data: {
+      subUserId: 'xxx',
+      archiveId: 'xxx',
+      detectionType: 'right_hand_index',
+      base64Image: base64Image,
+      needDetection: false  // 仅保存
+    }
+  });
+  return response.data;
+};
 ```
 
-### 2. 先上传再检测
-```javascript
-// 步骤1：上传图片
-wx.request({
-  url: '/api/miniprogram/upload-image',
-  method: 'POST',
-  data: {
-    base64Image: base64Image,
-    fileName: 'test.jpg'
-  },
-  success: function(uploadRes) {
-    const imageUrl = uploadRes.data.data.imageUrl
-    
-    // 步骤2：调用检测接口
-    wx.request({
-      url: '/api/miniprogram/detection-real',
-      method: 'POST',
-      data: {
-        subUserId: 'xxx',
-        archiveId: 'xxx',
-        detectionType: 'right_hand_index',
-        imageUrl: imageUrl
-      },
-      success: function(detectionRes) {
-        console.log('检测结果:', detectionRes.data)
-      }
-    })
-  }
-})
-```
+### 业务逻辑建议
+1. **首次检测**：使用 `needDetection: true`，获取AI检测结果
+2. **后续拍照**：使用 `needDetection: false`，仅保存图片
+3. **定期检测**：可以设置时间间隔，定期使用AI检测模式
 
 ## 错误码说明
 
@@ -197,3 +230,4 @@ wx.request({
 3. **base64格式**：支持带前缀和不带前缀的base64格式
 4. **认证**：需要微信小程序认证
 5. **权限**：只能操作当前用户下的子用户和档案
+6. **性能优化**：仅保存模式可以显著减少第三方服务调用，提高性能

@@ -113,7 +113,8 @@ async function createRealDetection(request) {
       archiveId, 
       detectionType = 'left_hand_thumb',
       imageUrl,      // 方式1：图片URL
-      base64Image    // 方式2：直接base64图片
+      base64Image,   // 方式2：直接base64图片
+      needDetection = true  // 是否需要调用第三方检测服务，默认true
     } = body
 
     // 验证必填字段
@@ -191,35 +192,51 @@ async function createRealDetection(request) {
       console.log('✅ 图片转换完成')
     }
 
-    // 4. 调用第三方检测服务
-    console.log('🔄 开始调用第三方检测服务...')
-    console.log('检测服务URL:', config.detectionService.fullUrl())
-    console.log('base64图片长度:', base64Img.length)
+    // 4. 处理检测逻辑
+    let detectionResult = null
+    let finalResult = null
+    let shouldSaveToDatabase = false
     
-    const thirdPartyResult = await callRealDetectionService(base64Img)
-    
-    if (!thirdPartyResult.success) {
-      console.error('❌ 第三方检测服务调用失败:', thirdPartyResult.error)
-      return createErrorResponse(`第三方检测服务调用失败: ${thirdPartyResult.error}`, 500)
+    if (needDetection) {
+      // 需要调用第三方检测服务
+      console.log('🔄 开始调用第三方检测服务...')
+      console.log('检测服务URL:', config.detectionService.fullUrl())
+      console.log('base64图片长度:', base64Img.length)
+      
+      const thirdPartyResult = await callRealDetectionService(base64Img)
+      
+      if (!thirdPartyResult.success) {
+        console.error('❌ 第三方检测服务调用失败:', thirdPartyResult.error)
+        return createErrorResponse(`第三方检测服务调用失败: ${thirdPartyResult.error}`, 500)
+      }
+
+      console.log('✅ 第三方检测服务调用成功')
+
+      // 处理检测结果
+      detectionResult = thirdPartyResult.data
+      finalResult = detectionResult.final_result
+      
+      console.log('📊 检测结果:', finalResult)
+      console.log('📊 模型结果:', detectionResult.model_results)
+
+      // 判断是否需要落库
+      shouldSaveToDatabase = finalResult === 'onychomycosis'
+    } else {
+      // 不需要检测，只保存图片
+      console.log('📸 仅保存图片，不进行AI检测')
+      finalResult = 'photo_only' // 标记为仅拍照
+      shouldSaveToDatabase = true // 仅拍照也保存到数据库
     }
-
-    console.log('✅ 第三方检测服务调用成功')
-
-    // 5. 处理检测结果
-    const detectionResult = thirdPartyResult.data
-    const finalResult = detectionResult.final_result
-    
-    console.log('📊 检测结果:', finalResult)
-    console.log('📊 模型结果:', detectionResult.model_results)
-
-    // 6. 判断是否需要落库
-    const shouldSaveToDatabase = finalResult === 'onychomycosis'
     
     let newDetection = null
     let archive = null
 
     if (shouldSaveToDatabase) {
-      console.log('💾 检测结果为灰指甲，需要落库')
+      if (needDetection) {
+        console.log('💾 检测结果为灰指甲，需要落库')
+      } else {
+        console.log('💾 仅保存图片，不进行AI检测')
+      }
       
       // 如果是base64图片，需要保存到服务器
       if (base64Image) {
@@ -269,20 +286,30 @@ async function createRealDetection(request) {
       }
 
       // 创建检测记录
+      const detectionData = {
+        subUserId: subUser.id,
+        archiveId: archive.id,
+        archiveName: archive.archiveName,
+        detectionType: detectionType,
+        imageUrl: savedImageUrl, // 使用保存后的图片URL
+        result: finalResult,
+        status: 'completed',
+        detectionTime: new Date(),
+        isFirstReport: existingDetections.length === 0
+      }
+      
+      if (needDetection) {
+        // AI检测的情况
+        detectionData.confidence = parseFloat(detectionResult.model_results?.fusion?.confidence?.replace('%', '') || '0') / 100
+        detectionData.remark = `检测类型: ${detectionType}, 最终结果: ${finalResult}, 融合模型置信度: ${detectionResult.model_results?.fusion?.confidence || 'N/A'}`
+      } else {
+        // 仅拍照的情况
+        detectionData.confidence = 0
+        detectionData.remark = `检测类型: ${detectionType}, 仅保存图片，未进行AI检测`
+      }
+      
       newDetection = await prisma.detection.create({
-        data: {
-          subUserId: subUser.id,
-          archiveId: archive.id,
-          archiveName: archive.archiveName,
-          detectionType: detectionType,
-          imageUrl: savedImageUrl, // 使用保存后的图片URL
-          result: finalResult,
-          confidence: parseFloat(detectionResult.model_results?.fusion?.confidence?.replace('%', '') || '0') / 100,
-          status: 'completed',
-          remark: `检测类型: ${detectionType}, 最终结果: ${finalResult}, 融合模型置信度: ${detectionResult.model_results?.fusion?.confidence || 'N/A'}`,
-          detectionTime: new Date(),
-          isFirstReport: existingDetections.length === 0
-        }
+        data: detectionData
       })
 
       console.log('✅ 检测记录创建成功:', newDetection.archiveName)
@@ -304,12 +331,19 @@ async function createRealDetection(request) {
         detectionTime: newDetection.detectionTime,
         createdAt: newDetection.createdAt
       } : null,
-      thirdPartyResult: {
+      thirdPartyResult: needDetection ? {
         final_result: finalResult,
         model_results: detectionResult.model_results,
         imageUrl: savedImageUrl, // 使用保存后的图片URL
         detectionType: detectionType,
         timestamp: new Date().toISOString()
+      } : {
+        final_result: 'photo_only',
+        model_results: null,
+        imageUrl: savedImageUrl, // 使用保存后的图片URL
+        detectionType: detectionType,
+        timestamp: new Date().toISOString(),
+        message: '仅保存图片，未进行AI检测'
       },
       archive: archive ? {
         id: archive.id,
@@ -322,7 +356,12 @@ async function createRealDetection(request) {
       shouldSaveToDatabase: shouldSaveToDatabase
     }
 
-    const message = shouldSaveToDatabase ? '检测完成，报告已生成' : '检测完成，结果已返回'
+    let message
+    if (needDetection) {
+      message = shouldSaveToDatabase ? '检测完成，报告已生成' : '检测完成，结果已返回'
+    } else {
+      message = '图片保存完成'
+    }
     return createSuccessResponse(responseData, message)
 
   } catch (error) {
