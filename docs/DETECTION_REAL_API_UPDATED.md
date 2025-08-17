@@ -217,6 +217,18 @@ const savePhoto = async (base64Image) => {
 2. **后续拍照**：使用 `needDetection: false`，仅保存图片
 3. **定期检测**：可以设置时间间隔，定期使用AI检测模式
 
+### 首次报告判断逻辑
+- **isFirstReport** 字段基于当前档案中是否有异常（灰指甲）检测记录来判断
+- 如果档案中没有任何异常记录，则 `isFirstReport: true`
+- 如果档案中已有异常记录，则 `isFirstReport: false`
+- 这个逻辑确保每次发现新的异常时都能正确标记为首次报告
+
+#### 示例场景
+1. **用户第一次拍照，检测正常**：`isFirstReport: false`（因为正常结果不保存）
+2. **用户第二次拍照，检测为灰指甲**：`isFirstReport: true`（首次发现异常）
+3. **用户第三次拍照，检测为灰指甲**：`isFirstReport: false`（已有异常记录）
+4. **用户第四次拍照，检测正常**：`isFirstReport: false`（已有异常记录）
+
 ## 错误码说明
 
 - `400`: 请求参数错误

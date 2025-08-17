@@ -234,6 +234,9 @@ async function createRealDetection(request) {
     if (shouldSaveToDatabase) {
       if (needDetection) {
         console.log('💾 检测结果为灰指甲，需要落库')
+        console.log(`📊 当前档案异常记录数: ${existingAbnormalDetections.length}`)
+        console.log(`📊 当前档案总记录数: ${allExistingDetections.length}`)
+        console.log(`📊 是否为首次异常报告: ${existingAbnormalDetections.length === 0}`)
       } else {
         console.log('💾 仅保存图片，不进行AI检测')
       }
@@ -245,12 +248,13 @@ async function createRealDetection(request) {
         console.log('✅ 图片保存成功:', savedImageUrl)
       }
       
-      // 检查是否已有检测记录
-      const existingDetections = await prisma.detection.findMany({
+      // 检查是否已有异常检测记录（灰指甲）
+      const existingAbnormalDetections = await prisma.detection.findMany({
         where: {
           subUserId: subUser.id,
           archiveName: existingArchive.archiveName,
-          status: 'completed'
+          status: 'completed',
+          result: 'onychomycosis'  // 只查找异常（灰指甲）记录
         },
         select: {
           id: true,
@@ -262,9 +266,21 @@ async function createRealDetection(request) {
           createdAt: 'asc'
         }
       })
+      
+      // 检查是否已有任何检测记录（用于photoCount计算）
+      const allExistingDetections = await prisma.detection.findMany({
+        where: {
+          subUserId: subUser.id,
+          archiveName: existingArchive.archiveName,
+          status: 'completed'
+        },
+        select: {
+          id: true
+        }
+      })
 
-      if (existingDetections.length > 0) {
-        // 更新档案信息
+      if (allExistingDetections.length > 0) {
+        // 更新档案信息（已有检测记录）
         archive = await prisma.archive.update({
           where: { id: existingArchive.id },
           data: {
@@ -275,7 +291,7 @@ async function createRealDetection(request) {
           }
         })
       } else {
-        // 创建新档案
+        // 创建第一个检测记录
         archive = await prisma.archive.update({
           where: { id: existingArchive.id },
           data: {
@@ -295,7 +311,7 @@ async function createRealDetection(request) {
         result: finalResult,
         status: 'completed',
         detectionTime: new Date(),
-        isFirstReport: existingDetections.length === 0
+        isFirstReport: existingAbnormalDetections.length === 0  // 基于异常记录判断是否为首次报告
       }
       
       if (needDetection) {
