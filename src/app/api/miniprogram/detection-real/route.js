@@ -113,9 +113,9 @@ async function createRealDetection(request) {
       archiveId, 
       detectionType = 'left_hand_thumb',
       imageUrl,      // 方式1：图片URL
-      base64Image,   // 方式2：直接base64图片
-      needDetection = true  // 是否需要调用第三方检测服务，默认true
+      base64Image   // 方式2：直接base64图片
     } = body
+    let needDetection = true  // 默认需要检测
 
     // 验证必填字段
     if (!subUserId || !archiveId) {
@@ -192,14 +192,52 @@ async function createRealDetection(request) {
       console.log('✅ 图片转换完成')
     }
 
-    // 4. 处理检测逻辑
+    // 4. 检查是否已有任何检测记录（用于判断是否为首次检测）
+    const allExistingDetections = await prisma.detection.findMany({
+      where: {
+        subUserId: subUser.id,
+        archiveName: existingArchive.archiveName,
+        status: 'completed'
+      },
+      select: {
+        id: true,
+        result: true
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    })
+    
+    // 检查是否已有异常检测记录（灰指甲）
+    const existingAbnormalDetections = await prisma.detection.findMany({
+      where: {
+        subUserId: subUser.id,
+        archiveName: existingArchive.archiveName,
+        status: 'completed',
+        result: 'onychomycosis'  // 只查找异常（灰指甲）记录
+      },
+      select: {
+        id: true
+      }
+    })
+    
+    // 判断是否需要调用第三方检测服务
+    // 规则：只有第一次检测时才调用第三方服务
+    needDetection = allExistingDetections.length === 0
+    
+    console.log(`📊 档案检测记录统计:`)
+    console.log(`- 总检测记录数: ${allExistingDetections.length}`)
+    console.log(`- 异常记录数: ${existingAbnormalDetections.length}`)
+    console.log(`- 是否需要AI检测: ${needDetection}`)
+    
+    // 5. 处理检测逻辑
     let detectionResult = null
     let finalResult = null
     let shouldSaveToDatabase = false
     
     if (needDetection) {
-      // 需要调用第三方检测服务
-      console.log('🔄 开始调用第三方检测服务...')
+      // 第一次检测：需要调用第三方检测服务
+      console.log('🔄 首次检测，开始调用第三方检测服务...')
       console.log('检测服务URL:', config.detectionService.fullUrl())
       console.log('base64图片长度:', base64Img.length)
       
@@ -222,8 +260,8 @@ async function createRealDetection(request) {
       // 判断是否需要落库
       shouldSaveToDatabase = finalResult === 'onychomycosis'
     } else {
-      // 不需要检测，只保存图片
-      console.log('📸 仅保存图片，不进行AI检测')
+      // 后续拍照：不需要检测，只保存图片
+      console.log('📸 后续拍照，仅保存图片，不进行AI检测')
       finalResult = 'photo_only' // 标记为仅拍照
       shouldSaveToDatabase = true // 仅拍照也保存到数据库
     }
@@ -232,6 +270,15 @@ async function createRealDetection(request) {
     let archive = null
 
     if (shouldSaveToDatabase) {
+      // 如果是base64图片，需要保存到服务器
+      if (base64Image) {
+        console.log('💾 保存base64图片到服务器...')
+        savedImageUrl = await saveBase64Image(base64Img, subUserId, detectionType)
+        console.log('✅ 图片保存成功:', savedImageUrl)
+      }
+      
+      // 使用之前查询的结果，避免重复查询
+
       if (needDetection) {
         console.log('💾 检测结果为灰指甲，需要落库')
         console.log(`📊 当前档案异常记录数: ${existingAbnormalDetections.length}`)
@@ -240,44 +287,6 @@ async function createRealDetection(request) {
       } else {
         console.log('💾 仅保存图片，不进行AI检测')
       }
-      
-      // 如果是base64图片，需要保存到服务器
-      if (base64Image) {
-        console.log('💾 保存base64图片到服务器...')
-        savedImageUrl = await saveBase64Image(base64Img, subUserId, detectionType)
-        console.log('✅ 图片保存成功:', savedImageUrl)
-      }
-      
-      // 检查是否已有异常检测记录（灰指甲）
-      const existingAbnormalDetections = await prisma.detection.findMany({
-        where: {
-          subUserId: subUser.id,
-          archiveName: existingArchive.archiveName,
-          status: 'completed',
-          result: 'onychomycosis'  // 只查找异常（灰指甲）记录
-        },
-        select: {
-          id: true,
-          result: true,
-          confidence: true,
-          createdAt: true
-        },
-        orderBy: {
-          createdAt: 'asc'
-        }
-      })
-      
-      // 检查是否已有任何检测记录（用于photoCount计算）
-      const allExistingDetections = await prisma.detection.findMany({
-        where: {
-          subUserId: subUser.id,
-          archiveName: existingArchive.archiveName,
-          status: 'completed'
-        },
-        select: {
-          id: true
-        }
-      })
 
       if (allExistingDetections.length > 0) {
         // 更新档案信息（已有检测记录）
