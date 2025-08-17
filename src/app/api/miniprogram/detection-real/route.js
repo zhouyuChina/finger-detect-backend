@@ -185,13 +185,6 @@ async function createRealDetection(request) {
       // 移除data:image/jpeg;base64,前缀（如果存在）
       base64Img = base64Image.replace(/^data:image\/[a-z]+;base64,/, '')
       console.log('✅ base64图片处理完成，长度:', base64Img.length)
-      
-      // 如果是base64图片，需要保存到服务器
-      if (shouldSaveToDatabase) {
-        console.log('💾 保存base64图片到服务器...')
-        savedImageUrl = await saveBase64Image(base64Img, subUserId, detectionType)
-        console.log('✅ 图片保存成功:', savedImageUrl)
-      }
     } else {
       console.log('🔄 开始转换图片URL为base64...')
       base64Img = await convertImageToBase64(imageUrl)
@@ -200,9 +193,13 @@ async function createRealDetection(request) {
 
     // 4. 调用第三方检测服务
     console.log('🔄 开始调用第三方检测服务...')
+    console.log('检测服务URL:', config.detectionService.fullUrl())
+    console.log('base64图片长度:', base64Img.length)
+    
     const thirdPartyResult = await callRealDetectionService(base64Img)
     
     if (!thirdPartyResult.success) {
+      console.error('❌ 第三方检测服务调用失败:', thirdPartyResult.error)
       return createErrorResponse(`第三方检测服务调用失败: ${thirdPartyResult.error}`, 500)
     }
 
@@ -223,6 +220,13 @@ async function createRealDetection(request) {
 
     if (shouldSaveToDatabase) {
       console.log('💾 检测结果为灰指甲，需要落库')
+      
+      // 如果是base64图片，需要保存到服务器
+      if (base64Image) {
+        console.log('💾 保存base64图片到服务器...')
+        savedImageUrl = await saveBase64Image(base64Img, subUserId, detectionType)
+        console.log('✅ 图片保存成功:', savedImageUrl)
+      }
       
       // 检查是否已有检测记录
       const existingDetections = await prisma.detection.findMany({
@@ -324,7 +328,18 @@ async function createRealDetection(request) {
   } catch (error) {
     console.error('❌ 创建真实检测记录错误:', error.message)
     console.error('错误堆栈:', error.stack)
-    return createErrorResponse('创建检测记录失败')
+    
+    // 提供更详细的错误信息
+    let errorMessage = '创建检测记录失败'
+    if (error.message.includes('第三方检测服务')) {
+      errorMessage = `第三方检测服务调用失败: ${error.message}`
+    } else if (error.message.includes('base64')) {
+      errorMessage = `图片处理失败: ${error.message}`
+    } else if (error.message.includes('数据库')) {
+      errorMessage = `数据库操作失败: ${error.message}`
+    }
+    
+    return createErrorResponse(errorMessage)
   } finally {
     // 确保 Prisma 连接被正确关闭
     if (prisma) {
