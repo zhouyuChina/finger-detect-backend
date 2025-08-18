@@ -295,6 +295,11 @@ export default function ArchivesPage() {
   }
 
   const getBodyPartColor = (bodyPart) => {
+    // 添加空值检查
+    if (!bodyPart) {
+      return 'bg-gray-100 text-gray-800'
+    }
+    
     if (bodyPart.startsWith('left_hand') || bodyPart.startsWith('right_hand') || bodyPart.includes('palm')) {
       return 'bg-blue-100 text-blue-800'
     } else if (bodyPart.startsWith('left_foot') || bodyPart.startsWith('right_foot') || bodyPart.includes('sole')) {

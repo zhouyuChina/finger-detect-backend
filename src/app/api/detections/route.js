@@ -21,16 +21,19 @@ export async function GET(request) {
     const openid = searchParams.get('openid') || ''
     const userName = searchParams.get('userName') || ''
     const archiveId = searchParams.get('archiveId') || ''
+    const archiveName = searchParams.get('archiveName') || ''
 
     const skip = (page - 1) * pageSize
 
     // 构建查询条件
-    const where = {
-      isFirstReport: true  // 只查询有检测报告的记录
-    }
+    const where = {}
     
     if (archiveId) {
       where.archiveId = archiveId
+    }
+    
+    if (archiveName) {
+      where.archiveName = archiveName
     }
 
     // 如果搜索 openid 或 userName，需要关联查询

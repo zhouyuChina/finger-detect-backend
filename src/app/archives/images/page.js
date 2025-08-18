@@ -45,9 +45,9 @@ export default function ArchiveImagesPage() {
           const firstImage = result.data.data[0]
           setArchiveInfo({
             archiveName: firstImage.archiveName,
-            userId: firstImage.userId,
-            userNickname: firstImage.userNickname,
-            bodyPart: firstImage.bodyPart
+            userId: firstImage.openid,
+            userNickname: firstImage.userName,
+            bodyPart: firstImage.detectionType
           })
         }
       } else {
@@ -83,6 +83,11 @@ export default function ArchiveImagesPage() {
       alert('缺少档案名称参数')
       return
     }
+
+    console.log('📤 导出图片请求参数:', {
+      archiveName: archiveName,
+      userId: userId
+    })
 
     try {
       const response = await fetch('/api/archives/export-images', {
@@ -145,6 +150,11 @@ export default function ArchiveImagesPage() {
   }
 
   const getBodyPartColor = (bodyPart) => {
+    // 添加空值检查
+    if (!bodyPart) {
+      return 'bg-gray-100 text-gray-800'
+    }
+    
     if (bodyPart.startsWith('left_hand') || bodyPart.startsWith('right_hand') || bodyPart.includes('palm')) {
       return 'bg-blue-100 text-blue-800'
     } else if (bodyPart.startsWith('left_foot') || bodyPart.startsWith('right_foot') || bodyPart.includes('sole')) {
@@ -224,8 +234,8 @@ export default function ArchiveImagesPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">检测部位</label>
               <div>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(archiveInfo.bodyPart)}`}>
-                  {getBodyPartText(archiveInfo.bodyPart)}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getBodyPartColor(archiveInfo.bodyPart || '')}`}>
+                  {getBodyPartText(archiveInfo.bodyPart || '')}
                 </span>
               </div>
             </div>
@@ -274,9 +284,14 @@ export default function ArchiveImagesPage() {
                     {image.result && (
                       <div className="mt-1">
                         <span className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded ${
-                          image.result === 'normal' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          image.result === 'normal' ? 'bg-green-100 text-green-800' : 
+                          image.result === 'onychomycosis' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
                         }`}>
-                          {image.result === 'normal' ? '正常' : '异常'}
+                          {image.result === 'normal' ? '正常' : 
+                           image.result === 'onychomycosis' ? '灰指甲' :
+                           image.result === 'photo_only' ? '仅拍照' :
+                           image.result}
                         </span>
                       </div>
                     )}

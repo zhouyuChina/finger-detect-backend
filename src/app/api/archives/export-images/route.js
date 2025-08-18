@@ -8,6 +8,8 @@ const prisma = new PrismaClient()
 
 export async function POST(request) {
   try {
+    console.log('🚀 导出图片API被调用')
+    
     // 速率限制
     const rateLimitResult = await rateLimitMiddleware(request)
     if (rateLimitResult) return rateLimitResult
@@ -19,6 +21,8 @@ export async function POST(request) {
     const body = await request.json()
     const { archiveName, userId } = body
 
+    console.log('📤 请求参数:', { archiveName, userId })
+
     if (!archiveName) {
       return NextResponse.json(
         { success: false, message: '缺少档案名称参数' },
@@ -26,10 +30,16 @@ export async function POST(request) {
       )
     }
 
+    console.log('🔍 开始查询数据库...')
+    
     // 查询该档案下的所有图片
     const detections = await prisma.detection.findMany({
       where: {
-        archiveName: archiveName
+        archiveName: archiveName,
+        imageUrl: {
+          not: null,
+          not: ''
+        }
       },
       select: {
         id: true,
@@ -37,6 +47,7 @@ export async function POST(request) {
         detectionTime: true,
         result: true,
         confidence: true,
+        detectionType: true,
         subUser: {
           select: {
             username: true,
@@ -48,7 +59,19 @@ export async function POST(request) {
         detectionTime: 'asc'
       }
     })
+    
+    console.log('✅ 数据库查询完成')
 
+    console.log(`🔍 查询档案 "${archiveName}" 的检测记录:`)
+    console.log(`- 查询到的记录数: ${detections.length}`)
+    
+    if (detections.length > 0) {
+      console.log('📋 检测记录详情:')
+      detections.forEach((detection, index) => {
+        console.log(`${index + 1}. ID: ${detection.id}, 图片URL: ${detection.imageUrl}, 结果: ${detection.result}`)
+      })
+    }
+    
     if (detections.length === 0) {
       return NextResponse.json(
         { success: false, message: '该档案下没有图片' },
@@ -126,9 +149,18 @@ export async function POST(request) {
     })
 
   } catch (error) {
-    console.error('导出图片失败:', error)
+    console.error('❌ 导出图片失败:', error)
+    console.error('错误堆栈:', error.stack)
+    console.error('错误名称:', error.name)
+    console.error('错误消息:', error.message)
+    
     return NextResponse.json(
-      { success: false, message: '导出失败，请重试' },
+      { 
+        success: false, 
+        message: '导出失败，请重试',
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   }
