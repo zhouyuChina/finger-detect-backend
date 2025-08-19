@@ -243,7 +243,20 @@ async function createArchive(request) {
     })
 
     if (existingArchive) {
-      return createErrorResponse('档案名称已存在', 400)
+      console.log('⚠️ 档案名称已存在，返回已存在的档案信息')
+      return createSuccessResponse({
+        message: '档案名称已存在',
+        archive: {
+          id: existingArchive.id,
+          archiveName: existingArchive.archiveName,
+          activity: existingArchive.activity,
+          photoCount: existingArchive.photoCount,
+          bodyPart: existingArchive.bodyPart,
+          detectionTime: existingArchive.detectionTime,
+          createdAt: existingArchive.createdAt,
+          updatedAt: existingArchive.updatedAt
+        }
+      })
     }
 
     // 3. 先创建档案
