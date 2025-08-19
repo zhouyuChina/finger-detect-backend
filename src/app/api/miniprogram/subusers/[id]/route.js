@@ -9,9 +9,17 @@ async function getSubUser(request, context) {
     console.log('上下文:', context)
     console.log('用户:', request.user)
     
-    const { params } = context || {}
-    const { id: subUserId } = params || {}
+    // 从 URL 中提取子用户ID（与updateSubUser保持一致）
+    const url = new URL(request.url)
+    const pathSegments = url.pathname.split('/')
+    const subUserId = pathSegments[pathSegments.length - 1]
     const userId = request.user?.id
+    
+    console.log('🔍 解析的参数:')
+    console.log('- URL:', request.url)
+    console.log('- 路径段:', pathSegments)
+    console.log('- 子用户ID:', subUserId)
+    console.log('- 微信用户ID:', userId)
 
     // 创建 PrismaClient 实例
     const { PrismaClient } = await import('../../../../../generated/prisma/index.js')
