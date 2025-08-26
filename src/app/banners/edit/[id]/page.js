@@ -1,7 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import AdminLayout from '@/components/layout/AdminLayout'
 import ImageUpload from '@/components/ImageUpload'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
 import SimpleImage from '@/components/SimpleImage'
@@ -27,7 +26,7 @@ export default function EditBannerPage() {
   const [error, setError] = useState('')
 
   // 获取Banner详情
-  const fetchBanner = async () => {
+  const fetchBanner = useCallback(async () => {
     try {
       const response = await fetch(`/api/banners/${id}`)
       const result = await response.json()
@@ -53,7 +52,7 @@ export default function EditBannerPage() {
     } finally {
       setIsFetching(false)
     }
-  }
+  }, [id])
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -97,7 +96,7 @@ export default function EditBannerPage() {
     if (id) {
       fetchBanner()
     }
-  }, [id])
+  }, [id, fetchBanner])
 
   if (isFetching) {
     return (

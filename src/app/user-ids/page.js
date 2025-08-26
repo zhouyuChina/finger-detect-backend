@@ -2,8 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
-import SimpleImage from '@/components/SimpleImage'
-import SafeDate from '@/components/SafeDate'
 import ExcelExporter from '@/components/ExcelExporter'
 
 export default function UserIdsPage() {
@@ -85,9 +83,6 @@ export default function UserIdsPage() {
       '微信名',
       '活跃状态',
       '二级用户',
-      '建档数量',
-      '报告数量',
-      '拍照数量',
       '未读消息'
     ]
 
@@ -97,9 +92,6 @@ export default function UserIdsPage() {
       wechatUser.nickname || '未知用户',
       wechatUser.status === 'active' ? '活跃' : '非活跃',
       wechatUser.subUsers?.length || 0,
-      wechatUser.verification?.archives || 0,
-      wechatUser.verification?.reports || 0,
-      wechatUser.verification?.photos || 0,
       wechatUser.verification?.unreadMessages || 0
     ])
 
@@ -156,9 +148,6 @@ export default function UserIdsPage() {
               { wch: 20 },  // 微信名
               { wch: 10 },  // 活跃状态
               { wch: 10 },  // 二级用户
-              { wch: 10 },  // 建档数量
-              { wch: 10 },  // 报告数量
-              { wch: 10 },  // 拍照数量
               { wch: 10 }   // 未读消息
             ]}
             buttonText="导出数据"
@@ -324,15 +313,6 @@ export default function UserIdsPage() {
                       二级用户
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      建档数量
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      报告数量
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      拍照数量
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       未读消息
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -364,15 +344,6 @@ export default function UserIdsPage() {
 
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {wechatUser.subUsers?.length || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {wechatUser.verification?.archives || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {wechatUser.verification?.reports || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {wechatUser.verification?.photos || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
