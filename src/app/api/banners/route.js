@@ -54,7 +54,7 @@ export async function POST(request) {
     if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
     
     const body = await request.json()
-    const { title, imageUrl, linkUrl, position, sort, isActive, startTime, endTime } = body
+    const { title, imageUrl, linkUrl, position, sort, isActive, textColor, startTime, endTime } = body
     
     // 验证必填字段
     if (!title || !imageUrl) {
@@ -81,6 +81,7 @@ export async function POST(request) {
         position: position || 'middle',
         sort: sort || 0,
         isActive: isActive !== undefined ? isActive : true,
+        textColor: textColor || '#FFFFFF',
         startTime: startTime ? new Date(startTime) : null,
         endTime: endTime ? new Date(endTime) : null
       }

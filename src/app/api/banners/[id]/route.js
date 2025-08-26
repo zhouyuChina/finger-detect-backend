@@ -47,7 +47,7 @@ export async function PUT(request, { params }) {
     
     const { id } = await params
     const body = await request.json()
-    const { title, imageUrl, linkUrl, position, sort, isActive, startTime, endTime } = body
+    const { title, imageUrl, linkUrl, position, sort, isActive, textColor, startTime, endTime } = body
     
     // 检查轮播图是否存在
     const existingBanner = await prisma.banner.findUnique({
@@ -79,6 +79,7 @@ export async function PUT(request, { params }) {
         position,
         sort,
         isActive,
+        textColor,
         startTime: startTime ? new Date(startTime) : null,
         endTime: endTime ? new Date(endTime) : null
       }

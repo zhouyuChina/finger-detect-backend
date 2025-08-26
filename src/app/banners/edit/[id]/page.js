@@ -18,6 +18,7 @@ export default function EditBannerPage() {
     position: 'middle',
     sort: 0,
     isActive: true,
+    textColor: '#FFFFFF',
     startTime: '',
     endTime: ''
   })
@@ -40,6 +41,7 @@ export default function EditBannerPage() {
           position: banner.position || 'middle',
           sort: banner.sort || 0,
           isActive: banner.isActive,
+          textColor: banner.textColor || '#FFFFFF',
           startTime: banner.startTime ? new Date(banner.startTime).toISOString().slice(0, 16) : '',
           endTime: banner.endTime ? new Date(banner.endTime).toISOString().slice(0, 16) : ''
         })
@@ -178,6 +180,31 @@ export default function EditBannerPage() {
                 placeholder="0"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                字体颜色
+              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  name="textColor"
+                  value={formData.textColor}
+                  onChange={handleInputChange}
+                  className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
+                />
+                <input
+                  type="text"
+                  name="textColor"
+                  value={formData.textColor}
+                  onChange={handleInputChange}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  placeholder="#FFFFFF"
+                  pattern="^#[0-9A-Fa-f]{6}$"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Banner标题文字颜色</p>
+            </div>
           </div>
 
           {/* 图片上传 */}
@@ -272,6 +299,12 @@ export default function EditBannerPage() {
                     <p><strong>标题:</strong> {formData.title || '未设置'}</p>
                     <p><strong>位置:</strong> {formData.position === 'top' ? '上' : formData.position === 'middle' ? '中' : '下'}</p>
                     <p><strong>链接:</strong> {formData.linkUrl || '无'}</p>
+                    <p><strong>字体颜色:</strong> 
+                      <span className="inline-flex items-center ml-2">
+                        <span className="w-4 h-4 rounded border border-gray-300 mr-1" style={{backgroundColor: formData.textColor}}></span>
+                        {formData.textColor}
+                      </span>
+                    </p>
                     <p><strong>状态:</strong> {formData.isActive ? '启用' : '禁用'}</p>
                   </div>
                 </div>

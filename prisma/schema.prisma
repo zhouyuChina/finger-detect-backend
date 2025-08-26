@@ -176,6 +176,7 @@ model Banner {
   position  String    @default("middle") // 位置：top(上)、middle(中)、bottom(下)
   sort      Int       @default(0)
   isActive  Boolean   @default(true)
+  textColor String    @default("#FFFFFF") // 字体颜色
   startTime DateTime?
   endTime   DateTime?
   createdAt DateTime  @default(now())
