@@ -11,7 +11,7 @@ export default function ArchivesPage() {
   const [showViewModal, setShowViewModal] = useState(false)
   const [editingArchive, setEditingArchive] = useState(null)
   const [viewingArchive, setViewingArchive] = useState(null)
-  const [searchUserId, setSearchUserId] = useState('')
+  const [searchSubUserId, setSearchSubUserId] = useState('')
   const [searchUserName, setSearchUserName] = useState('')
   const [searchArchiveName, setSearchArchiveName] = useState('')
   const [searchActivity, setSearchActivity] = useState('')
@@ -38,7 +38,7 @@ export default function ArchivesPage() {
       const params = new URLSearchParams({
         page: currentPage,
         pageSize,
-        searchUserId: searchUserId,
+        searchSubUserId: searchSubUserId,
         searchUserName: searchUserName,
         searchArchiveName: searchArchiveName,
         searchActivity: searchActivity,
@@ -69,15 +69,21 @@ export default function ArchivesPage() {
   // 使用useEffect获取数据
   useEffect(() => {
     fetchArchives()
-  }, [currentPage, pageSize, searchUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail])
+  }, [currentPage, pageSize, searchSubUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail])
 
   // 处理URL参数
   useEffect(() => {
+    const searchSubUserIdParam = searchParams.get('searchSubUserId')
     const searchUserIdParam = searchParams.get('searchUserId')
     const searchUserNameParam = searchParams.get('searchUserName')
     
+    if (searchSubUserIdParam) {
+      setSearchSubUserId(searchSubUserIdParam)
+      setCurrentPage(1)
+    }
+    
     if (searchUserIdParam) {
-      setSearchUserId(searchUserIdParam)
+      setSearchSubUserId(searchUserIdParam) // 兼容旧的参数名
       setCurrentPage(1)
     }
     
@@ -107,7 +113,7 @@ export default function ArchivesPage() {
   }
 
   const handleReset = () => {
-    setSearchUserId('')
+    setSearchSubUserId('')
     setSearchUserName('')
     setSearchArchiveName('')
     setSearchActivity('')
@@ -424,9 +430,9 @@ export default function ArchivesPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
             <input
               type="text"
-              value={searchUserId}
-              onChange={(e) => setSearchUserId(e.target.value)}
-              placeholder="请输入所属ID"
+              value={searchSubUserId}
+              onChange={(e) => setSearchSubUserId(e.target.value)}
+              placeholder="请输入子用户ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>

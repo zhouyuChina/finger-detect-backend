@@ -18,6 +18,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
     const pageSize = parseInt(searchParams.get('pageSize')) || 10
+    const subUserId = searchParams.get('subUserId') || ''
     const openid = searchParams.get('openid') || ''
     const userName = searchParams.get('userName') || ''
     const archiveId = searchParams.get('archiveId') || ''
@@ -28,6 +29,11 @@ export async function GET(request) {
     // 构建查询条件
     const where = {}
     
+    // 优先使用 subUserId 进行精确查询
+    if (subUserId) {
+      where.subUserId = subUserId
+    }
+    
     if (archiveId) {
       where.archiveId = archiveId
     }
@@ -36,8 +42,8 @@ export async function GET(request) {
       where.archiveName = archiveName
     }
 
-    // 如果搜索 openid 或 userName，需要关联查询
-    if (openid || userName) {
+    // 如果没有 subUserId，但有 openid 或 userName，需要关联查询
+    if (!subUserId && (openid || userName)) {
       where.subUser = {}
       if (openid) {
         where.subUser.wechatUser = {

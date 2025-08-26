@@ -18,6 +18,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
     const pageSize = parseInt(searchParams.get('pageSize')) || 10
+    const searchSubUserId = searchParams.get('searchSubUserId') || ''
     const searchUserId = searchParams.get('searchUserId') || ''
     const searchUserName = searchParams.get('searchUserName') || ''
     const searchArchiveName = searchParams.get('searchArchiveName') || ''
@@ -28,17 +29,23 @@ export async function GET(request) {
     const skip = (page - 1) * pageSize
 
     // 构建查询条件
-    const where = {
-      subUser: {
-        wechatUser: {}
+    const where = {}
+    
+    if (searchSubUserId) {
+      where.subUserId = searchSubUserId
+    } else if (searchUserId) {
+      // 兼容旧的查询方式 - 通过wechat openid查询
+      where.subUser = {
+        wechatUser: {
+          openid: { contains: searchUserId, mode: 'insensitive' }
+        }
       }
     }
     
-    if (searchUserId) {
-      where.subUser.wechatUser.openid = { contains: searchUserId, mode: 'insensitive' }
-    }
-    
     if (searchUserName) {
+      if (!where.subUser) {
+        where.subUser = {}
+      }
       where.subUser.realName = { contains: searchUserName, mode: 'insensitive' }
     }
     

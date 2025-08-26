@@ -7,6 +7,7 @@ export default function DetectionsPage() {
   const searchParams = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [searchSubUserId, setSearchSubUserId] = useState('')
   const [searchOpenid, setSearchOpenid] = useState('')
   const [searchUserName, setSearchUserName] = useState('')
   const [searchArchiveId, setSearchArchiveId] = useState('')
@@ -22,6 +23,7 @@ export default function DetectionsPage() {
       const params = new URLSearchParams({
         page: currentPage,
         pageSize,
+        subUserId: searchSubUserId,
         openid: searchOpenid,
         userName: searchUserName,
         archiveId: searchArchiveId
@@ -50,13 +52,19 @@ export default function DetectionsPage() {
   // 使用useEffect获取数据
   useEffect(() => {
     fetchDetections()
-  }, [currentPage, pageSize, searchOpenid, searchUserName, searchArchiveId])
+  }, [currentPage, pageSize, searchSubUserId, searchOpenid, searchUserName, searchArchiveId])
 
   // 处理URL参数
   useEffect(() => {
+    const searchSubUserIdParam = searchParams.get('searchSubUserId')
     const searchOpenidParam = searchParams.get('searchOpenid')
     const userNameParam = searchParams.get('userName')
     const archiveIdParam = searchParams.get('archiveId')
+    
+    if (searchSubUserIdParam) {
+      setSearchSubUserId(searchSubUserIdParam)
+      setCurrentPage(1)
+    }
     
     if (searchOpenidParam) {
       setSearchOpenid(searchOpenidParam)
@@ -94,6 +102,7 @@ export default function DetectionsPage() {
   }
 
   const handleReset = () => {
+    setSearchSubUserId('')
     setSearchOpenid('')
     setSearchUserName('')
     setSearchArchiveId('')

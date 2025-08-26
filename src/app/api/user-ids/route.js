@@ -49,6 +49,7 @@ export async function GET(request) {
               idNumber: true,
               verifyStatus: true,
               verifyTime: true,
+              unreadMessages: true, // 添加未读消息字段
               verifyAdmin: {
                 select: {
                   id: true,

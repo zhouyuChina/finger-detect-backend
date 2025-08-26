@@ -511,11 +511,11 @@ export default function UserManagementPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
                       onClick={() => {
-                        const realName = user.realName || ''
-                        if (realName) {
-                          router.push(`/archives?searchUserName=${encodeURIComponent(realName)}`)
+                        const subUserId = user.id || ''
+                        if (subUserId) {
+                          router.push(`/archives?searchSubUserId=${encodeURIComponent(subUserId)}`)
                         } else {
-                          alert('该用户没有真实姓名信息')
+                          alert('该用户没有ID信息')
                         }
                       }}
                       className="text-blue-600 hover:text-blue-900 mr-3"
@@ -524,11 +524,11 @@ export default function UserManagementPage() {
                     </button>
                     <button 
                       onClick={() => {
-                        const realName = user.realName || ''
-                        if (realName) {
-                          router.push(`/detections?userName=${encodeURIComponent(realName)}`)
+                        const subUserId = user.id || ''
+                        if (subUserId) {
+                          router.push(`/detections?searchSubUserId=${encodeURIComponent(subUserId)}`)
                         } else {
-                          alert('该用户没有真实姓名信息')
+                          alert('该用户没有ID信息')
                         }
                       }}
                       className="text-purple-600 hover:text-purple-900 mr-3"
