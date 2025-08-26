@@ -55,6 +55,32 @@ async function getSystemMessageDetail(request, context) {
       }
     })
 
+    // 减少用户的未读消息数（如果有的话）
+    const userId = request.user?.id
+    if (userId) {
+      try {
+        const userVerification = await prisma.wechatUserVerification.findUnique({
+          where: { wechatUserId: userId },
+          select: { unreadMessages: true }
+        })
+        
+        if (userVerification && userVerification.unreadMessages > 0) {
+          await prisma.wechatUserVerification.update({
+            where: { wechatUserId: userId },
+            data: {
+              unreadMessages: {
+                decrement: 1
+              }
+            }
+          })
+          console.log('📢 用户未读消息数已减少1')
+        }
+      } catch (error) {
+        console.log('⚠️ 更新未读消息数失败:', error.message)
+        // 不影响主要流程，继续执行
+      }
+    }
+
     console.log('✅ 获取系统消息详情成功:', systemMessage.title)
 
     // 处理数据格式

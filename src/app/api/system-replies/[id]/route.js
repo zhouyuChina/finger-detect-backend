@@ -74,6 +74,9 @@ export async function PUT(request, { params }) {
       )
     }
 
+    // 检查是否从未发布状态变为已发布状态
+    const isFirstTimePublished = status === 'published' && existingSystemReply.status !== 'published'
+    
     // 更新系统消息信息
     const updatedSystemReply = await prisma.systemReply.update({
       where: { id },
@@ -86,6 +89,30 @@ export async function PUT(request, { params }) {
         publishedAt: status === 'published' && !existingSystemReply.publishedAt ? new Date() : existingSystemReply.publishedAt
       }
     })
+
+    // 如果是第一次发布，则增加所有用户的未读消息数
+    if (isFirstTimePublished) {
+      console.log('📢 系统消息第一次发布，更新所有用户未读消息数')
+      
+      // 批量更新所有用户的未读消息数
+      const updateResult = await prisma.wechatUserVerification.updateMany({
+        data: {
+          unreadMessages: {
+            increment: 1
+          }
+        }
+      })
+      
+      console.log(`✅ 已更新 ${updateResult.count} 个用户的未读消息数`)
+      
+      // 更新系统消息的总数统计
+      await prisma.systemReply.update({
+        where: { id: updatedSystemReply.id },
+        data: {
+          totalCount: updateResult.count
+        }
+      })
+    }
 
     return NextResponse.json({
       success: true,

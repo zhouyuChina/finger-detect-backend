@@ -13,14 +13,17 @@ async function getUnreadSystemMessageCount(request) {
     const { PrismaClient } = await import('../../../../../generated/prisma/index.js')
     prisma = new PrismaClient()
 
-    // 查询未读系统消息数量（这里简单统计所有已发布的消息）
-    // 在实际应用中，你可能需要维护一个用户阅读状态表
-    const unreadCount = await prisma.systemReply.count({
+    // 查询用户的未读消息数量
+    const userVerification = await prisma.wechatUserVerification.findUnique({
       where: {
-        status: 'published',
-        isActive: true
+        wechatUserId: userId
+      },
+      select: {
+        unreadMessages: true
       }
     })
+
+    const unreadCount = userVerification?.unreadMessages || 0
 
     console.log('✅ 获取未读系统消息数量成功:', unreadCount)
 

@@ -127,12 +127,28 @@ export async function POST(request) {
     let wechatUser = await prisma.wechatUser.findUnique({
       where: { openid: finalOpenid },
       include: {
-        subUsers: true
+        subUsers: true,
+        verification: true  // 包含验证记录
       }
     })
 
     if (wechatUser) {
       console.log('✅ 微信用户已存在:', wechatUser.nickname)
+      
+      // 检查是否有验证记录，如果没有则创建
+      if (!wechatUser.verification) {
+        console.log('📝 为已存在用户创建验证记录...')
+        const userVerification = await prisma.wechatUserVerification.create({
+          data: {
+            wechatUserId: wechatUser.id,
+            idNumber: '',  // 暂时为空，等待用户填写
+            realName: wechatUser.nickname || '微信用户',
+            status: 'pending',
+            unreadMessages: 0  // 初始化未读消息数为0
+          }
+        })
+        console.log('✅ 已存在用户的验证记录创建成功:', userVerification.id)
+      }
       
       // 检查是否有代表用户本人的子用户
       const hasSelfSubUser = wechatUser.subUsers.some(subUser => 
@@ -255,7 +271,21 @@ export async function POST(request) {
 
     console.log('✅ 用户本人子用户创建成功:', selfSubUser.realName)
 
-    // 4. 获取完整的用户信息
+    // 5. 创建用户验证记录（初始状态）
+    console.log('📝 创建用户验证记录...')
+    const userVerification = await prisma.wechatUserVerification.create({
+      data: {
+        wechatUserId: wechatUser.id,
+        idNumber: '',  // 暂时为空，等待用户填写
+        realName: nickname || '微信用户',
+        status: 'pending',
+        unreadMessages: 0  // 初始化未读消息数为0
+      }
+    })
+    
+    console.log('✅ 用户验证记录创建成功:', userVerification.id)
+
+    // 6. 获取完整的用户信息
     const completeUser = await prisma.wechatUser.findUnique({
       where: { openid: finalOpenid },
       include: {

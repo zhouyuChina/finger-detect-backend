@@ -130,6 +130,30 @@ export async function POST(request) {
       }
     })
 
+    // 如果消息状态为已发布，则增加所有用户的未读消息数
+    if (status === 'published') {
+      console.log('📢 系统消息已发布，更新所有用户未读消息数')
+      
+      // 批量更新所有用户的未读消息数
+      const updateResult = await prisma.wechatUserVerification.updateMany({
+        data: {
+          unreadMessages: {
+            increment: 1
+          }
+        }
+      })
+      
+      console.log(`✅ 已更新 ${updateResult.count} 个用户的未读消息数`)
+      
+      // 更新系统消息的总数统计
+      await prisma.systemReply.update({
+        where: { id: systemReply.id },
+        data: {
+          totalCount: updateResult.count
+        }
+      })
+    }
+
     return NextResponse.json({
       success: true,
       message: '系统消息创建成功',
