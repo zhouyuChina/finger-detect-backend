@@ -12,7 +12,7 @@ export default function UserManagementPage() {
   const [searchUsername, setSearchUsername] = useState('')
   const [searchUserId, setSearchUserId] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
-  const [searchAge, setSearchAge] = useState('')
+  const [searchAgeRange, setSearchAgeRange] = useState('')
   const [searchGender, setSearchGender] = useState('')
   const [searchRegion, setSearchRegion] = useState('')
   const [allUsers, setAllUsers] = useState([])
@@ -64,7 +64,23 @@ export default function UserManagementPage() {
     const matchUsername = !searchUsername || (user.realName && user.realName.toLowerCase().includes(searchUsername.toLowerCase()))
     const matchUserId = !searchUserId || (user.wechatUser?.openid && user.wechatUser.openid.includes(searchUserId))
     const matchStatus = !searchStatus || user.status === searchStatus
-    const matchAge = !searchAge || user.age === parseInt(searchAge)
+    const matchAgeRange = !searchAgeRange || (() => {
+      if (!user.age) return false
+      const age = user.age
+      switch (searchAgeRange) {
+        case '0-9': return age >= 0 && age <= 9
+        case '10-19': return age >= 10 && age <= 19
+        case '20-29': return age >= 20 && age <= 29
+        case '30-39': return age >= 30 && age <= 39
+        case '40-49': return age >= 40 && age <= 49
+        case '50-59': return age >= 50 && age <= 59
+        case '60-69': return age >= 60 && age <= 69
+        case '70-79': return age >= 70 && age <= 79
+        case '80-89': return age >= 80 && age <= 89
+        case '90+': return age >= 90
+        default: return true
+      }
+    })()
     const matchGender = !searchGender || user.gender === searchGender
     const matchRegion = !searchRegion || (user.address && user.address.includes(searchRegion))
     
@@ -75,7 +91,7 @@ export default function UserManagementPage() {
       console.log('匹配结果:', matchUserId)
     }
     
-    return matchUsername && matchUserId && matchStatus && matchAge && matchGender && matchRegion
+    return matchUsername && matchUserId && matchStatus && matchAgeRange && matchGender && matchRegion
   })
   
   const totalUsers = filteredUsers.length
@@ -101,7 +117,7 @@ export default function UserManagementPage() {
     setSearchUsername('')
     setSearchUserId('')
     setSearchStatus('')
-    setSearchAge('')
+    setSearchAgeRange('')
     setSearchGender('')
     setSearchRegion('')
     setCurrentPage(1)
@@ -233,14 +249,24 @@ export default function UserManagementPage() {
         {/* 第一排：年龄、性别、地域 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">年龄</label>
-            <input
-              type="number"
-              value={searchAge}
-              onChange={(e) => setSearchAge(e.target.value)}
-              placeholder="请输入年龄"
+            <label className="block text-sm font-medium text-gray-700 mb-2">年龄段</label>
+            <select
+              value={searchAgeRange}
+              onChange={(e) => setSearchAgeRange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
+            >
+              <option value="">全部年龄</option>
+              <option value="0-9">0-9岁</option>
+              <option value="10-19">10-19岁</option>
+              <option value="20-29">20-29岁</option>
+              <option value="30-39">30-39岁</option>
+              <option value="40-49">40-49岁</option>
+              <option value="50-59">50-59岁</option>
+              <option value="60-69">60-69岁</option>
+              <option value="70-79">70-79岁</option>
+              <option value="80-89">80-89岁</option>
+              <option value="90+">90岁以上</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">性别</label>
