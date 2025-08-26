@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { PrismaClient } from '../../../../../src/generated/prisma/index.js'
 import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../../src/lib/middleware.js'
 import JSZip from 'jszip'
-import fetch from 'node-fetch'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { existsSync } from 'node:fs'
 
 const prisma = new PrismaClient()
 
@@ -74,7 +76,11 @@ export async function POST(request) {
     
     if (detections.length === 0) {
       return NextResponse.json(
-        { success: false, message: '该档案下没有图片' },
+        { 
+          success: false, 
+          message: `档案"${archiveName}"下没有检测记录或图片数据`,
+          details: '提示：需要通过小程序对该档案进行拍照检测后才会有图片数据可供导出'
+        },
         { status: 404 }
       )
     }
@@ -92,6 +98,12 @@ export async function POST(request) {
           return null
         }
 
+        // 构建实际文件路径，移除开头的斜杠
+        const relativePath = detection.imageUrl.startsWith('/') ? detection.imageUrl.slice(1) : detection.imageUrl
+        const filePath = join(process.cwd(), 'public', relativePath)
+        
+        console.log(`🔍 尝试读取文件: ${filePath}`)
+        
         // 获取图片文件扩展名
         const urlParts = detection.imageUrl.split('.')
         const extension = urlParts.length > 1 ? urlParts[urlParts.length - 1].split('?')[0] : 'jpg'
@@ -104,21 +116,37 @@ export async function POST(request) {
         const result = detection.result || 'unknown'
         const confidence = detection.confidence ? Math.round(detection.confidence * 100) : 0
         
+        // 检查文件是否存在
+        if (!existsSync(filePath)) {
+          console.warn(`❌ 文件不存在: ${filePath}`)
+          // 尝试备用路径：直接在uploads目录查找文件名
+          const fileName = detection.imageUrl.split('/').pop()
+          const backupFilePath = join(process.cwd(), 'public', 'uploads', fileName)
+          console.log(`🔄 尝试备用路径: ${backupFilePath}`)
+          
+          if (!existsSync(backupFilePath)) {
+            console.warn(`❌ 备用路径也不存在: ${backupFilePath}`)
+            return null
+          }
+          
+          // 使用备用路径读取文件
+          const imageBuffer = await readFile(backupFilePath)
+          const finalFileName = `${String(index + 1).padStart(3, '0')}_${detectionTime}_${result}_${confidence}%.${extension}`
+          zip.file(finalFileName, imageBuffer)
+          console.log(`✅ 从备用路径成功读取文件: ${finalFileName}`)
+          return finalFileName
+        }
+        
         const fileName = `${String(index + 1).padStart(3, '0')}_${detectionTime}_${result}_${confidence}%.${extension}`
 
-        // 下载图片
-        const response = await fetch(detection.imageUrl)
-        if (!response.ok) {
-          console.warn(`无法下载图片: ${detection.imageUrl}`)
-          return null
-        }
-
-        const imageBuffer = await response.buffer()
+        // 直接读取文件
+        const imageBuffer = await readFile(filePath)
         zip.file(fileName, imageBuffer)
 
+        console.log(`✅ 成功读取文件: ${fileName}`)
         return fileName
       } catch (error) {
-        console.error(`下载图片失败: ${detection.imageUrl}`, error)
+        console.error(`❌ 读取图片失败: ${detection.imageUrl}`, error.message)
         return null
       }
     })

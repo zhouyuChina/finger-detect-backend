@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { PrismaClient } from '../../../../../src/generated/prisma/index.js'
 import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../../src/lib/middleware.js'
 import JSZip from 'jszip'
-import fetch from 'node-fetch'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { existsSync } from 'node:fs'
 
 const prisma = new PrismaClient()
 
@@ -22,6 +24,7 @@ export async function POST(request) {
     const detections = await prisma.detection.findMany({
       where: {
         imageUrl: {
+          not: null,
           not: ""
         }
       },
@@ -49,7 +52,11 @@ export async function POST(request) {
 
     if (detections.length === 0) {
       return NextResponse.json(
-        { success: false, message: '没有找到任何图片' },
+        { 
+          success: false, 
+          message: '数据库中没有任何检测记录或图片数据，请先进行检测后再尝试导出',
+          details: '提示：需要通过小程序进行拍照检测后才会有图片数据可供导出'
+        },
         { status: 404 }
       )
     }
@@ -87,6 +94,32 @@ export async function POST(request) {
             return null
           }
 
+          // 构建实际文件路径，移除开头的斜杠
+          const relativePath = detection.imageUrl.startsWith('/') ? detection.imageUrl.slice(1) : detection.imageUrl
+          const filePath = join(process.cwd(), 'public', relativePath)
+          
+          console.log(`🔍 尝试读取文件: ${filePath}`)
+          
+          // 检查文件是否存在
+          if (!existsSync(filePath)) {
+            console.warn(`❌ 文件不存在: ${filePath}`)
+            // 尝试备用路径：直接在uploads目录查找文件名
+            const fileName = detection.imageUrl.split('/').pop()
+            const backupFilePath = join(process.cwd(), 'public', 'uploads', fileName)
+            console.log(`🔄 尝试备用路径: ${backupFilePath}`)
+            
+            if (!existsSync(backupFilePath)) {
+              console.warn(`❌ 备用路径也不存在: ${backupFilePath}`)
+              return null
+            }
+            
+            // 使用备用路径读取文件
+            const imageBuffer = await readFile(backupFilePath)
+            userFolder.file(fileName, imageBuffer)
+            console.log(`✅ 从备用路径成功读取文件: ${fileName}`)
+            return fileName
+          }
+
           // 获取图片文件扩展名
           const urlParts = detection.imageUrl.split('.')
           const extension = urlParts.length > 1 ? urlParts[urlParts.length - 1].split('?')[0] : 'jpg'
@@ -102,27 +135,14 @@ export async function POST(request) {
           
           const fileName = `${String(index + 1).padStart(3, '0')}_${archiveName}_${detectionTime}_${result}_${confidence}%.${extension}`
 
-          // 下载图片
-          console.log(`尝试下载图片: ${detection.imageUrl}`)
-          
-          try {
-            const response = await fetch(detection.imageUrl)
-            if (!response.ok) {
-              console.warn(`无法下载图片: ${detection.imageUrl}, 状态码: ${response.status}`)
-              return null
-            }
+          // 直接读取文件
+          const imageBuffer = await readFile(filePath)
+          userFolder.file(fileName, imageBuffer)
+          console.log(`✅ 成功读取文件: ${fileName}`)
 
-            const imageBuffer = await response.buffer()
-            userFolder.file(fileName, imageBuffer)
-            console.log(`成功下载图片: ${fileName}`)
-
-            return fileName
-          } catch (fetchError) {
-            console.error(`下载图片失败: ${detection.imageUrl}`, fetchError.message)
-            return null
-          }
+          return fileName
         } catch (error) {
-          console.error(`下载图片失败: ${detection.imageUrl}`, error)
+          console.error(`❌ 读取图片失败: ${detection.imageUrl}`, error.message)
           return null
         }
       })
@@ -176,8 +196,17 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('导出所有图片失败:', error)
+    console.error('错误堆栈:', error.stack)
+    console.error('错误名称:', error.name)
+    console.error('错误消息:', error.message)
+    
     return NextResponse.json(
-      { success: false, message: '导出失败，请重试' },
+      { 
+        success: false, 
+        message: '导出失败，请重试',
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   }
