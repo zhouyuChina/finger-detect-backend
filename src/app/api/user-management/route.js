@@ -37,7 +37,7 @@ export async function GET(request) {
       ]
     }
 
-    // 查询数据
+    // 查询数据，并动态计算统计信息
     const [subUsers, total] = await Promise.all([
       prisma.subUser.findMany({
         where,
@@ -52,9 +52,6 @@ export async function GET(request) {
           age: true,
           gender: true,
           address: true,
-          archives: true,
-          photos: true,
-          reports: true,
           createdAt: true,
           updatedAt: true,
           remark: true,
@@ -62,6 +59,16 @@ export async function GET(request) {
             select: {
               openid: true,
               nickname: true
+            }
+          },
+          // 动态计算统计数据
+          archiveList: {
+            select: { id: true }
+          },
+          detections: {
+            select: { 
+              id: true,
+              result: true
             }
           }
         },
@@ -72,10 +79,32 @@ export async function GET(request) {
       prisma.subUser.count({ where })
     ])
 
+    // 处理数据，计算真实统计信息
+    const processedUsers = subUsers.map(user => ({
+      id: user.id,
+      wechatUserId: user.wechatUserId,
+      username: user.username,
+      realName: user.realName,
+      phone: user.phone,
+      email: user.email,
+      status: user.status,
+      age: user.age,
+      gender: user.gender,
+      address: user.address,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      remark: user.remark,
+      wechatUser: user.wechatUser,
+      // 动态计算的真实数据
+      archives: user.archiveList.length, // 建档数量 = 档案数量
+      photos: user.detections.length,    // 拍照数量 = 检测记录数量（包括AI检测和仅拍照）
+      reports: user.detections.filter(d => d.result === 'onychomycosis').length // 报告数量 = 异常检测数量
+    }))
+
     return NextResponse.json({
       success: true,
       data: {
-        data: subUsers,
+        data: processedUsers,
         pagination: {
           page,
           pageSize,

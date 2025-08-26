@@ -113,9 +113,10 @@ async function createRealDetection(request) {
       archiveId, 
       detectionType = 'left_hand_thumb',
       imageUrl,      // 方式1：图片URL
-      base64Image   // 方式2：直接base64图片
+      base64Image,   // 方式2：直接base64图片
+      performDetection = true  // 新增：是否进行AI检测，默认为true
     } = body
-    let needDetection = true  // 默认需要检测
+    console.log(`📊 用户选择: ${performDetection ? '进行AI检测' : '仅保存图片'}`)
 
     // 验证必填字段
     if (!subUserId || !archiveId) {
@@ -192,7 +193,7 @@ async function createRealDetection(request) {
       console.log('✅ 图片转换完成')
     }
 
-    // 4. 检查是否已有任何检测记录（用于判断是否为首次检测）
+    // 4. 检查是否已有检测记录（用于统计信息）
     const allExistingDetections = await prisma.detection.findMany({
       where: {
         subUserId: subUser.id,
@@ -221,23 +222,19 @@ async function createRealDetection(request) {
       }
     })
     
-    // 判断是否需要调用第三方检测服务
-    // 规则：只有第一次检测时才调用第三方服务
-    needDetection = allExistingDetections.length === 0
-    
     console.log(`📊 档案检测记录统计:`)
     console.log(`- 总检测记录数: ${allExistingDetections.length}`)
     console.log(`- 异常记录数: ${existingAbnormalDetections.length}`)
-    console.log(`- 是否需要AI检测: ${needDetection}`)
+    console.log(`- 用户选择: ${performDetection ? 'AI检测' : '仅保存图片'}`)
     
     // 5. 处理检测逻辑
     let detectionResult = null
     let finalResult = null
-    let shouldSaveToDatabase = false
+    let shouldSaveToDatabase = true // 总是保存到数据库
     
-    if (needDetection) {
-      // 第一次检测：需要调用第三方检测服务
-      console.log('🔄 首次检测，开始调用第三方检测服务...')
+    if (performDetection) {
+      // 用户选择进行AI检测
+      console.log('🔄 用户选择AI检测，开始调用第三方检测服务...')
       console.log('检测服务URL:', config.detectionService.fullUrl())
       console.log('base64图片长度:', base64Img.length)
       
@@ -256,95 +253,87 @@ async function createRealDetection(request) {
       
       console.log('📊 检测结果:', finalResult)
       console.log('📊 模型结果:', detectionResult.model_results)
-
-      // 判断是否需要落库
-      shouldSaveToDatabase = finalResult === 'onychomycosis'
     } else {
-      // 后续拍照：不需要检测，只保存图片
-      console.log('📸 后续拍照，仅保存图片，不进行AI检测')
+      // 用户选择仅保存图片
+      console.log('📸 用户选择仅保存图片，不进行AI检测')
       finalResult = 'photo_only' // 标记为仅拍照
-      shouldSaveToDatabase = true // 仅拍照也保存到数据库
     }
     
     let newDetection = null
     let archive = null
 
-    if (shouldSaveToDatabase) {
-      // 如果是base64图片，需要保存到服务器
-      if (base64Image) {
-        console.log('💾 保存base64图片到服务器...')
-        savedImageUrl = await saveBase64Image(base64Img, subUserId, detectionType)
-        console.log('✅ 图片保存成功:', savedImageUrl)
-      }
-      
-      // 使用之前查询的结果，避免重复查询
-
-      if (needDetection) {
-        console.log('💾 检测结果为灰指甲，需要落库')
-        console.log(`📊 当前档案异常记录数: ${existingAbnormalDetections.length}`)
-        console.log(`📊 当前档案总记录数: ${allExistingDetections.length}`)
-        console.log(`📊 是否为首次异常报告: ${existingAbnormalDetections.length === 0}`)
-      } else {
-        console.log('💾 仅保存图片，不进行AI检测')
-      }
-
-      if (allExistingDetections.length > 0) {
-        // 更新档案信息（已有检测记录）
-        archive = await prisma.archive.update({
-          where: { id: existingArchive.id },
-          data: {
-            photoCount: {
-              increment: 1
-            },
-            detectionTime: new Date()
-          }
-        })
-      } else {
-        // 创建第一个检测记录
-        archive = await prisma.archive.update({
-          where: { id: existingArchive.id },
-          data: {
-            photoCount: 1, // 创建第一个检测记录，照片数量为1
-            detectionTime: new Date()
-          }
-        })
-      }
-
-      // 创建检测记录
-      const detectionData = {
-        subUserId: subUser.id,
-        archiveId: archive.id,
-        archiveName: archive.archiveName,
-        detectionType: detectionType,
-        imageUrl: savedImageUrl, // 使用保存后的图片URL
-        result: finalResult,
-        status: 'completed',
-        detectionTime: new Date(),
-        isFirstReport: existingAbnormalDetections.length === 0  // 基于异常记录判断是否为首次报告
-      }
-      
-      if (needDetection) {
-        // AI检测的情况
-        detectionData.confidence = parseFloat(detectionResult.model_results?.fusion?.confidence?.replace('%', '') || '0') / 100
-        detectionData.remark = `检测类型: ${detectionType}, 最终结果: ${finalResult}, 融合模型置信度: ${detectionResult.model_results?.fusion?.confidence || 'N/A'}`
-      } else {
-        // 仅拍照的情况
-        detectionData.confidence = 0
-        detectionData.remark = `检测类型: ${detectionType}, 仅保存图片，未进行AI检测`
-      }
-      
-      newDetection = await prisma.detection.create({
-        data: detectionData
-      })
-
-      console.log('✅ 检测记录创建成功:', newDetection.archiveName)
-    } else {
-      console.log('📤 检测结果不需要落库，直接返回给前端')
+    // 总是保存到数据库（AI检测结果或仅拍照记录）
+    // 如果是base64图片，需要保存到服务器
+    if (base64Image) {
+      console.log('💾 保存base64图片到服务器...')
+      savedImageUrl = await saveBase64Image(base64Img, subUserId, detectionType)
+      console.log('✅ 图片保存成功:', savedImageUrl)
     }
+    
+    if (performDetection) {
+      console.log('💾 AI检测完成，保存检测结果到数据库')
+    } else {
+      console.log('💾 用户选择仅保存图片')
+    }
+
+    console.log(`📊 当前档案异常记录数: ${existingAbnormalDetections.length}`)
+    console.log(`📊 当前档案总记录数: ${allExistingDetections.length}`)
+
+    if (allExistingDetections.length > 0) {
+      // 更新档案信息（已有检测记录）
+      archive = await prisma.archive.update({
+        where: { id: existingArchive.id },
+        data: {
+          photoCount: {
+            increment: 1
+          },
+          detectionTime: new Date()
+        }
+      })
+    } else {
+      // 创建第一个检测记录
+      archive = await prisma.archive.update({
+        where: { id: existingArchive.id },
+        data: {
+          photoCount: 1, // 创建第一个检测记录，照片数量为1
+          detectionTime: new Date()
+        }
+      })
+    }
+
+    // 创建检测记录
+    const detectionData = {
+      subUserId: subUser.id,
+      archiveId: archive.id,
+      archiveName: archive.archiveName,
+      detectionType: detectionType,
+      imageUrl: savedImageUrl, // 使用保存后的图片URL
+      result: finalResult,
+      status: 'completed',
+      detectionTime: new Date(),
+      // 判断是否为首次异常报告：只有AI检测出异常且之前没有异常记录时才为true
+      isFirstReport: performDetection && finalResult === 'onychomycosis' && existingAbnormalDetections.length === 0
+    }
+    
+    if (performDetection) {
+      // AI检测的情况
+      detectionData.confidence = parseFloat(detectionResult.model_results?.fusion?.confidence?.replace('%', '') || '0') / 100
+      detectionData.remark = `检测类型: ${detectionType}, AI检测结果: ${finalResult}, 融合模型置信度: ${detectionResult.model_results?.fusion?.confidence || 'N/A'}`
+    } else {
+      // 仅拍照的情况
+      detectionData.confidence = 0
+      detectionData.remark = `检测类型: ${detectionType}, 用户选择仅保存图片，未进行AI检测`
+    }
+    
+    newDetection = await prisma.detection.create({
+      data: detectionData
+    })
+
+    console.log('✅ 检测记录创建成功:', newDetection.archiveName)
 
     // 7. 构建响应数据
     const responseData = {
-      detection: newDetection ? {
+      detection: {
         id: newDetection.id,
         archiveName: newDetection.archiveName,
         detectionType: newDetection.detectionType,
@@ -355,38 +344,35 @@ async function createRealDetection(request) {
         remark: newDetection.remark,
         detectionTime: newDetection.detectionTime,
         createdAt: newDetection.createdAt
-      } : null,
-      thirdPartyResult: needDetection ? {
+      },
+      thirdPartyResult: performDetection ? {
         final_result: finalResult,
         model_results: detectionResult.model_results,
-        imageUrl: savedImageUrl, // 使用保存后的图片URL
+        imageUrl: savedImageUrl,
         detectionType: detectionType,
         timestamp: new Date().toISOString()
       } : {
         final_result: 'photo_only',
         model_results: null,
-        imageUrl: savedImageUrl, // 使用保存后的图片URL
+        imageUrl: savedImageUrl,
         detectionType: detectionType,
         timestamp: new Date().toISOString(),
-        message: '仅保存图片，未进行AI检测'
+        message: '用户选择仅保存图片，未进行AI检测'
       },
-      archive: archive ? {
+      archive: {
         id: archive.id,
         archiveName: archive.archiveName,
         photoCount: archive.photoCount,
         detectionTime: archive.detectionTime,
         createdAt: archive.createdAt
-      } : null,
-      isFirstReport: newDetection ? newDetection.isFirstReport : false,
-      shouldSaveToDatabase: shouldSaveToDatabase
+      },
+      isFirstReport: newDetection.isFirstReport,
+      performedDetection: performDetection
     }
 
-    let message
-    if (needDetection) {
-      message = shouldSaveToDatabase ? '检测完成，报告已生成' : '检测完成，结果已返回'
-    } else {
-      message = '图片保存完成'
-    }
+    const message = performDetection ? 
+      (finalResult === 'onychomycosis' ? 'AI检测完成，发现异常，报告已生成' : 'AI检测完成，结果正常') : 
+      '图片保存完成'
     return createSuccessResponse(responseData, message)
 
   } catch (error) {
