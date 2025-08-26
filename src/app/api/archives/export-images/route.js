@@ -168,7 +168,11 @@ export async function POST(request) {
     // 设置响应头
     const headers = new Headers()
     headers.set('Content-Type', 'application/zip')
-    headers.set('Content-Disposition', `attachment; filename="${userNickname}_${archiveName}_${currentDate}.zip"`)
+    
+    // 对中文文件名进行编码
+    const fileName = `${userNickname}_${archiveName}_${currentDate}.zip`
+    const encodedFileName = encodeURIComponent(fileName)
+    headers.set('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`)
     headers.set('Content-Length', zipBuffer.length.toString())
 
     return new NextResponse(zipBuffer, {
