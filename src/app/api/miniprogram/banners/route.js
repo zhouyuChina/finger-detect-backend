@@ -51,6 +51,7 @@ async function getBanners(request) {
         linkUrl: true,
         position: true,
         sort: true,
+        textColor: true,
       },
     })
 
