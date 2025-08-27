@@ -34,6 +34,17 @@ export default function ArchivesPage() {
   // 从数据库获取档案数据
   const fetchArchives = async () => {
     try {
+      console.log('🔍 开始获取档案数据，搜索条件:', {
+        currentPage,
+        pageSize,
+        searchSubUserId,
+        searchUserName,
+        searchArchiveName,
+        searchActivity,
+        searchBodyPartType,
+        searchBodyPartDetail
+      })
+      
       setIsLoading(true)
       const params = new URLSearchParams({
         page: currentPage,
@@ -46,6 +57,7 @@ export default function ArchivesPage() {
         searchBodyPartDetail: searchBodyPartDetail
       })
       
+      console.log('📡 调用API:', `/api/archives?${params}`)
       const response = await fetch(`/api/archives?${params}`)
       const result = await response.json()
       
@@ -78,16 +90,19 @@ export default function ArchivesPage() {
     const searchUserNameParam = searchParams.get('searchUserName')
     
     if (searchSubUserIdParam) {
+      console.log('📄 从URL设置searchSubUserId:', searchSubUserIdParam)
       setSearchSubUserId(searchSubUserIdParam)
       setCurrentPage(1)
     }
     
     if (searchUserIdParam) {
+      console.log('📄 从URL设置searchUserId（兼容）:', searchUserIdParam)
       setSearchSubUserId(searchUserIdParam) // 兼容旧的参数名
       setCurrentPage(1)
     }
     
     if (searchUserNameParam) {
+      console.log('📄 从URL设置searchUserName:', searchUserNameParam)
       setSearchUserName(searchUserNameParam)
       setCurrentPage(1)
     }
@@ -239,7 +254,8 @@ export default function ArchivesPage() {
   const getActivityText = (activity) => {
     const activityMap = {
       active: '活跃',
-      inactive: '非活跃'
+      inactive: '非活跃',
+      high: '活跃'  // 添加 high 映射为活跃
     }
     return activityMap[activity] || activity
   }
@@ -247,7 +263,8 @@ export default function ArchivesPage() {
   const getActivityColor = (activity) => {
     const colorMap = {
       active: 'bg-green-100 text-green-800',
-      inactive: 'bg-gray-100 text-gray-800'
+      inactive: 'bg-gray-100 text-gray-800',
+      high: 'bg-green-100 text-green-800'  // high 状态使用和 active 相同的绿色样式
     }
     return colorMap[activity] || 'bg-gray-100 text-gray-800'
   }
@@ -427,12 +444,12 @@ export default function ArchivesPage() {
         {/* 第二排：所属ID、用户名称、档案名称 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">所属ID</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">用户ID</label>
             <input
               type="text"
               value={searchSubUserId}
               onChange={(e) => setSearchSubUserId(e.target.value)}
-              placeholder="请输入子用户ID"
+              placeholder="请输入用户ID"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
@@ -567,7 +584,7 @@ export default function ArchivesPage() {
                   序号
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  所属ID
+                  用户ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   用户名称
@@ -596,7 +613,7 @@ export default function ArchivesPage() {
                     {startIndex + index + 1}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{archive.userId || '未知'}</div>
+                    <div className="text-sm font-medium text-gray-900">{archive.subUserId || '未知'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{archive.userNickname || '未知'}</div>

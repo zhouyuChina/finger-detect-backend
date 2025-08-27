@@ -366,11 +366,13 @@ export default function UserIdsPage() {
                         </button>
                         <button 
                           onClick={() => {
-                            const openid = wechatUser.openid || ''
-                            if (openid) {
-                              router.push(`/archives?searchUserId=${encodeURIComponent(openid)}`)
+                            // 获取该微信用户下的第一个子用户ID
+                            const subUsers = wechatUser.subUsers || []
+                            if (subUsers.length > 0) {
+                              const subUserId = subUsers[0].id
+                              router.push(`/archives?searchSubUserId=${encodeURIComponent(subUserId)}`)
                             } else {
-                              alert('该用户没有openid信息')
+                              alert('该用户没有子用户信息')
                             }
                           }}
                           className="text-green-600 hover:text-green-900 mr-3"
@@ -381,7 +383,7 @@ export default function UserIdsPage() {
                           onClick={() => {
                             const openid = wechatUser.openid || ''
                             if (openid) {
-                              router.push(`/detections?searchUserId=${encodeURIComponent(openid)}`)
+                              router.push(`/detections?searchOpenid=${encodeURIComponent(openid)}`)
                             } else {
                               alert('该用户没有openid信息')
                             }
