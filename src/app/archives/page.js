@@ -78,10 +78,8 @@ export default function ArchivesPage() {
     }
   }
 
-  // 使用useEffect获取数据
-  useEffect(() => {
-    fetchArchives()
-  }, [currentPage, pageSize, searchSubUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail])
+  // 处理URL参数的状态
+  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false)
 
   // 处理URL参数
   useEffect(() => {
@@ -106,7 +104,17 @@ export default function ArchivesPage() {
       setSearchUserName(searchUserNameParam)
       setCurrentPage(1)
     }
+    
+    // 标记URL参数已处理完成
+    setUrlParamsProcessed(true)
   }, [searchParams])
+
+  // 使用useEffect获取数据，等待URL参数处理完成
+  useEffect(() => {
+    if (urlParamsProcessed) {
+      fetchArchives()
+    }
+  }, [urlParamsProcessed, currentPage, pageSize, searchSubUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail])
   
   const totalArchives = allArchives.length
   const totalPages = Math.ceil(totalArchives / pageSize)
@@ -635,11 +643,11 @@ export default function ArchivesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
                       onClick={() => {
-                        const archiveName = archive.archiveName || ''
-                        if (archiveName) {
-                          router.push(`/archives/images?archiveName=${encodeURIComponent(archiveName)}&userId=${encodeURIComponent(archive.userId || '')}`)
+                        const archiveId = archive.id || ''
+                        if (archiveId) {
+                          router.push(`/archives/images?archiveId=${encodeURIComponent(archiveId)}`)
                         } else {
-                          alert('该档案没有档案名称信息')
+                          alert('该档案没有ID信息')
                         }
                       }}
                       className="text-blue-600 hover:text-blue-900 mr-3"

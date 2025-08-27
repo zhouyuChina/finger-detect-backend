@@ -81,7 +81,7 @@ export default function UserManagementPage() {
         default: return true
       }
     })()
-    const matchGender = !searchGender || user.gender === searchGender
+    const matchGender = !searchGender || getGenderText(user.gender) === searchGender
     const matchRegion = !searchRegion || (user.address && user.address.includes(searchRegion))
     
     // 调试信息：当有searchUserId时，输出匹配信息
@@ -93,6 +93,13 @@ export default function UserManagementPage() {
     
     return matchUsername && matchUserId && matchStatus && matchAgeRange && matchGender && matchRegion
   })
+  
+  // 性别映射函数
+  const getGenderText = (genderValue) => {
+    if (genderValue === 1 || genderValue === '1') return '男'
+    if (genderValue === 2 || genderValue === '2') return '女'
+    return genderValue || '-'
+  }
   
   const totalUsers = filteredUsers.length
   const totalPages = Math.ceil(totalUsers / pageSize)
@@ -144,7 +151,7 @@ export default function UserManagementPage() {
       user.wechatUser?.openid || '未知ID',
       user.status === 'active' ? '活跃' : user.status === 'inactive' ? '非活跃' : user.status === 'pending' ? '待审核' : '已禁用',
       user.age || '-',
-      user.gender || '-',
+      getGenderText(user.gender),
       user.address || '-',
       user.archives || 0,
       user.photos || 0,
@@ -494,7 +501,7 @@ export default function UserManagementPage() {
                     {user.age}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.gender}
+                    {getGenderText(user.gender)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.address}
@@ -634,7 +641,7 @@ export default function UserManagementPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">性别</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedUser.gender}</p>
+                  <p className="mt-1 text-sm text-gray-900">{getGenderText(selectedUser.gender)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">地址</label>

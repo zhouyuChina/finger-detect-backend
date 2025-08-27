@@ -21,28 +21,37 @@ export async function POST(request) {
     if (authResult && authResult.error) return authResult
 
     const body = await request.json()
-    const { archiveName, userId } = body
+    const { archiveName, archiveId, userId } = body
 
-    console.log('📤 请求参数:', { archiveName, userId })
+    console.log('📤 请求参数:', { archiveName, archiveId, userId })
 
-    if (!archiveName) {
+    if (!archiveName && !archiveId) {
       return NextResponse.json(
-        { success: false, message: '缺少档案名称参数' },
+        { success: false, message: '缺少档案名称或档案ID参数' },
         { status: 400 }
       )
     }
 
     console.log('🔍 开始查询数据库...')
     
+    // 构建查询条件
+    const whereCondition = {
+      imageUrl: {
+        not: null,
+        not: ''
+      }
+    }
+    
+    // 优先使用档案ID，更精确
+    if (archiveId) {
+      whereCondition.archiveId = archiveId
+    } else if (archiveName) {
+      whereCondition.archiveName = archiveName
+    }
+    
     // 查询该档案下的所有图片
     const detections = await prisma.detection.findMany({
-      where: {
-        archiveName: archiveName,
-        imageUrl: {
-          not: null,
-          not: ''
-        }
-      },
+      where: whereCondition,
       select: {
         id: true,
         imageUrl: true,

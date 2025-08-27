@@ -16,11 +16,13 @@ export default function ArchiveImagesPage() {
 
   const archiveName = searchParams.get('archiveName')
   const userId = searchParams.get('userId')
+  const archiveId = searchParams.get('archiveId')
 
   // 获取档案图片数据
   const fetchImages = async () => {
-    if (!archiveName) {
-      setError('缺少档案名称参数')
+    // 至少需要档案名称或档案ID之一
+    if (!archiveName && !archiveId) {
+      setError('缺少档案名称或档案ID参数')
       setIsLoading(false)
       return
     }
@@ -29,9 +31,15 @@ export default function ArchiveImagesPage() {
       setIsLoading(true)
       const params = new URLSearchParams({
         page: currentPage,
-        pageSize,
-        archiveName: archiveName
+        pageSize
       })
+      
+      // 优先使用档案ID，更精确
+      if (archiveId) {
+        params.append('archiveId', archiveId)
+      } else if (archiveName) {
+        params.append('archiveName', archiveName)
+      }
       
       const response = await fetch(`/api/detections?${params}`)
       const result = await response.json()
@@ -67,7 +75,7 @@ export default function ArchiveImagesPage() {
 
   useEffect(() => {
     fetchImages()
-  }, [currentPage, pageSize, archiveName])
+  }, [currentPage, pageSize, archiveName, archiveId])
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -79,13 +87,14 @@ export default function ArchiveImagesPage() {
   }
 
   const handleExportImages = async () => {
-    if (!archiveName) {
-      alert('缺少档案名称参数')
+    if (!archiveName && !archiveId) {
+      alert('缺少档案参数')
       return
     }
 
     console.log('📤 导出图片请求参数:', {
       archiveName: archiveName,
+      archiveId: archiveId,
       userId: userId
     })
 
@@ -98,6 +107,7 @@ export default function ArchiveImagesPage() {
         },
         body: JSON.stringify({
           archiveName: archiveName,
+          archiveId: archiveId,
           userId: userId
         })
       })
