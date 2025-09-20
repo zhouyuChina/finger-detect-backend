@@ -41,7 +41,7 @@ const config = {
 
   // 第三方检测服务配置
   detectionService: {
-    baseUrl: process.env.DETECTION_SERVICE_URL || 'http://localhost:1008',
+    baseUrl: process.env.DETECTION_SERVICE_URL || 'http://localhost:11008',
     endpoint: process.env.DETECTION_SERVICE_ENDPOINT || '/predict',
     fullUrl: function() {
       return `${this.baseUrl}${this.endpoint}`;

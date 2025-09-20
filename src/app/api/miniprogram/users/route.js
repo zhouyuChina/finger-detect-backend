@@ -136,12 +136,12 @@ async function createSubUser(request) {
     }
 
     // 验证用户名长度
-    if (username.length < 2 || username.length > 20) {
-      return createErrorResponse('用户名长度应在2-20个字符之间', 400)
+    if (username.length < 1 || username.length > 20) {
+      return createErrorResponse('用户名长度应在1-20个字符之间', 400)
     }
 
     // 验证真实姓名长度
-    if (realName.length < 2 || realName.length > 10) {
+    if (realName.length < 1 || realName.length > 10) {
       return createErrorResponse('真实姓名长度应在2-10个字符之间', 400)
     }
 

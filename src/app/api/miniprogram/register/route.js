@@ -92,19 +92,50 @@ export async function POST(request) {
     // 如果提供了code，则调用微信API换取openid
     if (code && !openid) {
       console.log('📞 使用微信登录code换取openid...')
-      try {
-        const wxResult = await getWechatOpenid(code)
-        if (wxResult.success) {
-          finalOpenid = wxResult.openid
-          finalUnionid = wxResult.unionid
-          console.log('✅ 微信API调用成功，openid:', finalOpenid)
-        } else {
-          console.log('❌ 微信API调用失败:', wxResult.message)
-          return createErrorResponse('微信登录失败: ' + wxResult.message, 400)
+
+      // 开发环境：支持测试 code
+      if (process.env.NODE_ENV === 'development' && code.startsWith('DEV_')) {
+        finalOpenid = code.replace('DEV_', 'openid_dev_')
+        finalUnionid = code.replace('DEV_', 'unionid_dev_')
+        console.log('🧪 开发环境测试模式，使用模拟数据:')
+        console.log('  - openid:', finalOpenid)
+        console.log('  - unionid:', finalUnionid)
+      } else {
+        // 生产环境：调用真实微信API
+        try {
+          const wxResult = await getWechatOpenid(code)
+          if (wxResult.success) {
+            finalOpenid = wxResult.openid
+            finalUnionid = wxResult.unionid
+            console.log('✅ 微信API调用成功，openid:', finalOpenid)
+          } else {
+            console.log('❌ 微信API调用失败:', wxResult.message)
+
+            // 开发环境：如果微信API失败，使用code生成模拟openid
+            if (process.env.NODE_ENV === 'development') {
+              finalOpenid = `openid_dev_${code.slice(-8)}`
+              finalUnionid = `unionid_dev_${code.slice(-8)}`
+              console.log('🧪 开发环境：微信API失败，使用模拟数据:')
+              console.log('  - openid:', finalOpenid)
+              console.log('  - unionid:', finalUnionid)
+            } else {
+              return createErrorResponse('微信登录失败: ' + wxResult.message, 400)
+            }
+          }
+        } catch (error) {
+          console.log('❌ 微信API调用异常:', error.message)
+
+          // 开发环境：如果微信API异常，使用code生成模拟openid
+          if (process.env.NODE_ENV === 'development') {
+            finalOpenid = `openid_dev_${code.slice(-8)}`
+            finalUnionid = `unionid_dev_${code.slice(-8)}`
+            console.log('🧪 开发环境：微信API异常，使用模拟数据:')
+            console.log('  - openid:', finalOpenid)
+            console.log('  - unionid:', finalUnionid)
+          } else {
+            return createErrorResponse('微信登录失败: ' + error.message, 400)
+          }
         }
-      } catch (error) {
-        console.log('❌ 微信API调用异常:', error.message)
-        return createErrorResponse('微信登录失败: ' + error.message, 400)
       }
     }
 

@@ -13,7 +13,7 @@ async function getArchives(request) {
     const subUserId = searchParams.get('subUserId')
     console.log('📋 请求的子用户ID:', subUserId)
     const page = parseInt(searchParams.get('page')) || 1
-    const limit = parseInt(searchParams.get('limit')) || 10
+    const limit = parseInt(searchParams.get('limit')) || 100 // 提高默认限制到100
     
     // 验证参数
     if (!subUserId) {
