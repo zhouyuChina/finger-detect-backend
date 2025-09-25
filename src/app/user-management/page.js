@@ -16,54 +16,63 @@ export default function UserManagementPage() {
   const [searchGender, setSearchGender] = useState('')
   const [searchRegion, setSearchRegion] = useState('')
   const [allUsers, setAllUsers] = useState([])
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   
-  // 从数据库获取用户数据
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch('/api/user-management')
-      const result = await response.json()
-      
-      if (response.ok) {
-        setAllUsers(result.data.data || [])
-      } else {
-        setError(result.message || '获取数据失败')
-      }
-    } catch (err) {
-      setError('网络错误，请重试')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   // 使用useEffect获取数据
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true)
+        const params = new URLSearchParams({
+          page: currentPage,
+          pageSize,
+          search: searchUsername,
+          status: searchStatus
+        })
+        
+        const response = await fetch(`/api/user-management?${params}`)
+        const result = await response.json()
+        
+        if (response.ok) {
+          setAllUsers(result.data.data || [])
+          setTotalUsers(result.data.pagination?.total || 0)
+          setTotalPages(result.data.pagination?.totalPages || 0)
+        } else {
+          setError(result.message || '获取数据失败')
+        }
+      } catch (err) {
+        setError('网络错误，请重试')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
     fetchUsers()
-  }, [])
+  }, [currentPage, pageSize, searchUsername, searchStatus])
 
   // 处理URL参数
   useEffect(() => {
     const searchUserId = searchParams.get('searchUserId')
     if (searchUserId) {
       setSearchUserId(searchUserId)
-      // 自动触发搜索
       setCurrentPage(1)
-      // 确保数据加载完成后再应用过滤
-      if (allUsers.length > 0) {
-        // 数据已加载，过滤会自动生效
-      }
     }
-  }, [searchParams, allUsers])
+  }, [searchParams])
   
-  // 过滤用户数据
+  // 性别映射函数
+  const getGenderText = (genderValue) => {
+    if (genderValue === 1 || genderValue === '1') return '男'
+    if (genderValue === 2 || genderValue === '2') return '女'
+    return genderValue || '-'
+  }
+  
+  // 客户端过滤（年龄、性别、地区等）
   const filteredUsers = allUsers.filter(user => {
-    const matchUsername = !searchUsername || (user.realName && user.realName.toLowerCase().includes(searchUsername.toLowerCase()))
-    const matchUserId = !searchUserId || (user.wechatUser?.openid && user.wechatUser.openid.includes(searchUserId))
-    const matchStatus = !searchStatus || user.status === searchStatus
     const matchAgeRange = !searchAgeRange || (() => {
       if (!user.age) return false
       const age = user.age
@@ -83,26 +92,13 @@ export default function UserManagementPage() {
     })()
     const matchGender = !searchGender || getGenderText(user.gender) === searchGender
     const matchRegion = !searchRegion || (user.address && user.address.includes(searchRegion))
+    const matchUserId = !searchUserId || (user.wechatUser?.openid && user.wechatUser.openid.includes(searchUserId))
     
-    // 调试信息：当有searchUserId时，输出匹配信息
-    if (searchUserId) {
-      console.log('搜索ID:', searchUserId)
-      console.log('用户openid:', user.wechatUser?.openid)
-      console.log('匹配结果:', matchUserId)
-    }
-    
-    return matchUsername && matchUserId && matchStatus && matchAgeRange && matchGender && matchRegion
+    return matchAgeRange && matchGender && matchRegion && matchUserId
   })
-  
-  // 性别映射函数
-  const getGenderText = (genderValue) => {
-    if (genderValue === 1 || genderValue === '1') return '男'
-    if (genderValue === 2 || genderValue === '2') return '女'
-    return genderValue || '-'
-  }
-  
-  const totalUsers = filteredUsers.length
-  const totalPages = Math.ceil(totalUsers / pageSize)
+
+  const filteredTotalUsers = filteredUsers.length
+  const filteredTotalPages = Math.ceil(filteredTotalUsers / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
   const currentUsers = filteredUsers.slice(startIndex, endIndex)
@@ -559,7 +555,7 @@ export default function UserManagementPage() {
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              显示第 {startIndex + 1} 到 {Math.min(endIndex, totalUsers)} 条，共 {totalUsers} 条记录
+              显示第 {startIndex + 1} 到 {Math.min(endIndex, filteredTotalUsers)} 条，共 {filteredTotalUsers} 条记录
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -570,7 +566,7 @@ export default function UserManagementPage() {
                 上一页
               </button>
               
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, filteredTotalPages) }, (_, i) => {
                 const page = i + 1
                 return (
                   <button
@@ -587,13 +583,13 @@ export default function UserManagementPage() {
                 )
               })}
               
-              {totalPages > 5 && (
+              {filteredTotalPages > 5 && (
                 <span className="px-2 text-gray-500">...</span>
               )}
               
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === filteredTotalPages}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-900"
               >
                 下一页

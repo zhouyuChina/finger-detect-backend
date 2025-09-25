@@ -5,8 +5,15 @@ import config from '../../../../lib/config.js'
 // 调用真实的第三方检测服务
 async function callRealDetectionService(base64Img) {
   console.log('🤖 调用真实第三方检测服务')
-  
+
   try {
+    // 创建600秒超时控制器
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      controller.abort()
+      console.log('⏰ 第三方检测服务请求超时（600秒）')
+    }, 900000) // 600秒 = 600000毫秒
+
     const response = await fetch(config.detectionService.fullUrl(), {
       method: 'POST',
       headers: {
@@ -14,8 +21,12 @@ async function callRealDetectionService(base64Img) {
       },
       body: JSON.stringify({
         base64_img: base64Img
-      })
+      }),
+      signal: controller.signal // 添加超时信号
     })
+
+    // 清除超时定时器
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -23,13 +34,22 @@ async function callRealDetectionService(base64Img) {
 
     const result = await response.json()
     console.log('✅ 第三方检测服务返回结果:', result)
-    
+
     return {
       success: true,
       data: result
     }
   } catch (error) {
     console.error('❌ 调用第三方检测服务失败:', error)
+
+    // 检查是否为超时错误
+    if (error.name === 'AbortError') {
+      return {
+        success: false,
+        error: '第三方检测服务请求超时（600秒），请稍后重试'
+      }
+    }
+
     return {
       success: false,
       error: error.message

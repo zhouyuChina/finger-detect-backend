@@ -12,6 +12,8 @@ export default function DetectionsPage() {
   const [searchUserName, setSearchUserName] = useState('')
   const [searchArchiveId, setSearchArchiveId] = useState('')
   const [allDetections, setAllDetections] = useState([])
+  const [totalDetections, setTotalDetections] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -34,6 +36,8 @@ export default function DetectionsPage() {
       
       if (response.ok) {
         setAllDetections(result.data.data || [])
+        setTotalDetections(result.data.pagination?.total || 0)
+        setTotalPages(result.data.pagination?.totalPages || 0)
       } else {
         if (response.status === 401) {
           alert('登录已过期，请重新登录')
@@ -82,11 +86,9 @@ export default function DetectionsPage() {
     }
   }, [searchParams])
   
-  const totalDetections = allDetections.length
-  const totalPages = Math.ceil(totalDetections / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const currentDetections = allDetections.slice(startIndex, endIndex)
+  const currentDetections = allDetections
 
   const handlePageChange = (page) => {
     setCurrentPage(page)

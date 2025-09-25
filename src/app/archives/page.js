@@ -18,6 +18,8 @@ export default function ArchivesPage() {
   const [searchBodyPartType, setSearchBodyPartType] = useState('')
   const [searchBodyPartDetail, setSearchBodyPartDetail] = useState('')
   const [allArchives, setAllArchives] = useState([])
+  const [totalArchives, setTotalArchives] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   
@@ -63,6 +65,8 @@ export default function ArchivesPage() {
       
       if (response.ok) {
         setAllArchives(result.data.data || [])
+        setTotalArchives(result.data.pagination?.total || 0)
+        setTotalPages(result.data.pagination?.totalPages || 0)
       } else {
         if (response.status === 401) {
           alert('登录已过期，请重新登录')
@@ -116,11 +120,9 @@ export default function ArchivesPage() {
     }
   }, [urlParamsProcessed, currentPage, pageSize, searchSubUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail])
   
-  const totalArchives = allArchives.length
-  const totalPages = Math.ceil(totalArchives / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const currentArchives = allArchives.slice(startIndex, endIndex)
+  const currentArchives = allArchives
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
