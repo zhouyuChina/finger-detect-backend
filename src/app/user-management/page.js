@@ -32,16 +32,33 @@ export default function UserManagementPage() {
           page: currentPage,
           pageSize,
           search: searchUsername,
-          status: searchStatus
+          status: searchStatus,
+          userId: searchUserId,
+          ageRange: searchAgeRange,
+          gender: searchGender,
+          region: searchRegion
+        })
+
+        // 移除空值
+        Array.from(params.keys()).forEach(key => {
+          if (!params.get(key)) {
+            params.delete(key)
+          }
         })
         
         const response = await fetch(`/api/user-management?${params}`)
         const result = await response.json()
-        
+
+        console.log('🔍 API Response:', result)
+        console.log('📊 Data:', result.data)
+        console.log('👥 Users:', result.data?.data)
+
         if (response.ok) {
           setAllUsers(result.data.data || [])
           setTotalUsers(result.data.pagination?.total || 0)
           setTotalPages(result.data.pagination?.totalPages || 0)
+
+          console.log('✅ State updated - allUsers length:', result.data.data?.length || 0)
         } else {
           setError(result.message || '获取数据失败')
         }
@@ -53,7 +70,7 @@ export default function UserManagementPage() {
     }
 
     fetchUsers()
-  }, [currentPage, pageSize, searchUsername, searchStatus])
+  }, [currentPage, pageSize, searchUsername, searchStatus, searchUserId, searchAgeRange, searchGender, searchRegion])
 
   // 处理URL参数
   useEffect(() => {
@@ -71,37 +88,19 @@ export default function UserManagementPage() {
     return genderValue || '-'
   }
   
-  // 客户端过滤（年龄、性别、地区等）
-  const filteredUsers = allUsers.filter(user => {
-    const matchAgeRange = !searchAgeRange || (() => {
-      if (!user.age) return false
-      const age = user.age
-      switch (searchAgeRange) {
-        case '0-9': return age >= 0 && age <= 9
-        case '10-19': return age >= 10 && age <= 19
-        case '20-29': return age >= 20 && age <= 29
-        case '30-39': return age >= 30 && age <= 39
-        case '40-49': return age >= 40 && age <= 49
-        case '50-59': return age >= 50 && age <= 59
-        case '60-69': return age >= 60 && age <= 69
-        case '70-79': return age >= 70 && age <= 79
-        case '80-89': return age >= 80 && age <= 89
-        case '90+': return age >= 90
-        default: return true
-      }
-    })()
-    const matchGender = !searchGender || getGenderText(user.gender) === searchGender
-    const matchRegion = !searchRegion || (user.address && user.address.includes(searchRegion))
-    const matchUserId = !searchUserId || (user.wechatUser?.openid && user.wechatUser.openid.includes(searchUserId))
-    
-    return matchAgeRange && matchGender && matchRegion && matchUserId
-  })
+  // 直接使用服务器返回的数据，不再进行客户端过滤
+  const currentUsers = allUsers
+  const filteredTotalUsers = totalUsers
 
-  const filteredTotalUsers = filteredUsers.length
-  const filteredTotalPages = Math.ceil(filteredTotalUsers / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const currentUsers = filteredUsers.slice(startIndex, endIndex)
+  console.log('🖥️ Render - allUsers length:', allUsers.length)
+  console.log('🖥️ Render - currentUsers length:', currentUsers.length)
+  console.log('🖥️ Render - isLoading:', isLoading)
+  console.log('🖥️ Render - currentPage:', currentPage)
+  console.log('🖥️ Render - totalPages:', totalPages)
+
+  if (currentUsers.length > 0) {
+    console.log('🔍 First user sample:', currentUsers[0])
+  }
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -141,7 +140,7 @@ export default function UserManagementPage() {
       '报告数量'
     ]
 
-    const data = filteredUsers.map((user, index) => [
+    const data = allUsers.map((user, index) => [
       index + 1,
       user.realName || '未知用户',
       user.wechatUser?.openid || '未知ID',
@@ -390,7 +389,7 @@ export default function UserManagementPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">活跃用户</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredUsers.filter(u => u.status === 'active').length}
+                {allUsers.filter(u => u.status === 'active').length}
               </p>
             </div>
           </div>
@@ -406,7 +405,7 @@ export default function UserManagementPage() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">总建档数</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {filteredUsers.reduce((sum, user) => sum + user.archives, 0)}
+                {allUsers.reduce((sum, user) => sum + user.archives, 0)}
               </p>
             </div>
           </div>
@@ -482,7 +481,7 @@ export default function UserManagementPage() {
               {currentUsers.map((user, index) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {startIndex + index + 1}
+                    {(currentPage - 1) * pageSize + index + 1}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{user.realName || '未知用户'}</div>
@@ -555,7 +554,7 @@ export default function UserManagementPage() {
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              显示第 {startIndex + 1} 到 {Math.min(endIndex, filteredTotalUsers)} 条，共 {filteredTotalUsers} 条记录
+              显示第 {(currentPage - 1) * pageSize + 1} 到 {Math.min(currentPage * pageSize, totalUsers)} 条，共 {totalUsers} 条记录
             </div>
             <div className="flex items-center space-x-2">
               <button
@@ -565,8 +564,8 @@ export default function UserManagementPage() {
               >
                 上一页
               </button>
-              
-              {Array.from({ length: Math.min(5, filteredTotalPages) }, (_, i) => {
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const page = i + 1
                 return (
                   <button
@@ -582,14 +581,14 @@ export default function UserManagementPage() {
                   </button>
                 )
               })}
-              
-              {filteredTotalPages > 5 && (
+
+              {totalPages > 5 && (
                 <span className="px-2 text-gray-500">...</span>
               )}
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === filteredTotalPages}
+                disabled={currentPage === totalPages}
                 className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-gray-900"
               >
                 下一页
