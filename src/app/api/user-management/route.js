@@ -20,22 +20,58 @@ export async function GET(request) {
     const pageSize = parseInt(searchParams.get('pageSize')) || 10
     const status = searchParams.get('status') || ''
     const search = searchParams.get('search') || ''
+    const userId = searchParams.get('userId') || '' // 所属ID (openid)
+    const ageRange = searchParams.get('ageRange') || ''
+    const gender = searchParams.get('gender') || ''
+    const region = searchParams.get('region') || ''
+
+    console.log('🔍 API 接收参数:', { page, pageSize, status, search, userId, ageRange, gender, region })
 
     const skip = (page - 1) * pageSize
 
     // 构建查询条件
     const where = {}
-    
+
     if (status) {
       where.status = status
     }
-    
+
     if (search) {
       where.OR = [
         { username: { contains: search, mode: 'insensitive' } },
         { realName: { contains: search, mode: 'insensitive' } }
       ]
     }
+
+    // 通过所属ID (openid) 查询
+    if (userId) {
+      console.log('🎯 按所属ID筛选:', userId)
+      where.wechatUser = {
+        openid: userId
+      }
+    }
+
+    // 年龄段筛选
+    if (ageRange) {
+      if (ageRange === '90+') {
+        where.age = { gte: 90 }
+      } else {
+        const [min, max] = ageRange.split('-').map(Number)
+        where.age = { gte: min, lte: max }
+      }
+    }
+
+    // 性别筛选
+    if (gender) {
+      where.gender = gender
+    }
+
+    // 地域筛选
+    if (region) {
+      where.address = { contains: region, mode: 'insensitive' }
+    }
+
+    console.log('📋 Prisma 查询条件:', JSON.stringify(where, null, 2))
 
     // 查询数据，并动态计算统计信息
     const [subUsers, total] = await Promise.all([

@@ -1,90 +1,88 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function DetectionsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // 从 URL 参数初始化状态
+  const initialSearchSubUserId = searchParams.get('searchSubUserId') || ''
+  const initialSearchOpenid = searchParams.get('searchOpenid') || ''
+  const initialUserName = searchParams.get('userName') || ''
+  const initialArchiveId = searchParams.get('archiveId') || ''
+
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [searchSubUserId, setSearchSubUserId] = useState('')
-  const [searchOpenid, setSearchOpenid] = useState('')
-  const [searchUserName, setSearchUserName] = useState('')
-  const [searchArchiveId, setSearchArchiveId] = useState('')
+  const [searchSubUserId, setSearchSubUserId] = useState(initialSearchSubUserId)
+  const [searchOpenid, setSearchOpenid] = useState(initialSearchOpenid)
+  const [searchUserName, setSearchUserName] = useState(initialUserName)
+  const [searchArchiveId, setSearchArchiveId] = useState(initialArchiveId)
   const [allDetections, setAllDetections] = useState([])
   const [totalDetections, setTotalDetections] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  
+  // 使用 ref 追踪是否正在请求，防止重复请求
+  const isRequestingRef = useRef(false)
+
   // 从数据库获取检测记录数据
-  const fetchDetections = async () => {
-    try {
-      setIsLoading(true)
-      const params = new URLSearchParams({
-        page: currentPage,
-        pageSize,
-        subUserId: searchSubUserId,
-        openid: searchOpenid,
-        userName: searchUserName,
-        archiveId: searchArchiveId
-      })
-      
-      const response = await fetch(`/api/detections?${params}`)
-      const result = await response.json()
-      
-      if (response.ok) {
-        setAllDetections(result.data.data || [])
-        setTotalDetections(result.data.pagination?.total || 0)
-        setTotalPages(result.data.pagination?.totalPages || 0)
-      } else {
-        if (response.status === 401) {
-          alert('登录已过期，请重新登录')
-          router.push('/')
+  useEffect(() => {
+    // 如果正在请求中，跳过
+    if (isRequestingRef.current) {
+      console.log('⏭️ 跳过重复请求')
+      return
+    }
+
+    const fetchDetections = async () => {
+      try {
+        isRequestingRef.current = true
+        setIsLoading(true)
+        const params = new URLSearchParams({
+          page: currentPage,
+          pageSize,
+          subUserId: searchSubUserId,
+          openid: searchOpenid,
+          userName: searchUserName,
+          archiveId: searchArchiveId
+        })
+
+        // 移除空值
+        Array.from(params.keys()).forEach(key => {
+          if (!params.get(key)) {
+            params.delete(key)
+          }
+        })
+
+        const response = await fetch(`/api/detections?${params}`)
+        const result = await response.json()
+
+        if (response.ok) {
+          setAllDetections(result.data.data || [])
+          setTotalDetections(result.data.pagination?.total || 0)
+          setTotalPages(result.data.pagination?.totalPages || 0)
         } else {
-          setError(result.message || '获取数据失败')
+          if (response.status === 401) {
+            alert('登录已过期，请重新登录')
+            router.push('/')
+          } else {
+            setError(result.message || '获取数据失败')
+          }
         }
+      } catch (err) {
+        setError('网络错误，请重试')
+      } finally {
+        setIsLoading(false)
+        // 延迟重置请求标志，避免同一个渲染周期内的多次请求
+        setTimeout(() => {
+          isRequestingRef.current = false
+        }, 500)
       }
-    } catch (err) {
-      setError('网络错误，请重试')
-    } finally {
-      setIsLoading(false)
     }
-  }
 
-  // 使用useEffect获取数据
-  useEffect(() => {
     fetchDetections()
-  }, [currentPage, pageSize, searchSubUserId, searchOpenid, searchUserName, searchArchiveId])
-
-  // 处理URL参数
-  useEffect(() => {
-    const searchSubUserIdParam = searchParams.get('searchSubUserId')
-    const searchOpenidParam = searchParams.get('searchOpenid')
-    const userNameParam = searchParams.get('userName')
-    const archiveIdParam = searchParams.get('archiveId')
-    
-    if (searchSubUserIdParam) {
-      setSearchSubUserId(searchSubUserIdParam)
-      setCurrentPage(1)
-    }
-    
-    if (searchOpenidParam) {
-      setSearchOpenid(searchOpenidParam)
-      setCurrentPage(1)
-    }
-    
-    if (userNameParam) {
-      setSearchUserName(userNameParam)
-      setCurrentPage(1)
-    }
-    
-    if (archiveIdParam) {
-      setSearchArchiveId(archiveIdParam)
-      setCurrentPage(1)
-    }
-  }, [searchParams])
+  }, [currentPage, pageSize, searchSubUserId, searchOpenid, searchUserName, searchArchiveId, router])
   
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize

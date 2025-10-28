@@ -11,50 +11,67 @@ export default function UserIdsPage() {
   const [searchWechatName, setSearchWechatName] = useState('')
   const [searchStatus, setSearchStatus] = useState('')
   const [allUserIds, setAllUserIds] = useState([])
+  const [totalUserIds, setTotalUserIds] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  
-  // 从数据库获取ID管理数据
+
+  // 从数据库获取ID管理数据 - 使用服务端分页
   const fetchUserIds = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/user-ids')
+      const params = new URLSearchParams({
+        page: currentPage,
+        pageSize,
+        search: searchWechatName,
+        status: searchStatus
+      })
+
+      // 移除空值
+      Array.from(params.keys()).forEach(key => {
+        if (!params.get(key)) {
+          params.delete(key)
+        }
+      })
+
+      const response = await fetch(`/api/user-ids?${params}`)
       const result = await response.json()
-      
+
+      console.log('🔍 ID管理 API 响应:', result)
+
       if (response.ok) {
-        setAllUserIds(result.data.data || [])
+        const wechatUsers = result.data.data || []
+        console.log('👥 微信用户数量:', wechatUsers.length)
+        if (wechatUsers.length > 0) {
+          console.log('📋 第一个用户示例:', wechatUsers[0])
+          console.log('👶 第一个用户的subUsers:', wechatUsers[0].subUsers)
+        }
+        setAllUserIds(wechatUsers)
+        setTotalUserIds(result.data.pagination?.total || 0)
+        setTotalPages(result.data.pagination?.totalPages || 0)
       } else {
         setError(result.message || '获取数据失败')
       }
     } catch (err) {
+      console.error('❌ 获取数据错误:', err)
       setError('网络错误，请重试')
     } finally {
       setIsLoading(false)
     }
   }
 
-  // 使用useEffect获取数据
+  // 使用useEffect获取数据 - 添加搜索条件和分页依赖
   useEffect(() => {
     fetchUserIds()
-  }, [])
-  
-  // 过滤微信用户数据
-  const filteredWechatUsers = allUserIds.filter(wechatUser => {
-    const matchWechatName = !searchWechatName || 
-      (wechatUser.nickname && wechatUser.nickname.toLowerCase().includes(searchWechatName.toLowerCase()))
-    const matchStatus = !searchStatus || wechatUser.status === searchStatus
-    return matchWechatName && matchStatus
-  })
-  
-  const totalWechatUsers = filteredWechatUsers.length
-  const totalPages = Math.ceil(totalWechatUsers / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const currentWechatUsers = filteredWechatUsers.slice(startIndex, endIndex)
+  }, [currentPage, pageSize, searchWechatName, searchStatus])
 
-  // 统计数据
-  const activeCount = filteredWechatUsers.filter(u => u.status === 'active').length
-  const inactiveCount = filteredWechatUsers.filter(u => u.status === 'inactive').length
+  // 直接使用服务器返回的数据
+  const currentWechatUsers = allUserIds
+  const totalWechatUsers = totalUserIds
+
+  // 统计数据 - 从所有数据中统计
+  const activeCount = allUserIds.filter(u => u.status === 'active').length
+  const inactiveCount = allUserIds.filter(u => u.status === 'inactive').length
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
@@ -75,7 +92,7 @@ export default function UserIdsPage() {
     setCurrentPage(1)
   }
 
-  // 准备Excel导出数据
+  // 准备Excel导出数据 - 导出当前页数据
   const getExcelData = () => {
     const headers = [
       '序号',
@@ -86,8 +103,8 @@ export default function UserIdsPage() {
       '未读消息'
     ]
 
-    const data = filteredWechatUsers.map((wechatUser, index) => [
-      index + 1,
+    const data = currentWechatUsers.map((wechatUser, index) => [
+      (currentPage - 1) * pageSize + index + 1,
       wechatUser.openid || '未知账号',
       wechatUser.nickname || '未知用户',
       wechatUser.status === 'active' ? '活跃' : '非活跃',
@@ -324,7 +341,7 @@ export default function UserIdsPage() {
                   {currentWechatUsers.map((wechatUser, index) => (
                     <tr key={wechatUser.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {startIndex + index + 1}
+                        {(currentPage - 1) * pageSize + index + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{wechatUser.openid || '未知账号'}</div>
@@ -409,7 +426,7 @@ export default function UserIdsPage() {
             <div className="px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-700">
-                  显示第 {startIndex + 1} 到 {Math.min(endIndex, totalWechatUsers)} 条，共 {totalWechatUsers} 条记录
+                  显示第 {(currentPage - 1) * pageSize + 1} 到 {Math.min(currentPage * pageSize, totalWechatUsers)} 条，共 {totalWechatUsers} 条记录
                 </div>
                 <div className="flex items-center space-x-2">
                   <button

@@ -1,18 +1,23 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function ArchivesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // 从 URL 参数初始化状态
+  const initialSearchSubUserId = searchParams.get('searchSubUserId') || searchParams.get('searchUserId') || ''
+  const initialSearchUserName = searchParams.get('searchUserName') || ''
+
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [showModal, setShowModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [editingArchive, setEditingArchive] = useState(null)
   const [viewingArchive, setViewingArchive] = useState(null)
-  const [searchSubUserId, setSearchSubUserId] = useState('')
-  const [searchUserName, setSearchUserName] = useState('')
+  const [searchSubUserId, setSearchSubUserId] = useState(initialSearchSubUserId)
+  const [searchUserName, setSearchUserName] = useState(initialSearchUserName)
   const [searchArchiveName, setSearchArchiveName] = useState('')
   const [searchActivity, setSearchActivity] = useState('')
   const [searchBodyPartType, setSearchBodyPartType] = useState('')
@@ -22,6 +27,9 @@ export default function ArchivesPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // 使用 ref 追踪是否正在请求，防止重复请求
+  const isRequestingRef = useRef(false)
   
   // 表单状态
   const [formData, setFormData] = useState({
@@ -34,91 +42,75 @@ export default function ArchivesPage() {
   })
 
   // 从数据库获取档案数据
-  const fetchArchives = async () => {
-    try {
-      console.log('🔍 开始获取档案数据，搜索条件:', {
-        currentPage,
-        pageSize,
-        searchSubUserId,
-        searchUserName,
-        searchArchiveName,
-        searchActivity,
-        searchBodyPartType,
-        searchBodyPartDetail
-      })
-      
-      setIsLoading(true)
-      const params = new URLSearchParams({
-        page: currentPage,
-        pageSize,
-        searchSubUserId: searchSubUserId,
-        searchUserName: searchUserName,
-        searchArchiveName: searchArchiveName,
-        searchActivity: searchActivity,
-        searchBodyPartType: searchBodyPartType,
-        searchBodyPartDetail: searchBodyPartDetail
-      })
-      
-      console.log('📡 调用API:', `/api/archives?${params}`)
-      const response = await fetch(`/api/archives?${params}`)
-      const result = await response.json()
-      
-      if (response.ok) {
-        setAllArchives(result.data.data || [])
-        setTotalArchives(result.data.pagination?.total || 0)
-        setTotalPages(result.data.pagination?.totalPages || 0)
-      } else {
-        if (response.status === 401) {
-          alert('登录已过期，请重新登录')
-          router.push('/')
+  useEffect(() => {
+    // 如果正在请求中，跳过
+    if (isRequestingRef.current) {
+      console.log('⏭️ 跳过重复请求')
+      return
+    }
+
+    const fetchArchives = async () => {
+      try {
+        isRequestingRef.current = true
+        console.log('🔍 开始获取档案数据，搜索条件:', {
+          currentPage,
+          pageSize,
+          searchSubUserId,
+          searchUserName,
+          searchArchiveName,
+          searchActivity,
+          searchBodyPartType,
+          searchBodyPartDetail
+        })
+
+        setIsLoading(true)
+        const params = new URLSearchParams({
+          page: currentPage,
+          pageSize,
+          searchSubUserId: searchSubUserId,
+          searchUserName: searchUserName,
+          searchArchiveName: searchArchiveName,
+          searchActivity: searchActivity,
+          searchBodyPartType: searchBodyPartType,
+          searchBodyPartDetail: searchBodyPartDetail
+        })
+
+        // 移除空值
+        Array.from(params.keys()).forEach(key => {
+          if (!params.get(key)) {
+            params.delete(key)
+          }
+        })
+
+        console.log('📡 调用API:', `/api/archives?${params}`)
+        const response = await fetch(`/api/archives?${params}`)
+        const result = await response.json()
+
+        if (response.ok) {
+          setAllArchives(result.data.data || [])
+          setTotalArchives(result.data.pagination?.total || 0)
+          setTotalPages(result.data.pagination?.totalPages || 0)
         } else {
-          setError(result.message || '获取数据失败')
+          if (response.status === 401) {
+            alert('登录已过期，请重新登录')
+            router.push('/')
+          } else {
+            setError(result.message || '获取数据失败')
+          }
         }
+      } catch (err) {
+        setError('网络错误，请重试')
+      } finally {
+        setIsLoading(false)
+        // 延迟重置请求标志，避免同一个渲染周期内的多次请求
+        setTimeout(() => {
+          isRequestingRef.current = false
+        }, 500)
       }
-    } catch (err) {
-      setError('网络错误，请重试')
-    } finally {
-      setIsLoading(false)
     }
-  }
 
-  // 处理URL参数的状态
-  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false)
-
-  // 处理URL参数
-  useEffect(() => {
-    const searchSubUserIdParam = searchParams.get('searchSubUserId')
-    const searchUserIdParam = searchParams.get('searchUserId')
-    const searchUserNameParam = searchParams.get('searchUserName')
-    
-    if (searchSubUserIdParam) {
-      console.log('📄 从URL设置searchSubUserId:', searchSubUserIdParam)
-      setSearchSubUserId(searchSubUserIdParam)
-      setCurrentPage(1)
-    }
-    
-    if (searchUserIdParam) {
-      console.log('📄 从URL设置searchUserId（兼容）:', searchUserIdParam)
-      setSearchSubUserId(searchUserIdParam) // 兼容旧的参数名
-      setCurrentPage(1)
-    }
-    
-    if (searchUserNameParam) {
-      console.log('📄 从URL设置searchUserName:', searchUserNameParam)
-      setSearchUserName(searchUserNameParam)
-      setCurrentPage(1)
-    }
-    
-    // 标记URL参数已处理完成
-    setUrlParamsProcessed(true)
-  }, [searchParams])
-
-  // 使用useEffect获取数据，等待URL参数处理完成
-  useEffect(() => {
-    if (urlParamsProcessed) {
-      fetchArchives()
-    }
-  }, [urlParamsProcessed, currentPage, pageSize, searchSubUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail])
+    fetchArchives()
+  }, [currentPage, pageSize, searchSubUserId, searchUserName, searchArchiveName, searchActivity, searchBodyPartType, searchBodyPartDetail, router])
   
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize

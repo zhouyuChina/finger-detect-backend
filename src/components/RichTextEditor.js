@@ -31,38 +31,6 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
     setIsClient(true)
   }, [])
 
-  // 自定义上传处理器
-  const handleImageUpload = async (files) => {
-    const file = files[0]
-    if (!file) return
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
-
-      const result = await response.json()
-      
-      if (result.success) {
-        return {
-          success: 1,
-          data: {
-            url: result.data.url
-          }
-        }
-      } else {
-        throw new Error(result.message || '上传失败')
-      }
-    } catch (error) {
-      console.error('图片上传错误:', error)
-      throw error
-    }
-  }
-
   // Jodit 配置 - 类似微信公众号编辑器
   const config = useMemo(() => ({
     readonly: false,
@@ -128,15 +96,40 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
     uploader: {
       insertImageAsBase64URI: false,
       imagesExtensions: ['jpg', 'png', 'jpeg', 'gif', 'webp'],
-      process: handleImageUpload,
+      url: '/api/upload',
+      filesVariableName: () => 'file',
+      withCredentials: false,
+      method: 'POST',
+      format: 'json',
+      prepareData: function (formData) {
+        return formData
+      },
+      isSuccess: function (resp) {
+        return resp && resp.success
+      },
+      getMessage: function (resp) {
+        return resp.message || ''
+      },
+      process: function (resp) {
+        const url = resp?.data?.url
+        return {
+          files: url ? [url] : [],
+          path: '',
+          baseurl: '',
+          error: resp.success ? 0 : 1,
+          msg: resp.message || ''
+        }
+      },
       defaultHandlerSuccess: function (data) {
-        if (data && data.data && data.data.url) {
-          this.selection.insertImage(data.data.url)
+        const files = data.files || []
+        if (files.length > 0) {
+          const url = files[0]
+          this.selection.insertImage(url, null, 300)
         }
       },
       defaultHandlerError: function (error) {
         console.error('上传失败:', error)
-        this.events.fire('errorMessage', error.message || '图片上传失败')
+        this.events.fire('errorMessage', error.msg || '图片上传失败')
       }
     },
 
@@ -160,63 +153,158 @@ export default function RichTextEditor({ value, onChange, placeholder = "请输�
       lineHeight: '1.6'
     },
 
-    // 内容样式
+    // 内容样式 - 移动端优化
     iframeCSSLinks: [],
     iframeStyle: `
-      body { 
+      /* 基础样式 - 移动端优先 */
+      body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
-        font-size: 14px !important;
-        line-height: 1.6 !important;
+        font-size: 16px !important; /* 移动端推荐 16px，避免缩放 */
+        line-height: 1.8 !important; /* 更大的行高，提升可读性 */
         color: #333 !important;
-        margin: 10px !important;
-        padding: 0 !important;
+        margin: 0 !important;
+        padding: 15px !important; /* 移动端增加内边距 */
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        -webkit-text-size-adjust: 100% !important; /* 防止iOS自动调整字体大小 */
       }
+
+      /* 标题样式 - 移动端优化 */
       h1, h2, h3, h4, h5, h6 {
-        margin: 16px 0 8px 0 !important;
+        margin: 20px 0 12px 0 !important;
         font-weight: 600 !important;
-        line-height: 1.25 !important;
+        line-height: 1.4 !important;
+        color: #1a1a1a !important;
+        word-wrap: break-word !important;
       }
-      h1 { font-size: 24px !important; }
-      h2 { font-size: 20px !important; }
-      h3 { font-size: 18px !important; }
-      h4 { font-size: 16px !important; }
-      h5 { font-size: 14px !important; }
-      h6 { font-size: 12px !important; }
-      p { margin: 0 0 10px 0 !important; }
-      ul, ol { margin: 0 0 10px 20px !important; }
-      li { margin: 0 0 5px 0 !important; }
+      h1 {
+        font-size: 26px !important; /* 移动端适中大小 */
+        margin-top: 0 !important;
+      }
+      h2 { font-size: 22px !important; }
+      h3 { font-size: 20px !important; }
+      h4 { font-size: 18px !important; }
+      h5 { font-size: 16px !important; }
+      h6 { font-size: 14px !important; }
+
+      /* 段落样式 */
+      p {
+        margin: 0 0 15px 0 !important;
+        font-size: 16px !important;
+        line-height: 1.8 !important;
+      }
+
+      /* 列表样式 - 移动端优化 */
+      ul, ol {
+        margin: 0 0 15px 0 !important;
+        padding-left: 25px !important; /* 减少缩进 */
+      }
+      li {
+        margin: 0 0 8px 0 !important;
+        line-height: 1.8 !important;
+      }
+
+      /* 引用样式 - 移动端优化 */
       blockquote {
-        margin: 10px 0 !important;
-        padding: 10px 20px !important;
-        border-left: 4px solid #ddd !important;
-        background-color: #f9f9f9 !important;
-        font-style: italic !important;
+        margin: 15px 0 !important;
+        padding: 12px 15px !important;
+        border-left: 4px solid #1890ff !important;
+        background-color: #f6f8fa !important;
+        font-style: normal !important; /* 移除斜体 */
+        border-radius: 4px !important;
+        color: #555 !important;
       }
+
+      /* 图片样式 - 移动端优化 */
       img {
         max-width: 100% !important;
+        width: auto !important;
         height: auto !important;
-        margin: 10px 0 !important;
-        border-radius: 4px !important;
+        display: block !important; /* 块级显示 */
+        margin: 15px auto !important; /* 居中显示 */
+        border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; /* 添加阴影 */
       }
+
+      /* 链接样式 */
       a {
-        color: #007bff !important;
+        color: #1890ff !important;
         text-decoration: none !important;
+        word-wrap: break-word !important;
+        -webkit-tap-highlight-color: rgba(24, 144, 255, 0.1) !important; /* 移动端点击高亮 */
       }
-      a:hover {
+      a:hover, a:active {
         text-decoration: underline !important;
       }
+
+      /* 表格样式 - 移动端优化 */
       table {
         border-collapse: collapse !important;
         width: 100% !important;
-        margin: 10px 0 !important;
+        margin: 15px 0 !important;
+        font-size: 14px !important; /* 表格字体稍小 */
+        display: block !important; /* 允许横向滚动 */
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important; /* iOS 平滑滚动 */
       }
       table td, table th {
-        border: 1px solid #ddd !important;
-        padding: 8px !important;
+        border: 1px solid #e8e8e8 !important;
+        padding: 10px 8px !important;
+        text-align: left !important;
+        word-wrap: break-word !important;
+        min-width: 80px !important; /* 最小宽度 */
       }
       table th {
-        background-color: #f2f2f2 !important;
-        font-weight: bold !important;
+        background-color: #fafafa !important;
+        font-weight: 600 !important;
+        color: #1a1a1a !important;
+      }
+
+      /* 水平线 */
+      hr {
+        border: none !important;
+        border-top: 1px solid #e8e8e8 !important;
+        margin: 20px 0 !important;
+      }
+
+      /* 代码样式 */
+      code {
+        font-family: 'Menlo', 'Monaco', 'Courier New', monospace !important;
+        background-color: #f5f5f5 !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 14px !important;
+        color: #d63200 !important;
+      }
+
+      pre {
+        background-color: #f5f5f5 !important;
+        padding: 12px !important;
+        border-radius: 4px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin: 15px 0 !important;
+      }
+
+      pre code {
+        background-color: transparent !important;
+        padding: 0 !important;
+        color: #333 !important;
+      }
+
+      /* 强调文本 */
+      strong, b {
+        font-weight: 600 !important;
+        color: #1a1a1a !important;
+      }
+
+      /* 视频/iframe 响应式 */
+      video, iframe {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        margin: 15px auto !important;
       }
     `,
 

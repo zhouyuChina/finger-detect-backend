@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
 import ExcelExporter from '@/components/ExcelExporter'
@@ -7,10 +7,14 @@ import ExcelExporter from '@/components/ExcelExporter'
 export default function UserManagementPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // 从 URL 参数初始化状态
+  const initialSearchUserId = searchParams.get('searchUserId') || ''
+
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchUsername, setSearchUsername] = useState('')
-  const [searchUserId, setSearchUserId] = useState('')
+  const [searchUserId, setSearchUserId] = useState(initialSearchUserId)
   const [searchStatus, setSearchStatus] = useState('')
   const [searchAgeRange, setSearchAgeRange] = useState('')
   const [searchGender, setSearchGender] = useState('')
@@ -22,13 +26,34 @@ export default function UserManagementPage() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  
+
+  // 使用 ref 追踪是否正在请求，防止重复请求
+  const isRequestingRef = useRef(false)
+
   // 使用useEffect获取数据
   useEffect(() => {
+    // 如果正在请求中，跳过
+    if (isRequestingRef.current) {
+      console.log('⏭️ 跳过重复请求')
+      return
+    }
+
     const fetchUsers = async () => {
       try {
+        isRequestingRef.current = true
         setIsLoading(true)
         const params = new URLSearchParams({
+          page: currentPage,
+          pageSize,
+          search: searchUsername,
+          status: searchStatus,
+          userId: searchUserId,
+          ageRange: searchAgeRange,
+          gender: searchGender,
+          region: searchRegion
+        })
+
+        console.log('📤 准备发送的参数:', {
           page: currentPage,
           pageSize,
           search: searchUsername,
@@ -45,8 +70,11 @@ export default function UserManagementPage() {
             params.delete(key)
           }
         })
-        
-        const response = await fetch(`/api/user-management?${params}`)
+
+        const apiUrl = `/api/user-management?${params}`
+        console.log('🌐 API URL:', apiUrl)
+
+        const response = await fetch(apiUrl)
         const result = await response.json()
 
         console.log('🔍 API Response:', result)
@@ -66,21 +94,16 @@ export default function UserManagementPage() {
         setError('网络错误，请重试')
       } finally {
         setIsLoading(false)
+        // 延迟重置请求标志，避免同一个渲染周期内的多次请求
+        setTimeout(() => {
+          isRequestingRef.current = false
+        }, 500)
       }
     }
 
     fetchUsers()
   }, [currentPage, pageSize, searchUsername, searchStatus, searchUserId, searchAgeRange, searchGender, searchRegion])
 
-  // 处理URL参数
-  useEffect(() => {
-    const searchUserId = searchParams.get('searchUserId')
-    if (searchUserId) {
-      setSearchUserId(searchUserId)
-      setCurrentPage(1)
-    }
-  }, [searchParams])
-  
   // 性别映射函数
   const getGenderText = (genderValue) => {
     if (genderValue === 1 || genderValue === '1') return '男'
