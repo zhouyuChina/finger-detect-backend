@@ -89,28 +89,99 @@ async function updateUserProfile(request) {
         updatedSubUser = await tx.subUser.update({
           where: { id: currentSubUserId },
           data: subUserUpdateData,
-                  select: {
-          id: true,
-          phone: true,
-          email: true,
-          gender: true,
-          age: true,
-          address: true,
-          updatedAt: true
-        }
+          select: {
+            id: true,
+            phone: true,
+            email: true,
+            gender: true,
+            age: true,
+            address: true,
+            updatedAt: true
+          }
         })
 
         console.log('✅ 子用户更新完成:', updatedSubUser)
       }
 
-      return { updatedWechatUser, updatedSubUser }
+      // 如果更新了微信用户的昵称，需要同步更新默认用户的 username 和 realName
+      let updatedDefaultSubUser = null
+      if (nickname !== undefined) {
+        console.log('🔄 检测到昵称更新，同步更新默认用户信息...')
+        
+        // 查找默认用户
+        const defaultSubUser = await tx.subUser.findFirst({
+          where: {
+            wechatUserId: userId,
+            isDefault: true,
+            status: 'active'
+          },
+          select: {
+            id: true,
+            username: true,
+            realName: true
+          }
+        })
+
+        if (defaultSubUser) {
+          console.log('📋 找到默认用户:', defaultSubUser)
+          
+          // 检查是否需要更新默认用户的用户名和真实姓名
+          const needsUpdate = defaultSubUser.username !== nickname || defaultSubUser.realName !== nickname
+          
+          if (needsUpdate) {
+            console.log('🔄 更新默认用户的用户名和真实姓名...')
+            
+            // 检查新的用户名是否与其他子用户冲突
+            const existingSubUser = await tx.subUser.findFirst({
+              where: {
+                wechatUserId: userId,
+                username: nickname,
+                id: { not: defaultSubUser.id }
+              }
+            })
+
+            let finalUsername = nickname
+            if (existingSubUser) {
+              // 如果用户名冲突，添加时间戳
+              finalUsername = `${nickname}_${Date.now()}`
+              console.log('⚠️ 用户名冲突，使用新用户名:', finalUsername)
+            }
+
+            updatedDefaultSubUser = await tx.subUser.update({
+              where: { id: defaultSubUser.id },
+              data: {
+                username: finalUsername,
+                realName: nickname,
+                updatedAt: new Date()
+              },
+              select: {
+                id: true,
+                username: true,
+                realName: true,
+                updatedAt: true
+              }
+            })
+
+            console.log('✅ 默认用户同步更新完成:', updatedDefaultSubUser)
+          } else {
+            console.log('✅ 默认用户信息已是最新，无需更新')
+          }
+        } else {
+          console.log('⚠️ 未找到默认用户，跳过同步更新')
+        }
+      }
+
+      return { updatedWechatUser, updatedSubUser, updatedDefaultSubUser }
     })
 
-    const { updatedWechatUser, updatedSubUser } = result
+    const { updatedWechatUser, updatedSubUser, updatedDefaultSubUser } = result
 
     console.log('✅ 微信用户信息更新成功:', updatedWechatUser.nickname)
     if (updatedSubUser) {
       console.log('✅ 子用户信息更新成功:', updatedSubUser.id)
+    }
+    if (updatedDefaultSubUser) {
+      console.log('✅ 默认用户同步更新成功:', updatedDefaultSubUser.username, updatedDefaultSubUser.realName)
     }
 
     // 验证更新结果

@@ -277,12 +277,7 @@ async function deleteSubUser(request, context) {
     }
 
     // 检查是否为默认用户（不能删除）
-    const isDefaultUser = 
-      subUser.username === wechatUser.nickname ||
-      subUser.realName === wechatUser.nickname ||
-      subUser.username === `user_${wechatUser.openid.slice(-6)}` ||
-      (wechatUser.nickname && subUser.username === wechatUser.nickname) ||
-      (wechatUser.nickname && subUser.realName === wechatUser.nickname)
+    const isDefaultUser = subUser.isDefault === true
 
     if (isDefaultUser) {
       return createErrorResponse('不能删除本人的默认用户', 400)
