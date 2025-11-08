@@ -115,11 +115,24 @@ export default function UserIdsPage() {
     return { headers, data }
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('确定要删除这条ID记录吗？')) return
-    
+  const handleDelete = async (wechatUser) => {
+    const userName = wechatUser.nickname || wechatUser.openid || '该用户'
+    const subUserCount = wechatUser.subUsers?.length || 0
+    const hasVerification = !!wechatUser.verification
+
+    let confirmMessage = `确定要删除微信用户 "${userName}" 吗？\n\n此操作将同时删除：`
+    if (hasVerification) {
+      confirmMessage += `\n- 身份验证记录`
+    }
+    if (subUserCount > 0) {
+      confirmMessage += `\n- ${subUserCount} 个子用户及其所有档案和检测记录`
+    }
+    confirmMessage += `\n\n⚠️ 此操作不可恢复！`
+
+    if (!confirm(confirmMessage)) return
+
     try {
-      const response = await fetch(`/api/user-ids/${id}`, {
+      const response = await fetch(`/api/user-ids/${wechatUser.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${getLocalStorage('token') || ''}`
@@ -129,7 +142,14 @@ export default function UserIdsPage() {
       const result = await response.json()
 
       if (response.ok) {
-        alert('删除成功')
+        let successMessage = '删除成功'
+        if (result.data) {
+          successMessage += `\n- 用户: ${result.data.deletedUser}`
+          if (result.data.deletedSubUsers > 0) {
+            successMessage += `\n- 已删除 ${result.data.deletedSubUsers} 个子用户`
+          }
+        }
+        alert(successMessage)
         fetchUserIds() // 重新获取数据
       } else {
         if (response.status === 401) {
@@ -410,13 +430,7 @@ export default function UserIdsPage() {
                           报告
                         </button>
                         <button
-                          onClick={() => {
-                            if (wechatUser.verification?.id) {
-                              handleDelete(wechatUser.verification.id)
-                            } else {
-                              alert('该用户没有验证记录')
-                            }
-                          }}
+                          onClick={() => handleDelete(wechatUser)}
                           className="text-red-600 hover:text-red-900"
                         >
                           删除

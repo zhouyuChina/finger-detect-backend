@@ -158,7 +158,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-// 删除ID记录
+// 删除微信用户及其所有关联数据
 export async function DELETE(request, { params }) {
   let prisma = null
   try {
@@ -174,29 +174,44 @@ export async function DELETE(request, { params }) {
 
     prisma = new PrismaClient()
 
-    // 检查记录是否存在
-    const existingRecord = await prisma.wechatUserVerification.findUnique({
-      where: { id }
+    // 检查微信用户是否存在
+    const existingUser = await prisma.wechatUser.findUnique({
+      where: { id },
+      include: {
+        verification: true,
+        subUsers: true,
+        systemInfo: true
+      }
     })
 
-    if (!existingRecord) {
+    if (!existingUser) {
       return NextResponse.json(
-        { success: false, message: 'ID记录不存在' },
+        { success: false, message: '微信用户不存在' },
         { status: 404 }
       )
     }
 
-    // 删除记录
-    await prisma.wechatUserVerification.delete({
+    // 删除微信用户（会级联删除所有关联数据：verification, subUsers, systemInfo 等）
+    await prisma.wechatUser.delete({
       where: { id }
     })
 
+    console.log(`✅ 已删除微信用户: ${existingUser.nickname || existingUser.openid}`)
+    console.log(`   - 验证记录: ${existingUser.verification ? '已删除' : '无'}`)
+    console.log(`   - 子用户: ${existingUser.subUsers?.length || 0} 个已删除`)
+    console.log(`   - 系统信息: ${existingUser.systemInfo ? '已删除' : '无'}`)
+
     return NextResponse.json({
       success: true,
-      message: 'ID记录删除成功'
+      message: '微信用户及所有关联数据删除成功',
+      data: {
+        deletedUser: existingUser.nickname || existingUser.openid,
+        deletedSubUsers: existingUser.subUsers?.length || 0,
+        hadVerification: !!existingUser.verification
+      }
     })
   } catch (error) {
-    console.error('删除ID记录失败:', error)
+    console.error('删除微信用户失败:', error)
     return NextResponse.json(
       { success: false, message: '删除失败' },
       { status: 500 }
