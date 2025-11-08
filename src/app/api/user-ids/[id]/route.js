@@ -2,10 +2,9 @@ import { NextResponse } from 'next/server'
 import { PrismaClient } from '../../../../../src/generated/prisma/index.js'
 import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../../src/lib/middleware.js'
 
-const prisma = new PrismaClient()
-
 // 获取单个ID记录
 export async function GET(request, { params }) {
+  let prisma = null
   try {
     // 速率限制
     const rateLimitResult = await rateLimitMiddleware(request)
@@ -17,10 +16,12 @@ export async function GET(request, { params }) {
 
     const { id } = await params
 
-    const userIdRecord = await prisma.userId.findUnique({
+    prisma = new PrismaClient()
+
+    const userIdRecord = await prisma.wechatUserVerification.findUnique({
       where: { id },
       include: {
-        user: {
+        wechatUser: {
           select: {
             id: true,
             nickname: true,
@@ -55,11 +56,16 @@ export async function GET(request, { params }) {
       { success: false, message: '获取数据失败' },
       { status: 500 }
     )
+  } finally {
+    if (prisma) {
+      await prisma.$disconnect()
+    }
   }
 }
 
 // 更新ID记录
 export async function PUT(request, { params }) {
+  let prisma = null
   try {
     // 速率限制
     const rateLimitResult = await rateLimitMiddleware(request)
@@ -81,8 +87,10 @@ export async function PUT(request, { params }) {
       rejectReason
     } = body
 
+    prisma = new PrismaClient()
+
     // 检查记录是否存在
-    const existingRecord = await prisma.userId.findUnique({
+    const existingRecord = await prisma.wechatUserVerification.findUnique({
       where: { id }
     })
 
@@ -112,11 +120,11 @@ export async function PUT(request, { params }) {
       }
     }
 
-    const updatedRecord = await prisma.userId.update({
+    const updatedRecord = await prisma.wechatUserVerification.update({
       where: { id },
       data: updateData,
       include: {
-        user: {
+        wechatUser: {
           select: {
             id: true,
             nickname: true,
@@ -143,11 +151,16 @@ export async function PUT(request, { params }) {
       { success: false, message: '更新失败' },
       { status: 500 }
     )
+  } finally {
+    if (prisma) {
+      await prisma.$disconnect()
+    }
   }
 }
 
 // 删除ID记录
 export async function DELETE(request, { params }) {
+  let prisma = null
   try {
     // 速率限制
     const rateLimitResult = await rateLimitMiddleware(request)
@@ -159,8 +172,10 @@ export async function DELETE(request, { params }) {
 
     const { id } = await params
 
+    prisma = new PrismaClient()
+
     // 检查记录是否存在
-    const existingRecord = await prisma.userId.findUnique({
+    const existingRecord = await prisma.wechatUserVerification.findUnique({
       where: { id }
     })
 
@@ -172,7 +187,7 @@ export async function DELETE(request, { params }) {
     }
 
     // 删除记录
-    await prisma.userId.delete({
+    await prisma.wechatUserVerification.delete({
       where: { id }
     })
 
@@ -186,5 +201,9 @@ export async function DELETE(request, { params }) {
       { success: false, message: '删除失败' },
       { status: 500 }
     )
+  } finally {
+    if (prisma) {
+      await prisma.$disconnect()
+    }
   }
 } 

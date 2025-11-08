@@ -89,10 +89,10 @@ export function miniprogramAuthMiddleware(handler) {
             )
           }
         }
-        
-        return handler(request)
+
+        return handler(request, context)
       }
-      
+
       // 生产环境下也跳过认证，但使用真实的 openid 查找用户
       if (process.env.NODE_ENV === 'production') {
         console.log('🔧 生产环境：跳过认证，使用 openid 查找用户')
@@ -138,8 +138,8 @@ export function miniprogramAuthMiddleware(handler) {
             { status: 401 }
           )
         }
-        
-        return handler(request)
+
+        return handler(request, context)
       }
 
       // 支持两种认证方式：openid 和 token

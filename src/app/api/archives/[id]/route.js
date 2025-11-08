@@ -56,8 +56,6 @@ export async function PUT(request, { params }) {
     const body = await request.json()
 
     const {
-      userId,
-      userNickname,
       archiveName,
       activity,
       photoCount,
@@ -76,17 +74,17 @@ export async function PUT(request, { params }) {
       )
     }
 
+    // 构建更新数据对象，只更新提供的字段
+    const updateData = {}
+    if (archiveName !== undefined) updateData.archiveName = archiveName
+    if (activity !== undefined) updateData.activity = activity
+    if (photoCount !== undefined) updateData.photoCount = photoCount
+    if (bodyPart !== undefined) updateData.bodyPart = bodyPart
+
     // 更新档案信息
     const updatedArchive = await prisma.archive.update({
       where: { id },
-      data: {
-        userId,
-        userNickname,
-        archiveName,
-        activity,
-        photoCount,
-        bodyPart
-      }
+      data: updateData
     })
 
     return NextResponse.json({
