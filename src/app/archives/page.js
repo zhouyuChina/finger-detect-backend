@@ -224,11 +224,18 @@ export default function ArchivesPage() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('确定要删除这条档案记录吗？')) return
-    
+  const handleDelete = async (archive) => {
+    const archiveName = archive.archiveName || '该档案'
+    const photoCount = archive.photoCount || 0
+
+    let confirmMessage = `确定要删除档案 "${archiveName}" 吗？\n\n此操作将同时删除：`
+    confirmMessage += `\n- ${photoCount} 条检测记录`
+    confirmMessage += `\n\n⚠️ 此操作不可恢复！`
+
+    if (!confirm(confirmMessage)) return
+
     try {
-      const response = await fetch(`/api/archives/${id}`, {
+      const response = await fetch(`/api/archives/${archive.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${getLocalStorage('token') || ''}`
@@ -238,7 +245,12 @@ export default function ArchivesPage() {
       const result = await response.json()
 
       if (response.ok) {
-        alert('删除成功')
+        let successMessage = '删除成功'
+        if (result.data) {
+          successMessage += `\n- 档案: ${result.data.deletedArchive}`
+          successMessage += `\n- 检测记录: ${result.data.deletedDetections} 条`
+        }
+        alert(successMessage)
         fetchArchives() // 重新获取数据
       } else {
         if (response.status === 401) {
@@ -704,8 +716,8 @@ export default function ArchivesPage() {
                     >
                       报告
                     </button>
-                    <button 
-                      onClick={() => handleDelete(archive.id)}
+                    <button
+                      onClick={() => handleDelete(archive)}
                       className="text-red-600 hover:text-red-900"
                     >
                       删除

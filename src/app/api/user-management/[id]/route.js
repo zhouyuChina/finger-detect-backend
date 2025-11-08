@@ -166,8 +166,9 @@ export async function PUT(request, { params }) {
   }
 }
 
-// 删除用户
+// 删除子用户及其所有关联数据
 export async function DELETE(request, { params }) {
+  let prisma = null
   try {
     // 速率限制
     const rateLimitResult = await rateLimitMiddleware(request)
@@ -179,9 +180,25 @@ export async function DELETE(request, { params }) {
 
     const { id } = await params
 
-    // 检查用户是否存在
-    const existingUser = await prisma.user.findUnique({
-      where: { id }
+    prisma = new PrismaClient()
+
+    // 检查子用户是否存在，并获取关联数据统计
+    const existingUser = await prisma.subUser.findUnique({
+      where: { id },
+      include: {
+        wechatUser: {
+          select: {
+            nickname: true,
+            openid: true
+          }
+        },
+        _count: {
+          select: {
+            detections: true,
+            userCoupons: true
+          }
+        }
+      }
     })
 
     if (!existingUser) {
@@ -191,14 +208,31 @@ export async function DELETE(request, { params }) {
       )
     }
 
-    // 删除用户
-    await prisma.user.delete({
+    // 获取档案数量（需要单独查询）
+    const archiveCount = await prisma.archive.count({
+      where: { subUserId: id }
+    })
+
+    // 删除子用户（会级联删除：detections, archives, userCoupons）
+    await prisma.subUser.delete({
       where: { id }
     })
 
+    console.log(`✅ 已删除子用户: ${existingUser.username || existingUser.realName}`)
+    console.log(`   - 所属微信用户: ${existingUser.wechatUser?.nickname || existingUser.wechatUser?.openid}`)
+    console.log(`   - 检测记录: ${existingUser._count.detections} 条已删除`)
+    console.log(`   - 档案: ${archiveCount} 个已删除`)
+    console.log(`   - 优惠券: ${existingUser._count.userCoupons} 个已删除`)
+
     return NextResponse.json({
       success: true,
-      message: '用户删除成功'
+      message: '用户及所有关联数据删除成功',
+      data: {
+        deletedUser: existingUser.username || existingUser.realName,
+        deletedDetections: existingUser._count.detections,
+        deletedArchives: archiveCount,
+        deletedCoupons: existingUser._count.userCoupons
+      }
     })
   } catch (error) {
     console.error('删除用户失败:', error)
@@ -206,5 +240,9 @@ export async function DELETE(request, { params }) {
       { success: false, message: '删除失败' },
       { status: 500 }
     )
+  } finally {
+    if (prisma) {
+      await prisma.$disconnect()
+    }
   }
 } 

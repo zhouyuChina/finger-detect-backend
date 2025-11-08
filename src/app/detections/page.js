@@ -109,11 +109,20 @@ export default function DetectionsPage() {
     setCurrentPage(1)
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('确定要删除这条检测记录吗？')) return
-    
+  const handleDelete = async (detection) => {
+    const archiveName = detection.archiveName || '未知档案'
+    const userName = detection.userName || detection.openid || '未知用户'
+
+    let confirmMessage = `确定要删除这条检测记录吗？\n\n`
+    confirmMessage += `用户: ${userName}\n`
+    confirmMessage += `档案: ${archiveName}\n`
+    confirmMessage += `检测时间: ${new Date(detection.detectionTime).toLocaleString()}\n`
+    confirmMessage += `\n⚠️ 此操作不可恢复！`
+
+    if (!confirm(confirmMessage)) return
+
     try {
-      const response = await fetch(`/api/detections/${id}`, {
+      const response = await fetch(`/api/detections/${detection.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${getLocalStorage('token') || ''}`
@@ -123,7 +132,12 @@ export default function DetectionsPage() {
       const result = await response.json()
 
       if (response.ok) {
-        alert('删除成功')
+        let successMessage = '删除成功'
+        if (result.data) {
+          successMessage += `\n- 检测记录ID: ${result.data.deletedDetection}`
+          successMessage += `\n- 所属档案: ${result.data.archiveName}`
+        }
+        alert(successMessage)
         fetchDetections() // 重新获取数据
       } else {
         if (response.status === 401) {
@@ -392,8 +406,8 @@ export default function DetectionsPage() {
                       >
                         导出报告
                       </button>
-                      <button 
-                        onClick={() => handleDelete(detection.id)}
+                      <button
+                        onClick={() => handleDelete(detection)}
                         className="text-red-600 hover:text-red-900"
                       >
                         删除

@@ -101,8 +101,9 @@ export async function PUT(request, { params }) {
   }
 }
 
-// 删除档案
+// 删除档案及其所有关联的检测记录
 export async function DELETE(request, { params }) {
+  let prisma = null
   try {
     // 速率限制
     const rateLimitResult = await rateLimitMiddleware(request)
@@ -114,9 +115,21 @@ export async function DELETE(request, { params }) {
 
     const { id } = await params
 
+    prisma = new PrismaClient()
+
     // 检查档案是否存在
     const existingArchive = await prisma.archive.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        subUser: {
+          select: {
+            username: true,
+            realName: true,
+            archives: true,
+            photos: true
+          }
+        }
+      }
     })
 
     if (!existingArchive) {
@@ -126,14 +139,41 @@ export async function DELETE(request, { params }) {
       )
     }
 
+    // 删除该档案下的所有检测记录
+    const deleteResult = await prisma.detection.deleteMany({
+      where: {
+        archiveName: existingArchive.archiveName,
+        subUserId: existingArchive.subUserId
+      }
+    })
+
     // 删除档案
     await prisma.archive.delete({
       where: { id }
     })
 
+    // 更新子用户的档案数量和拍照数量
+    const currentArchives = existingArchive.subUser.archives
+    const currentPhotos = existingArchive.subUser.photos
+    await prisma.subUser.update({
+      where: { id: existingArchive.subUserId },
+      data: {
+        archives: Math.max(0, currentArchives - 1),
+        photos: Math.max(0, currentPhotos - deleteResult.count)
+      }
+    })
+
+    console.log(`✅ 已删除档案: ${existingArchive.archiveName}`)
+    console.log(`   - 所属用户: ${existingArchive.subUser.username || existingArchive.subUser.realName}`)
+    console.log(`   - 检测记录: ${deleteResult.count} 条已删除`)
+
     return NextResponse.json({
       success: true,
-      message: '档案删除成功'
+      message: '档案及所有检测记录删除成功',
+      data: {
+        deletedArchive: existingArchive.archiveName,
+        deletedDetections: deleteResult.count
+      }
     })
   } catch (error) {
     console.error('删除档案失败:', error)
@@ -141,5 +181,9 @@ export async function DELETE(request, { params }) {
       { success: false, message: '删除失败' },
       { status: 500 }
     )
+  } finally {
+    if (prisma) {
+      await prisma.$disconnect()
+    }
   }
 } 

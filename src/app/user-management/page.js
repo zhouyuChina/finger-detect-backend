@@ -190,8 +190,18 @@ export default function UserManagementPage() {
   }
 
   const handleDeleteUser = async (user) => {
-    if (!confirm(`确定要删除用户 ${user.username} 吗？`)) return
-    
+    const userName = user.username || user.realName || '该用户'
+    const archives = user.archives || 0
+    const reports = user.reports || 0
+
+    let confirmMessage = `确定要删除用户 "${userName}" 吗？\n\n此操作将同时删除：`
+    confirmMessage += `\n- ${archives} 个档案`
+    confirmMessage += `\n- ${reports} 条检测报告`
+    confirmMessage += `\n- 所有优惠券记录`
+    confirmMessage += `\n\n⚠️ 此操作不可恢复！`
+
+    if (!confirm(confirmMessage)) return
+
     try {
       const response = await fetch(`/api/user-management/${user.id}`, {
         method: 'DELETE',
@@ -203,11 +213,51 @@ export default function UserManagementPage() {
       const result = await response.json()
 
       if (response.ok) {
-        alert('删除成功')
-        fetchUsers() // 重新获取数据
+        let successMessage = '删除成功'
+        if (result.data) {
+          successMessage += `\n- 用户: ${result.data.deletedUser}`
+          successMessage += `\n- 档案: ${result.data.deletedArchives} 个`
+          successMessage += `\n- 检测报告: ${result.data.deletedDetections} 条`
+          if (result.data.deletedCoupons > 0) {
+            successMessage += `\n- 优惠券: ${result.data.deletedCoupons} 个`
+          }
+        }
+        alert(successMessage)
+        // 重新获取数据
+        const fetchUsers = async () => {
+          try {
+            isRequestingRef.current = true
+            setIsLoading(true)
+            const params = new URLSearchParams({
+              page: currentPage,
+              pageSize,
+              search: searchUsername,
+              status: searchStatus,
+              userId: searchUserId,
+              ageRange: searchAgeRange,
+              gender: searchGender,
+              region: searchRegion
+            })
+            Array.from(params.keys()).forEach(key => {
+              if (!params.get(key)) params.delete(key)
+            })
+            const response = await fetch(`/api/user-management?${params}`)
+            const result = await response.json()
+            if (response.ok) {
+              setAllUsers(result.data.data || [])
+              setTotalUsers(result.data.pagination?.total || 0)
+              setTotalPages(result.data.pagination?.totalPages || 0)
+            }
+          } catch (err) {
+            console.error('获取数据失败:', err)
+          } finally {
+            setIsLoading(false)
+            setTimeout(() => { isRequestingRef.current = false }, 500)
+          }
+        }
+        await fetchUsers()
       } else {
         if (response.status === 401) {
-          // 认证失败，跳转到首页
           alert('登录已过期，请重新登录')
           router.push('/')
         } else {
