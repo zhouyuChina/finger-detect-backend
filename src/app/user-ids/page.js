@@ -409,8 +409,14 @@ export default function UserIdsPage() {
                         >
                           报告
                         </button>
-                        <button 
-                          onClick={() => handleDelete(wechatUser.id)}
+                        <button
+                          onClick={() => {
+                            if (wechatUser.verification?.id) {
+                              handleDelete(wechatUser.verification.id)
+                            } else {
+                              alert('该用户没有验证记录')
+                            }
+                          }}
                           className="text-red-600 hover:text-red-900"
                         >
                           删除
