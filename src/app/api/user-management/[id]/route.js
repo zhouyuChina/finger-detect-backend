@@ -195,7 +195,7 @@ export async function DELETE(request, { params }) {
         _count: {
           select: {
             detections: true,
-            userCoupons: true
+            coupons: true
           }
         }
       }
@@ -222,7 +222,7 @@ export async function DELETE(request, { params }) {
     console.log(`   - 所属微信用户: ${existingUser.wechatUser?.nickname || existingUser.wechatUser?.openid}`)
     console.log(`   - 检测记录: ${existingUser._count.detections} 条已删除`)
     console.log(`   - 档案: ${archiveCount} 个已删除`)
-    console.log(`   - 优惠券: ${existingUser._count.userCoupons} 个已删除`)
+    console.log(`   - 优惠券: ${existingUser._count.coupons} 个已删除`)
 
     return NextResponse.json({
       success: true,
@@ -231,7 +231,7 @@ export async function DELETE(request, { params }) {
         deletedUser: existingUser.username || existingUser.realName,
         deletedDetections: existingUser._count.detections,
         deletedArchives: archiveCount,
-        deletedCoupons: existingUser._count.userCoupons
+        deletedCoupons: existingUser._count.coupons
       }
     })
   } catch (error) {

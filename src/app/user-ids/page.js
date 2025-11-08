@@ -456,10 +456,27 @@ export default function UserIdsPage() {
                   >
                     上一页
                   </button>
-                  
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const page = i + 1
-                    return (
+
+                  {/* 第一页 */}
+                  {currentPage > 3 && (
+                    <>
+                      <button
+                        onClick={() => handlePageChange(1)}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        1
+                      </button>
+                      {currentPage > 4 && <span className="px-2 text-gray-500">...</span>}
+                    </>
+                  )}
+
+                  {/* 当前页附近的页码 */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      // 显示当前页前后2页
+                      return page >= currentPage - 2 && page <= currentPage + 2
+                    })
+                    .map(page => (
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
@@ -471,13 +488,21 @@ export default function UserIdsPage() {
                       >
                         {page}
                       </button>
-                    )
-                  })}
-                  
-                  {totalPages > 5 && (
-                    <span className="px-2 text-gray-500">...</span>
+                    ))}
+
+                  {/* 最后一页 */}
+                  {currentPage < totalPages - 2 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="px-2 text-gray-500">...</span>}
+                      <button
+                        onClick={() => handlePageChange(totalPages)}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
                   )}
-                  
+
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}

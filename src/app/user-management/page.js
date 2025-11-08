@@ -30,75 +30,76 @@ export default function UserManagementPage() {
   // 使用 ref 追踪是否正在请求，防止重复请求
   const isRequestingRef = useRef(false)
 
+  // 从数据库获取用户数据 - 提取到外部以便重用
+  const fetchUsers = async () => {
+    try {
+      isRequestingRef.current = true
+      setIsLoading(true)
+      const params = new URLSearchParams({
+        page: currentPage,
+        pageSize,
+        search: searchUsername,
+        status: searchStatus,
+        userId: searchUserId,
+        ageRange: searchAgeRange,
+        gender: searchGender,
+        region: searchRegion
+      })
+
+      console.log('📤 准备发送的参数:', {
+        page: currentPage,
+        pageSize,
+        search: searchUsername,
+        status: searchStatus,
+        userId: searchUserId,
+        ageRange: searchAgeRange,
+        gender: searchGender,
+        region: searchRegion
+      })
+
+      // 移除空值
+      Array.from(params.keys()).forEach(key => {
+        if (!params.get(key)) {
+          params.delete(key)
+        }
+      })
+
+      const apiUrl = `/api/user-management?${params}`
+      console.log('🌐 API URL:', apiUrl)
+
+      const response = await fetch(apiUrl)
+      const result = await response.json()
+
+      console.log('🔍 API Response:', result)
+      console.log('📊 Data:', result.data)
+      console.log('👥 Users:', result.data?.data)
+
+      if (response.ok) {
+        setAllUsers(result.data.data || [])
+        setTotalUsers(result.data.pagination?.total || 0)
+        setTotalPages(result.data.pagination?.totalPages || 0)
+
+        console.log('✅ State updated - allUsers length:', result.data.data?.length || 0)
+      } else {
+        setError(result.message || '获取数据失败')
+      }
+    } catch (err) {
+      setError('网络错误，请重试')
+    } finally {
+      setIsLoading(false)
+      // 延迟重置请求标志，避免同一个渲染周期内的多次请求
+      setTimeout(() => {
+        isRequestingRef.current = false
+      }, 500)
+    }
+  }
+
   // 使用useEffect获取数据
   useEffect(() => {
     // 如果正在请求中，跳过
     if (isRequestingRef.current) {
       console.log('⏭️ 跳过重复请求')
       return
-    }
-
-    const fetchUsers = async () => {
-      try {
-        isRequestingRef.current = true
-        setIsLoading(true)
-        const params = new URLSearchParams({
-          page: currentPage,
-          pageSize,
-          search: searchUsername,
-          status: searchStatus,
-          userId: searchUserId,
-          ageRange: searchAgeRange,
-          gender: searchGender,
-          region: searchRegion
-        })
-
-        console.log('📤 准备发送的参数:', {
-          page: currentPage,
-          pageSize,
-          search: searchUsername,
-          status: searchStatus,
-          userId: searchUserId,
-          ageRange: searchAgeRange,
-          gender: searchGender,
-          region: searchRegion
-        })
-
-        // 移除空值
-        Array.from(params.keys()).forEach(key => {
-          if (!params.get(key)) {
-            params.delete(key)
-          }
-        })
-
-        const apiUrl = `/api/user-management?${params}`
-        console.log('🌐 API URL:', apiUrl)
-
-        const response = await fetch(apiUrl)
-        const result = await response.json()
-
-        console.log('🔍 API Response:', result)
-        console.log('📊 Data:', result.data)
-        console.log('👥 Users:', result.data?.data)
-
-        if (response.ok) {
-          setAllUsers(result.data.data || [])
-          setTotalUsers(result.data.pagination?.total || 0)
-          setTotalPages(result.data.pagination?.totalPages || 0)
-
-          console.log('✅ State updated - allUsers length:', result.data.data?.length || 0)
-        } else {
-          setError(result.message || '获取数据失败')
-        }
-      } catch (err) {
-        setError('网络错误，请重试')
-      } finally {
-        setIsLoading(false)
-        // 延迟重置请求标志，避免同一个渲染周期内的多次请求
-        setTimeout(() => {
-          isRequestingRef.current = false
-        }, 500)
-      }
     }
 
     fetchUsers()
@@ -224,38 +225,7 @@ export default function UserManagementPage() {
         }
         alert(successMessage)
         // 重新获取数据
-        const fetchUsers = async () => {
-          try {
-            isRequestingRef.current = true
-            setIsLoading(true)
-            const params = new URLSearchParams({
-              page: currentPage,
-              pageSize,
-              search: searchUsername,
-              status: searchStatus,
-              userId: searchUserId,
-              ageRange: searchAgeRange,
-              gender: searchGender,
-              region: searchRegion
-            })
-            Array.from(params.keys()).forEach(key => {
-              if (!params.get(key)) params.delete(key)
-            })
-            const response = await fetch(`/api/user-management?${params}`)
-            const result = await response.json()
-            if (response.ok) {
-              setAllUsers(result.data.data || [])
-              setTotalUsers(result.data.pagination?.total || 0)
-              setTotalPages(result.data.pagination?.totalPages || 0)
-            }
-          } catch (err) {
-            console.error('获取数据失败:', err)
-          } finally {
-            setIsLoading(false)
-            setTimeout(() => { isRequestingRef.current = false }, 500)
-          }
-        }
-        await fetchUsers()
+        fetchUsers()
       } else {
         if (response.status === 401) {
           alert('登录已过期，请重新登录')
@@ -638,9 +608,26 @@ export default function UserManagementPage() {
                 上一页
               </button>
 
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const page = i + 1
-                return (
+              {/* 第一页 */}
+              {currentPage > 3 && (
+                <>
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    1
+                  </button>
+                  {currentPage > 4 && <span className="px-2 text-gray-500">...</span>}
+                </>
+              )}
+
+              {/* 当前页附近的页码 */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  // 显示当前页前后2页
+                  return page >= currentPage - 2 && page <= currentPage + 2
+                })
+                .map(page => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
@@ -652,11 +639,19 @@ export default function UserManagementPage() {
                   >
                     {page}
                   </button>
-                )
-              })}
+                ))}
 
-              {totalPages > 5 && (
-                <span className="px-2 text-gray-500">...</span>
+              {/* 最后一页 */}
+              {currentPage < totalPages - 2 && (
+                <>
+                  {currentPage < totalPages - 3 && <span className="px-2 text-gray-500">...</span>}
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    {totalPages}
+                  </button>
+                </>
               )}
 
               <button

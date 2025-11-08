@@ -27,58 +27,59 @@ export default function DetectionsPage() {
   // 使用 ref 追踪是否正在请求，防止重复请求
   const isRequestingRef = useRef(false)
 
+  // 从数据库获取检测记录数据 - 提取到外部以便重用
+  const fetchDetections = async () => {
+    try {
+      isRequestingRef.current = true
+      setIsLoading(true)
+      const params = new URLSearchParams({
+        page: currentPage,
+        pageSize,
+        subUserId: searchSubUserId,
+        openid: searchOpenid,
+        userName: searchUserName,
+        archiveId: searchArchiveId
+      })
+
+      // 移除空值
+      Array.from(params.keys()).forEach(key => {
+        if (!params.get(key)) {
+          params.delete(key)
+        }
+      })
+
+      const response = await fetch(`/api/detections?${params}`)
+      const result = await response.json()
+
+      if (response.ok) {
+        setAllDetections(result.data.data || [])
+        setTotalDetections(result.data.pagination?.total || 0)
+        setTotalPages(result.data.pagination?.totalPages || 0)
+      } else {
+        if (response.status === 401) {
+          alert('登录已过期，请重新登录')
+          router.push('/')
+        } else {
+          setError(result.message || '获取数据失败')
+        }
+      }
+    } catch (err) {
+      setError('网络错误，请重试')
+    } finally {
+      setIsLoading(false)
+      // 延迟重置请求标志，避免同一个渲染周期内的多次请求
+      setTimeout(() => {
+        isRequestingRef.current = false
+      }, 500)
+    }
+  }
+
   // 从数据库获取检测记录数据
   useEffect(() => {
     // 如果正在请求中，跳过
     if (isRequestingRef.current) {
       console.log('⏭️ 跳过重复请求')
       return
-    }
-
-    const fetchDetections = async () => {
-      try {
-        isRequestingRef.current = true
-        setIsLoading(true)
-        const params = new URLSearchParams({
-          page: currentPage,
-          pageSize,
-          subUserId: searchSubUserId,
-          openid: searchOpenid,
-          userName: searchUserName,
-          archiveId: searchArchiveId
-        })
-
-        // 移除空值
-        Array.from(params.keys()).forEach(key => {
-          if (!params.get(key)) {
-            params.delete(key)
-          }
-        })
-
-        const response = await fetch(`/api/detections?${params}`)
-        const result = await response.json()
-
-        if (response.ok) {
-          setAllDetections(result.data.data || [])
-          setTotalDetections(result.data.pagination?.total || 0)
-          setTotalPages(result.data.pagination?.totalPages || 0)
-        } else {
-          if (response.status === 401) {
-            alert('登录已过期，请重新登录')
-            router.push('/')
-          } else {
-            setError(result.message || '获取数据失败')
-          }
-        }
-      } catch (err) {
-        setError('网络错误，请重试')
-      } finally {
-        setIsLoading(false)
-        // 延迟重置请求标志，避免同一个渲染周期内的多次请求
-        setTimeout(() => {
-          isRequestingRef.current = false
-        }, 500)
-      }
     }
 
     fetchDetections()
@@ -434,10 +435,27 @@ export default function DetectionsPage() {
               >
                 上一页
               </button>
-              
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const page = i + 1
-                return (
+
+              {/* 第一页 */}
+              {currentPage > 3 && (
+                <>
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    1
+                  </button>
+                  {currentPage > 4 && <span className="px-2 text-gray-500">...</span>}
+                </>
+              )}
+
+              {/* 当前页附近的页码 */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  // 显示当前页前后2页
+                  return page >= currentPage - 2 && page <= currentPage + 2
+                })
+                .map(page => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
@@ -449,13 +467,21 @@ export default function DetectionsPage() {
                   >
                     {page}
                   </button>
-                )
-              })}
-              
-              {totalPages > 5 && (
-                <span className="px-2 text-gray-500">...</span>
+                ))}
+
+              {/* 最后一页 */}
+              {currentPage < totalPages - 2 && (
+                <>
+                  {currentPage < totalPages - 3 && <span className="px-2 text-gray-500">...</span>}
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    {totalPages}
+                  </button>
+                </>
               )}
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
