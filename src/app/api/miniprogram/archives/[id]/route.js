@@ -38,11 +38,10 @@ async function getArchive(request, context = {}) {
       return createErrorResponse('无权限访问此档案', 403)
     }
 
-    // 获取该档案的最新检测记录
+    // 获取该档案的最新检测记录（使用 archiveId）
     const latestDetection = await prisma.detection.findFirst({
       where: {
-        archiveName: archive.archiveName,
-        subUserId: archive.subUserId
+        archiveId: id
       },
       select: {
         imageUrl: true,
@@ -210,19 +209,17 @@ async function deleteArchive(request, context = {}) {
       return createErrorResponse('无权限删除此档案', 403)
     }
 
-    // 统计该档案的检测记录数量
+    // 统计该档案的检测记录数量（使用 archiveId）
     const detectionCount = await prisma.detection.count({
       where: {
-        archiveName: archive.archiveName,
-        subUserId: archive.subUserId
+        archiveId: id
       }
     })
 
-    // 删除该档案关联的所有检测记录
+    // 删除该档案关联的所有检测记录（使用 archiveId）
     await prisma.detection.deleteMany({
       where: {
-        archiveName: archive.archiveName,
-        subUserId: archive.subUserId
+        archiveId: id
       }
     })
 

@@ -59,42 +59,34 @@ async function getArchiveDetections(request) {
 
     console.log('✅ 验证子用户权限成功:', subUser.realName)
 
-    // 2. 查找指定的档案
-    console.log('🔍 查找档案:', archiveId)
-    
-    const archive = await prisma.archive.findFirst({
-      where: {
-        id: archiveId,
-        subUserId: subUserId
-      },
-      select: {
-        id: true,
-        archiveName: true,
-        activity: true,
-        photoCount: true,
-        bodyPart: true,
-        detectionTime: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    })
-
-    if (!archive) {
-      console.log('❌ 档案不存在:', archiveId)
-      return createErrorResponse('档案不存在或无权限访问', 404)
-    }
-
-    console.log('✅ 找到档案:', archive.archiveName)
-
-    // 3. 计算分页参数
+    // 2. 计算分页参数
     const skip = (page - 1) * limit
 
-    // 4. 获取该档案的所有检测记录
-    const [detections, total] = await Promise.all([
+    // 3. 同时获取档案信息和检测记录（使用 archiveId）
+    console.log('🔍 查询档案和检测记录，archiveId:', archiveId)
+
+    const [archive, detections, total] = await Promise.all([
+      // 获取档案信息
+      prisma.archive.findFirst({
+        where: {
+          id: archiveId,
+          subUserId: subUserId
+        },
+        select: {
+          id: true,
+          archiveName: true,
+          activity: true,
+          photoCount: true,
+          bodyPart: true,
+          detectionTime: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }),
+      // 获取检测记录（直接用 archiveId）
       prisma.detection.findMany({
         where: {
-          subUserId: subUserId,
-          archiveName: archive.archiveName
+          archiveId: archiveId
         },
         select: {
           id: true,
@@ -114,17 +106,23 @@ async function getArchiveDetections(request) {
         skip,
         take: limit
       }),
+      // 统计总数（直接用 archiveId）
       prisma.detection.count({
         where: {
-          subUserId: subUserId,
-          archiveName: archive.archiveName
+          archiveId: archiveId
         }
       })
     ])
 
+    if (!archive) {
+      console.log('❌ 档案不存在:', archiveId)
+      return createErrorResponse('档案不存在或无权限访问', 404)
+    }
+
+    console.log('✅ 找到档案:', archive.archiveName)
     console.log('✅ 获取检测记录成功，数量:', detections.length)
 
-    // 5. 构建检测报告
+    // 4. 构建检测报告
     const detectionReport = {
       archive: {
         id: archive.id,
@@ -162,7 +160,7 @@ async function getArchiveDetections(request) {
       }))
     }
 
-    // 6. 构建图片数组（按时间顺序排列，最新的在前）
+    // 5. 构建图片数组（按时间顺序排列，最新的在前）
     const imageArray = detections
       .filter(detection => detection.imageUrl) // 只包含有图片的检测记录
       .map(detection => ({
@@ -175,7 +173,7 @@ async function getArchiveDetections(request) {
         remark: detection.remark
       }))
 
-    // 7. 构建响应数据
+    // 6. 构建响应数据
     const responseData = {
       // 第一部分：检测报告
       report: detectionReport,

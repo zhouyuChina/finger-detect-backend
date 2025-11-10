@@ -444,11 +444,10 @@ async function createDetection(request) {
 
     console.log('✅ 找到档案:', existingArchive.archiveName)
 
-    // 4. 检查是否已有检测记录
+    // 4. 检查是否已有检测记录（使用 archiveId）
     const existingDetections = await prisma.detection.findMany({
       where: {
-        subUserId: subUser.id,
-        archiveName: existingArchive.archiveName,
+        archiveId: archiveId,
         status: 'completed'
       },
       select: {
@@ -468,13 +467,10 @@ async function createDetection(request) {
       // 已有报告，这是治疗过程中的拍照，不生成新报告
       console.log('📸 档案已存在且有报告，这是治疗过程中的拍照')
       
-      // 只更新档案的照片数量，不创建新的检测记录
+      // 只更新档案的照片数量，不创建新的检测记录（使用 archiveId）
       archive = await prisma.archive.update({
         where: {
-          subUserId_archiveName: {
-            subUserId: subUser.id,
-            archiveName: existingArchive.archiveName
-          }
+          id: archiveId
         },
         data: {
           photoCount: {
@@ -528,11 +524,12 @@ async function createDetection(request) {
       archive = existingArchive
     }
 
-    // 5. 创建检测记录（第一份报告）
+    // 5. 创建检测记录（第一份报告，使用 archiveId）
     const newDetection = await prisma.detection.create({
       data: {
+        archiveId: archiveId,
+        archiveName: archive.archiveName, // 兼容旧 schema
         subUserId: subUser.id,
-        archiveName: archive.archiveName,
         detectionType,
         imageUrl,
         result: thirdPartyResult.data.result,

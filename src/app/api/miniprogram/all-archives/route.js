@@ -82,11 +82,10 @@ async function getAllArchives(request) {
     // 3. 为每个档案获取最新的检测图片
     const archivesWithImages = await Promise.all(
       allArchives.map(async (archive) => {
-        // 查找该档案的最新检测记录
+        // 查找该档案的最新检测记录（使用 archiveId）
         const latestDetection = await prisma.detection.findFirst({
           where: {
-            archiveName: archive.archiveName,
-            subUserId: archive.subUserId
+            archiveId: archive.id
           },
           select: {
             imageUrl: true,

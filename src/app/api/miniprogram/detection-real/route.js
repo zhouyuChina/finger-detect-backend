@@ -213,11 +213,10 @@ async function createRealDetection(request) {
       console.log('✅ 图片转换完成')
     }
 
-    // 4. 检查是否已有检测记录（用于统计信息）
+    // 4. 检查是否已有检测记录（用于统计信息，使用 archiveId）
     const allExistingDetections = await prisma.detection.findMany({
       where: {
-        subUserId: subUser.id,
-        archiveName: existingArchive.archiveName,
+        archiveId: archiveId,
         status: 'completed'
       },
       select: {
@@ -229,11 +228,10 @@ async function createRealDetection(request) {
       }
     })
     
-    // 检查是否已有异常检测记录（灰指甲）
+    // 检查是否已有异常检测记录（灰指甲，使用 archiveId）
     const existingAbnormalDetections = await prisma.detection.findMany({
       where: {
-        subUserId: subUser.id,
-        archiveName: existingArchive.archiveName,
+        archiveId: archiveId,
         status: 'completed',
         result: 'onychomycosis'  // 只查找异常（灰指甲）记录
       },
@@ -321,11 +319,11 @@ async function createRealDetection(request) {
       })
     }
 
-    // 创建检测记录
+    // 创建检测记录（使用 archiveId）
     const detectionData = {
-      subUserId: subUser.id,
       archiveId: archive.id,
-      archiveName: archive.archiveName,
+      archiveName: archive.archiveName, // 兼容旧 schema，后端自行写入
+      subUserId: subUserId,
       detectionType: detectionType,
       imageUrl: savedImageUrl, // 使用保存后的图片URL
       result: finalResult,
