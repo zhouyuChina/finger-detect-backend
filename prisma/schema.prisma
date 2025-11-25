@@ -122,6 +122,7 @@ model Admin {
   email       String?                  @unique
   phone       String?
   role        String                   @default("admin")
+  permissions String[]                 @default([])
   isActive    Boolean                  @default(true)
   lastLogin   DateTime?
   createdAt   DateTime                 @default(now())
@@ -321,6 +322,18 @@ model SystemConfig {
   updatedAt   DateTime @updatedAt
 
   @@map("system_configs")
+}
+
+model SystemSettings {
+  id              String   @id @default(cuid())
+  siteName        String   @default("指纹检测后台管理系统")
+  siteDescription String   @default("微信小程序指纹检测后台管理系统")
+  maxUploadSize   Int      @default(10) // MB
+  sessionTimeout  Int      @default(30) // 分钟
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("system_settings")
 }
 
 model OperationLog {

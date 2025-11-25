@@ -1,16 +1,25 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { usePermissions } from '@/hooks/usePermissions'
+import { useSystemSettings } from '@/hooks/useSystemSettings'
 
 export default function AdminLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [currentAdmin, setCurrentAdmin] = useState(null)
   const pathname = usePathname()
   const router = useRouter()
   const userMenuRef = useRef(null)
 
-  const menuItems = [
+  // 使用权限管理 Hook
+  const { checkRouteAccess, isSuperAdmin } = usePermissions(currentAdmin)
+
+  // 使用系统设置 Hook
+  const { settings } = useSystemSettings()
+
+  const allMenuItems = [
     { name: '仪表盘', icon: '📊', href: '/dashboard' },
     { name: 'Banner管理', icon: '🖼️', href: '/banners' },
     { name: '资讯管理', icon: '📰', href: '/news' },
@@ -26,6 +35,12 @@ export default function AdminLayout({ children }) {
     { name: '系统设置', icon: '⚙️', href: '/settings' },
   ]
 
+  // 根据权限过滤菜单项
+  const menuItems = useMemo(() => {
+    if (!currentAdmin) return []
+    return allMenuItems.filter(item => checkRouteAccess(item.href))
+  }, [currentAdmin, checkRouteAccess])
+
   // 点击外部关闭用户菜单
   useEffect(() => {
     function handleClickOutside(event) {
@@ -36,6 +51,18 @@ export default function AdminLayout({ children }) {
 
     if (typeof window !== 'undefined') {
       document.addEventListener('mousedown', handleClickOutside);
+
+      // 获取当前管理员信息
+      const adminStr = localStorage.getItem('admin');
+      if (adminStr) {
+        try {
+          const admin = JSON.parse(adminStr);
+          setCurrentAdmin(admin);
+        } catch (error) {
+          console.error('解析管理员信息失败:', error);
+        }
+      }
+
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
@@ -49,7 +76,7 @@ export default function AdminLayout({ children }) {
         {/* Logo 区域 */}
         <div className="h-16 flex items-center justify-between px-4 border-b">
           {!collapsed && (
-            <h1 className="text-lg font-bold text-gray-800">指纹检测后台</h1>
+            <h1 className="text-lg font-bold text-gray-800">{settings.siteName}</h1>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -84,7 +111,7 @@ export default function AdminLayout({ children }) {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
           {!collapsed && (
             <div className="text-xs text-gray-500 text-center">
-              <p>© 2024 指纹检测系统</p>
+              <p>© {new Date().getFullYear()} {settings.siteName}</p>
               <p>Version 1.0.0</p>
             </div>
           )}
@@ -114,9 +141,19 @@ export default function AdminLayout({ children }) {
                 className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 focus:outline-none"
               >
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">A</span>
+                  <span className="text-white text-sm font-medium">
+                    {currentAdmin?.name?.charAt(0)?.toUpperCase() || 'A'}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-700">管理员</span>
+                <div className="text-left">
+                  <span className="text-sm text-gray-700 block">
+                    {currentAdmin?.name || '管理员'}
+                  </span>
+                  <span className="text-xs text-gray-500 block">
+                    {currentAdmin?.role === 'super_admin' ? '超级管理员' :
+                     currentAdmin?.role === 'admin' ? '管理员' : '操作员'}
+                  </span>
+                </div>
                 <svg
                   className={`w-4 h-4 text-gray-500 transition-transform ${showUserMenu ? 'rotate-180' : ''}`}
                   fill="none"
@@ -131,8 +168,8 @@ export default function AdminLayout({ children }) {
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">管理员</p>
-                    <p className="text-xs text-gray-500">admin@example.com</p>
+                    <p className="text-sm font-medium text-gray-900">{currentAdmin?.name || '管理员'}</p>
+                    <p className="text-xs text-gray-500">{currentAdmin?.email || '无邮箱'}</p>
                   </div>
                   <button
                     onClick={() => {
@@ -140,7 +177,7 @@ export default function AdminLayout({ children }) {
                       // 比如清除localStorage、cookies等
                       if (typeof window !== 'undefined') {
                         localStorage.removeItem('token');
-                        localStorage.removeItem('user');
+                        localStorage.removeItem('admin');
                       }
                       // 跳转到登录页
                       router.push('/');

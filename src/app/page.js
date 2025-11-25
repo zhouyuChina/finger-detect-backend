@@ -1,26 +1,51 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSystemSettings } from '@/hooks/useSystemSettings'
 
 export default function Home() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { settings } = useSystemSettings()
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
-    // 简单的登录验证（实际项目中应该调用后端 API）
-    if (username === 'admin' && password === 'admin123') {
-      // 登录成功，跳转到仪表盘
-      router.push('/dashboard')
-    } else {
-      alert('用户名或密码错误！')
+
+    try {
+      // 调用后端登录 API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username,
+          password
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 登录成功，保存 token 到 localStorage
+        localStorage.setItem('token', result.data.token)
+        localStorage.setItem('admin', JSON.stringify(result.data.admin))
+
+        // 跳转到仪表盘
+        router.push('/dashboard')
+      } else {
+        // 登录失败，显示错误信息
+        alert(result.message || '登录失败')
+      }
+    } catch (error) {
+      console.error('登录错误:', error)
+      alert('登录失败，请重试')
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   return (
@@ -28,9 +53,9 @@ export default function Home() {
       <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            指纹检测后台管理系统
+            {settings.siteName}
           </h1>
-          <p className="text-gray-600">请登录以继续</p>
+          <p className="text-gray-600">{settings.siteDescription}</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -74,8 +99,8 @@ export default function Home() {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <p>测试账号：admin</p>
-          <p>测试密码：admin123</p>
+          <p>超级管理员账号：admin</p>
+          <p>密码：admin123456</p>
         </div>
       </div>
     </div>

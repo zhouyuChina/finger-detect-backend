@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma, createPagination, createPaginatedResponse, handleDatabaseError } from '../../../lib/db.js'
 import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../../lib/middleware.js'
+import { checkPermission, PERMISSIONS } from '../../../lib/permissionMiddleware.js'
 
 // 获取轮播图列表
 export async function GET(request) {
   try {
+    // 管理员认证
+    const authResult = await adminAuthMiddleware(request)
+    if (authResult?.error) return authResult
+
+    // 权限检查
+    const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_VIEW, '查看轮播图列表')
+    if (permissionError) return permissionError
+
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 10
@@ -48,10 +57,14 @@ export async function POST(request) {
     // 限流检查
     const rateLimitResult = await rateLimitMiddleware(request, 50, 60)
     if (rateLimitResult) return rateLimitResult
-    
+
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
+    if (authResult?.error) return authResult
+
+    // 权限检查
+    const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_CREATE, '创建轮播图')
+    if (permissionError) return permissionError
     
     const body = await request.json()
     const { title, imageUrl, linkUrl, position, sort, isActive, textColor, startTime, endTime } = body

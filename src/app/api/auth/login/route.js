@@ -54,7 +54,8 @@ export async function POST(request) {
     const secret = process.env.JWT_SECRET || 'your-secret-key'
     const token = jwt.sign(
       {
-        id: admin.id,
+        userId: admin.id,  // 使用 userId 而不是 id，与 middleware 保持一致
+        id: admin.id,      // 保留 id 以兼容
         username: admin.username,
         role: admin.role
       },
@@ -87,7 +88,8 @@ export async function POST(request) {
         username: admin.username,
         name: admin.name,
         email: admin.email,
-        role: admin.role
+        role: admin.role,
+        permissions: admin.permissions || []
       }
     }, '登录成功')
     
