@@ -71,7 +71,7 @@ export default function Dashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">仪表盘</h1>
-          <p className="text-gray-600">欢迎使用指纹检测后台管理系统</p>
+          <p className="text-gray-600">欢迎使用指甲检测后台管理系统</p>
         </div>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -88,7 +88,7 @@ export default function Dashboard() {
       {/* 页面标题 */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">仪表盘</h1>
-        <p className="text-gray-600">欢迎使用指纹检测后台管理系统</p>
+        <p className="text-gray-600">欢迎使用指甲检测后台管理系统</p>
       </div>
 
       {/* 统计卡片 */}

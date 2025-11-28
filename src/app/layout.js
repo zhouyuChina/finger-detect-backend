@@ -2,8 +2,8 @@ import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import "./globals.css"
 
 export const metadata = {
-  title: "指纹检测后台管理系统",
-  description: "微信小程序指纹检测后台管理系统",
+  title: "指甲检测后台管理系统",
+  description: "微信小程序指甲检测后台管理系统",
 }
 
 export default function RootLayout({ children }) {

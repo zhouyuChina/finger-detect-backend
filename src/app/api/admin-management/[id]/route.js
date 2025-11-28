@@ -29,6 +29,7 @@ export async function GET(request, { params }) {
         email: true,
         phone: true,
         role: true,
+        permissions: true,
         isActive: true,
         lastLogin: true,
         createdAt: true,
@@ -65,7 +66,7 @@ export async function PUT(request, { params }) {
 
     const { id } = params
     const body = await request.json()
-    const { username, email, name, role, isActive, password } = body
+    const { username, email, name, role, isActive, password, permissions } = body
 
     // 检查管理员是否存在
     const existingAdmin = await prisma.admin.findUnique({
@@ -146,6 +147,7 @@ export async function PUT(request, { params }) {
       ...(name && { name }),
       ...(role && { role }),
       ...(typeof isActive === 'boolean' && { isActive }),
+      ...(permissions && { permissions }),
       updatedAt: new Date()
     }
 
@@ -171,6 +173,7 @@ export async function PUT(request, { params }) {
         name: true,
         email: true,
         role: true,
+        permissions: true,
         isActive: true,
         updatedAt: true
       }

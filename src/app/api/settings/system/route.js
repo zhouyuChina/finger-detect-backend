@@ -14,8 +14,8 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         data: {
-          siteName: '指纹检测后台管理系统',
-          siteDescription: '微信小程序指纹检测后台管理系统',
+          siteName: '',
+          siteDescription: '',
           maxUploadSize: 10,
           sessionTimeout: 30
         }

@@ -188,8 +188,8 @@ GET /api/miniprogram/detection?username=subuser001&page=1&limit=10
     },
     "thirdPartyResult": {
       "imageUrl": "https://example.com/image.jpg",
-      "description": "指纹检测结果正常，指纹纹路清晰，无异常特征。",
-      "suggestion": "建议保持良好的手部卫生，定期清洁指纹采集设备。",
+      "description": "指甲检测结果正常，指甲纹路清晰，无异常特征。",
+      "suggestion": "建议保持良好的手部卫生，定期清洁指甲采集设备。",
       "result": "normal",
       "confidence": 0.89,
       "detectionType": "left_hand_thumb",

@@ -19,6 +19,13 @@ export default function AdminLayout({ children }) {
   // 使用系统设置 Hook
   const { settings } = useSystemSettings()
 
+  // 动态更新页面标题
+  useEffect(() => {
+    if (settings.siteName) {
+      document.title = `${settings.siteName} - 管理后台`
+    }
+  }, [settings.siteName])
+
   const allMenuItems = [
     { name: '仪表盘', icon: '📊', href: '/dashboard' },
     { name: 'Banner管理', icon: '🖼️', href: '/banners' },
@@ -76,11 +83,11 @@ export default function AdminLayout({ children }) {
         {/* Logo 区域 */}
         <div className="h-16 flex items-center justify-between px-4 border-b">
           {!collapsed && (
-            <h1 className="text-lg font-bold text-gray-800">{settings.siteName}</h1>
+            <h1 className="text-lg font-bold text-gray-800 truncate">{settings.siteName || '管理系统'}</h1>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-md hover:bg-gray-100"
+            className="p-2 rounded-md hover:bg-gray-100 flex-shrink-0"
           >
             {collapsed ? '→' : '←'}
           </button>
@@ -111,7 +118,7 @@ export default function AdminLayout({ children }) {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
           {!collapsed && (
             <div className="text-xs text-gray-500 text-center">
-              <p>© {new Date().getFullYear()} {settings.siteName}</p>
+              <p>© {new Date().getFullYear()} {settings.siteName || '管理系统'}</p>
               <p>Version 1.0.0</p>
             </div>
           )}
@@ -123,17 +130,10 @@ export default function AdminLayout({ children }) {
         {/* 顶部导航栏 */}
         <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
           <div className="flex items-center space-x-4">
-            <h2 className="text-xl font-semibold text-gray-800">管理后台</h2>
+            <h2 className="text-xl font-semibold text-gray-800">{settings.siteName || '管理后台'}</h2>
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* 常用按钮区域 */}
-            <button className="p-2 rounded-md hover:bg-gray-100">
-              🔔
-            </button>
-            <button className="p-2 rounded-md hover:bg-gray-100">
-              ⚙️
-            </button>
             {/* 用户菜单 */}
             <div className="relative" ref={userMenuRef}>
               <button

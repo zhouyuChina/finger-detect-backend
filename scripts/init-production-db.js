@@ -27,8 +27,8 @@ async function initProductionDatabase() {
       where: { id: 1 },
       update: {},
       create: {
-        name: '指纹检测科技有限公司',
-        description: '专业的指纹检测服务提供商',
+        name: '指甲检测科技有限公司',
+        description: '专业的指甲检测服务提供商',
         address: '北京市朝阳区科技园区',
         phone: '400-123-4567',
         email: 'contact@finger-detect.com',
@@ -104,7 +104,7 @@ async function initProductionDatabase() {
         update: {},
         create: {
           title: `测试资讯${i}`,
-          content: `这是第${i}条测试资讯的内容，包含详细的指纹检测相关信息。`,
+          content: `这是第${i}条测试资讯的内容，包含详细的指甲检测相关信息。`,
           type: i % 3 === 0 ? 'TECHNOLOGY' : i % 3 === 1 ? 'NEWS' : 'ANNOUNCEMENT',
           status: 'PUBLISHED',
           author: '系统管理员',
@@ -128,7 +128,7 @@ async function initProductionDatabase() {
           userId: users[i % users.length].id,
           userNickname: users[i % users.length].nickname,
           archiveName: `档案${i}`,
-          activity: i % 2 === 0 ? '指纹录入' : '指纹比对',
+          activity: i % 2 === 0 ? '指甲录入' : '指甲比对',
           photoCount: i * 2,
           bodyPart: i % 3 === 0 ? '右手食指' : i % 3 === 1 ? '左手拇指' : '右手拇指',
           detectionTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000),

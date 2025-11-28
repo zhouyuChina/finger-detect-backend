@@ -16,8 +16,8 @@ END $$;
 -- 2. 创建 system_settings 表（如果不存在）
 CREATE TABLE IF NOT EXISTS "system_settings" (
     "id" TEXT NOT NULL,
-    "siteName" TEXT NOT NULL DEFAULT '指纹检测后台管理系统',
-    "siteDescription" TEXT NOT NULL DEFAULT '微信小程序指纹检测后台管理系统',
+    "siteName" TEXT NOT NULL DEFAULT '指甲检测后台管理系统',
+    "siteDescription" TEXT NOT NULL DEFAULT '微信小程序指甲检测后台管理系统',
     "maxUploadSize" INTEGER NOT NULL DEFAULT 10,
     "sessionTimeout" INTEGER NOT NULL DEFAULT 30,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -91,8 +91,8 @@ INSERT INTO "system_settings" (
 )
 SELECT
     'default_settings',
-    '指纹检测后台管理系统',
-    '微信小程序指纹检测后台管理系统',
+    '指甲检测后台管理系统',
+    '微信小程序指甲检测后台管理系统',
     10,
     30,
     CURRENT_TIMESTAMP,

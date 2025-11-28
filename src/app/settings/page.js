@@ -19,6 +19,10 @@ export default function SettingsPage() {
   // 新增管理员弹窗
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
 
+  // 编辑管理员弹窗
+  const [showEditAdminModal, setShowEditAdminModal] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState(null);
+
   // 删除确认对话框
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState(null);
@@ -45,8 +49,8 @@ export default function SettingsPage() {
 
   // 系统配置表单
   const [systemForm, setSystemForm] = useState({
-    siteName: '指纹检测后台管理系统',
-    siteDescription: '微信小程序指纹检测后台管理系统',
+    siteName: '',
+    siteDescription: '',
     maxUploadSize: '10',
     sessionTimeout: '30'
   });
@@ -194,7 +198,8 @@ export default function SettingsPage() {
           email: adminForm.email,
           password: adminForm.password,
           name: adminForm.username,
-          role: adminForm.role
+          role: adminForm.role,
+          permissions: adminForm.permissions
         })
       });
 
@@ -225,6 +230,80 @@ export default function SettingsPage() {
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
       setSaveStatus('管理员添加失败，请重试');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 编辑管理员保存
+  const handleEditAdminSave = async () => {
+    if (adminForm.password && adminForm.password !== adminForm.confirmPassword) {
+      setSaveStatus('密码与确认密码不匹配');
+      setTimeout(() => setSaveStatus(''), 3000);
+      return;
+    }
+
+    if (adminForm.password && adminForm.password.length < 6) {
+      setSaveStatus('密码长度至少6位');
+      setTimeout(() => setSaveStatus(''), 3000);
+      return;
+    }
+
+    if (adminForm.permissions.length === 0) {
+      setSaveStatus('请至少选择一个权限');
+      setTimeout(() => setSaveStatus(''), 3000);
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveStatus('更新中...');
+
+    try {
+      const token = localStorage.getItem('token');
+      const updateData = {
+        username: adminForm.username,
+        email: adminForm.email,
+        role: adminForm.role,
+        permissions: adminForm.permissions
+      };
+
+      // 如果提供了密码，则包含密码
+      if (adminForm.password.trim()) {
+        updateData.password = adminForm.password;
+      }
+
+      const response = await fetch(`/api/admin-management/${editingAdmin.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSaveStatus('管理员信息更新成功！');
+        setShowEditAdminModal(false);
+        setEditingAdmin(null);
+        setAdminForm({
+          username: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          role: 'admin',
+          permissions: []
+        });
+        await fetchAdmins();
+      } else {
+        setSaveStatus(result.message || '管理员信息更新失败');
+      }
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (error) {
+      console.error('管理员信息更新失败:', error);
+      setSaveStatus('管理员信息更新失败，请重试');
       setTimeout(() => setSaveStatus(''), 3000);
     } finally {
       setIsSaving(false);
@@ -353,51 +432,38 @@ export default function SettingsPage() {
   };
 
 
-  // 简单的编辑功能 - 使用提示输入
-  const handleEditAdmin = (admin) => {
-    const newUsername = prompt('修改用户名', admin.username);
-    if (newUsername === null) return; // 用户取消
-
-    const newEmail = prompt('修改邮箱', admin.email || '');
-    if (newEmail === null) return; // 用户取消
-
-    // 可以修改密码可选择
-    const newPassword = prompt('修改密码 (留空则不修改)', '');
-
-    updateAdmin(admin.id, {
-      username: newUsername.trim() || admin.username,
-      email: newEmail.trim() || admin.email,
-      ...(newPassword.trim() ? { password: newPassword.trim() } : {})
-    });
-  };
-
-  const updateAdmin = async (adminId, updateData) => {
+  // 打开编辑管理员弹窗
+  const handleEditAdmin = async (admin) => {
     setIsSaving(true);
-    setSaveStatus('更新中...');
-
     try {
+      // 获取管理员的详细信息（包括权限）
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin-management/${adminId}`, {
-        method: 'PUT',
+      const response = await fetch(`/api/admin-management/${admin.id}`, {
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updateData)
+        }
       });
-
       const result = await response.json();
 
       if (result.success) {
-        setSaveStatus('管理员信息更新成功！');
-        await fetchAdmins();
+        setEditingAdmin(result.data);
+        // 初始化表单数据
+        setAdminForm({
+          username: result.data.username,
+          email: result.data.email || '',
+          password: '',
+          confirmPassword: '',
+          role: result.data.role,
+          permissions: result.data.permissions || []
+        });
+        setShowEditAdminModal(true);
       } else {
-        setSaveStatus(result.message || '管理员信息更新失败');
+        setSaveStatus('获取管理员信息失败');
+        setTimeout(() => setSaveStatus(''), 3000);
       }
-      setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
-      console.error('管理员信息更新失败:', error);
-      setSaveStatus('管理员信息更新失败，请重试');
+      console.error('获取管理员信息失败:', error);
+      setSaveStatus('获取管理员信息失败');
       setTimeout(() => setSaveStatus(''), 3000);
     } finally {
       setIsSaving(false);
@@ -952,6 +1018,191 @@ export default function SettingsPage() {
                   }`}
                 >
                   {isSaving ? '保存中...' : '确认添加'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 编辑管理员弹窗 */}
+      {showEditAdminModal && editingAdmin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">编辑管理员</h3>
+              <button
+                onClick={() => {
+                  setShowEditAdminModal(false);
+                  setEditingAdmin(null);
+                  setAdminForm({
+                    username: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    role: 'admin',
+                    permissions: []
+                  });
+                }}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <span className="text-2xl">×</span>
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      用户名 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="username"
+                      value={adminForm.username}
+                      onChange={handleAdminChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      placeholder="请输入用户名"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      邮箱
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={adminForm.email}
+                      onChange={handleAdminChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      placeholder="请输入邮箱"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      新密码 <span className="text-gray-500 text-xs">(留空则不修改)</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={adminForm.password}
+                      onChange={handleAdminChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      placeholder="请输入新密码（至少6位）"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      确认新密码
+                    </label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={adminForm.confirmPassword}
+                      onChange={handleAdminChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      placeholder="请再次输入新密码"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      角色 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="role"
+                      value={adminForm.role}
+                      onChange={handleAdminChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    >
+                      <option value="admin">管理员</option>
+                      <option value="super_admin">超级管理员</option>
+                      <option value="operator">操作员</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      权限设置 <span className="text-red-500">*</span>
+                      <span className="ml-2 text-xs text-gray-500 font-normal">
+                        (已选 {adminForm.permissions.length}/{permissionOptions.length})
+                      </span>
+                    </label>
+                    {permissionOptions.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allSelected = permissionOptions.every(p => adminForm.permissions.includes(p.id));
+                          if (allSelected) {
+                            // 取消全选
+                            setAdminForm(prev => ({ ...prev, permissions: [] }));
+                          } else {
+                            // 全选
+                            setAdminForm(prev => ({ ...prev, permissions: permissionOptions.map(p => p.id) }));
+                          }
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {permissionOptions.every(p => adminForm.permissions.includes(p.id)) ? '取消全选' : '全选'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-md p-3">
+                    {permissionOptions.length > 0 ? (
+                      permissionOptions.map((permission) => (
+                        <label key={permission.id} className="flex items-start hover:bg-gray-50 p-2 rounded cursor-pointer transition-colors">
+                          <input
+                            type="checkbox"
+                            className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            checked={adminForm.permissions.includes(permission.id)}
+                            onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
+                          />
+                          <div className="ml-3 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">{permission.icon}</span>
+                              <span className="text-sm font-medium text-gray-700">{permission.label}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">{permission.description}</p>
+                          </div>
+                        </label>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>暂无可分配的权限</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3 border-t pt-4">
+                <button
+                  onClick={() => {
+                    setShowEditAdminModal(false);
+                    setEditingAdmin(null);
+                    setAdminForm({
+                      username: '',
+                      email: '',
+                      password: '',
+                      confirmPassword: '',
+                      role: 'admin',
+                      permissions: []
+                    });
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  disabled={isSaving}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleEditAdminSave}
+                  disabled={isSaving}
+                  className={`px-6 py-2 rounded-md text-white font-medium ${
+                    isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  {isSaving ? '保存中...' : '保存修改'}
                 </button>
               </div>
             </div>

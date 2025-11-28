@@ -157,16 +157,16 @@
   {
     "success": true,
     "data": {
-      "name": "指纹检测系统",
+      "name": "指甲检测系统",
       "logo": "/uploads/logo.png",
-      "description": "专业的指纹检测服务提供商",
+      "description": "专业的指甲检测服务提供商",
       "address": "北京市朝阳区xxx街道xxx号",
       "phone": "400-123-4567",
       "email": "contact@example.com",
       "website": "https://www.example.com",
       "wechat": "wechat_id",
       "version": "1.0.0",
-      "copyright": "© 2024 指纹检测系统. All rights reserved."
+      "copyright": "© 2024 指甲检测系统. All rights reserved."
     },
     "message": "获取关于我们信息成功",
     "code": 200

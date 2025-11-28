@@ -15,16 +15,16 @@ async function getAboutInfo(request) {
     // 如果没有企业信息，返回默认信息
     if (!company) {
       return createSuccessResponse({
-        name: '指纹检测系统',
+        name: '指甲检测系统',
         logo: null,
-        description: '专业的指纹检测服务提供商',
+        description: '专业的指甲检测服务提供商',
         address: null,
         phone: null,
         email: null,
         website: null,
         wechat: null,
         version: '1.0.0',
-        copyright: '© 2024 指纹检测系统. All rights reserved.'
+        copyright: '© 2024 指甲检测系统. All rights reserved.'
       }, '获取关于我们信息成功')
     }
 

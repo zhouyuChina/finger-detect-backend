@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 
 export function useSystemSettings() {
   const [settings, setSettings] = useState({
-    siteName: '指纹检测后台管理系统',
-    siteDescription: '微信小程序指纹检测后台管理系统',
+    siteName: '',
+    siteDescription: '',
     maxUploadSize: 10,
     sessionTimeout: 30
   })

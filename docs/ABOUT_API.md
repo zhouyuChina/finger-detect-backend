@@ -69,16 +69,16 @@ x-openid: <openid>            # 可选，使用openid认证
 {
   "success": true,
   "data": {
-    "name": "指纹检测科技有限公司",
+    "name": "指甲检测科技有限公司",
     "logo": "/uploads/logo.png",
-    "description": "专业的指纹检测服务提供商，致力于为用户提供高质量的指纹检测和分析服务。我们拥有先进的技术设备和专业的检测团队，确保检测结果的准确性和可靠性。",
+    "description": "专业的指甲检测服务提供商，致力于为用户提供高质量的指甲检测和分析服务。我们拥有先进的技术设备和专业的检测团队，确保检测结果的准确性和可靠性。",
     "address": "北京市朝阳区建国门外大街1号国贸大厦A座1001室",
     "phone": "400-123-4567",
     "email": "contact@fingerdetect.com",
     "website": "https://www.fingerdetect.com",
     "wechat": "fingerdetect_service",
     "version": "1.0.0",
-    "copyright": "© 2025 指纹检测科技有限公司. All rights reserved."
+    "copyright": "© 2025 指甲检测科技有限公司. All rights reserved."
   },
   "message": "获取关于我们信息成功",
   "code": 200
@@ -90,16 +90,16 @@ x-openid: <openid>            # 可选，使用openid认证
 {
   "success": true,
   "data": {
-    "name": "指纹检测系统",
+    "name": "指甲检测系统",
     "logo": null,
-    "description": "专业的指纹检测服务提供商",
+    "description": "专业的指甲检测服务提供商",
     "address": null,
     "phone": null,
     "email": null,
     "website": null,
     "wechat": null,
     "version": "1.0.0",
-    "copyright": "© 2024 指纹检测系统. All rights reserved."
+    "copyright": "© 2024 指甲检测系统. All rights reserved."
   },
   "message": "获取关于我们信息成功",
   "code": 200
