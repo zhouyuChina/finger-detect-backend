@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@/generated/prisma'
+import { adminAuthMiddleware } from '../../../../lib/middleware.js'
 
 const prisma = new PrismaClient()
 
-export async function GET() {
+export async function GET(request) {
   try {
+    // 验证管理员身份
+    const authResult = await adminAuthMiddleware(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     // 1. 微信用户数（ID的数量）- 从 wechat_user_verifications 表获取
     const wechatUserCount = await prisma.wechatUserVerification.count()
 

@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
 
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return authResult
+    if (authResult instanceof NextResponse) return authResult
 
     // 权限检查
     const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_VIEW, '查看轮播图详情')
@@ -48,7 +48,7 @@ export async function PUT(request, { params }) {
 
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return authResult
+    if (authResult instanceof NextResponse) return authResult
 
     // 权限检查
     const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_UPDATE, '更新轮播图')
@@ -111,7 +111,7 @@ export async function DELETE(request, { params }) {
 
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return authResult
+    if (authResult instanceof NextResponse) return authResult
 
     // 权限检查
     const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_DELETE, '删除轮播图')

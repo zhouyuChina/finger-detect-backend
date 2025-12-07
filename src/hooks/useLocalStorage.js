@@ -44,7 +44,20 @@ export function getLocalStorage(key) {
   if (typeof window === 'undefined') return null
   try {
     const item = window.localStorage.getItem(key)
-    return item ? JSON.parse(item) : null
+    if (!item) return null
+
+    // 对于 token，直接返回字符串，不进行 JSON 解析
+    if (key === 'token') {
+      return item
+    }
+
+    // 其他值尝试 JSON 解析
+    try {
+      return JSON.parse(item)
+    } catch {
+      // 如果解析失败，返回原始字符串
+      return item
+    }
   } catch (error) {
     console.error(`Error reading localStorage key "${key}":`, error)
     return null

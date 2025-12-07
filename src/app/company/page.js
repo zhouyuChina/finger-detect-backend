@@ -24,7 +24,12 @@ export default function CompanyPage() {
   const fetchCompanyData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/company');
+      const token = getLocalStorage('token');
+      const response = await fetch('/api/company', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const result = await response.json();
       
       if (response.ok) {

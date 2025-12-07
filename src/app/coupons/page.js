@@ -46,7 +46,12 @@ export default function CouponsPage() {
         status: searchStatus
       });
       
-      const response = await fetch(`/api/coupons?${params}`);
+      const token = getLocalStorage('token');
+      const response = await fetch(`/api/coupons?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const result = await response.json();
       
       if (response.ok) {

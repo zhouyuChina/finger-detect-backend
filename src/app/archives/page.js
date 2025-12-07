@@ -76,7 +76,12 @@ export default function ArchivesPage() {
       })
 
       console.log('📡 调用API:', `/api/archives?${params}`)
-      const response = await fetch(`/api/archives?${params}`)
+      const token = getLocalStorage('token')
+      const response = await fetch(`/api/archives?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const result = await response.json()
 
       if (response.ok) {

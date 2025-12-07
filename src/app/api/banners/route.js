@@ -8,7 +8,9 @@ export async function GET(request) {
   try {
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return authResult
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
 
     // 权限检查
     const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_VIEW, '查看轮播图列表')
@@ -60,7 +62,9 @@ export async function POST(request) {
 
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return authResult
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
 
     // 权限检查
     const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_CREATE, '创建轮播图')

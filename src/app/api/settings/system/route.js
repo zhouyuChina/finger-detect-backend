@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@/generated/prisma'
+import { adminAuthMiddleware } from '../../../../lib/middleware.js'
+import { checkPermission, PERMISSIONS } from '../../../../lib/permissionMiddleware.js'
 
 const prisma = new PrismaClient()
 
@@ -38,6 +40,16 @@ export async function GET() {
 // 保存系统配置
 export async function POST(request) {
   try {
+    // 验证管理员身份
+    const authResult = await adminAuthMiddleware(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
+    // 权限检查：只有超级管理员可以修改系统配置
+    const permissionError = checkPermission(authResult, PERMISSIONS.SETTINGS_SYSTEM_CONFIG, '修改系统配置')
+    if (permissionError) return permissionError
+
     const body = await request.json()
     const {
       siteName,

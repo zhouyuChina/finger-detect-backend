@@ -12,7 +12,7 @@ export async function GET(request) {
     
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
+    if (authResult instanceof NextResponse) return authResult
     
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || 'today' // today, week, month, year

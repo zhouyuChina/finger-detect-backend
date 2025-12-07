@@ -5,6 +5,12 @@ import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../..
 // 获取新闻列表
 export async function GET(request) {
   try {
+    // 管理员认证
+    const authResult = await adminAuthMiddleware(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 10
@@ -61,7 +67,7 @@ export async function POST(request) {
     
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
+    if (authResult instanceof NextResponse) return authResult
     
     const body = await request.json()
     const { 

@@ -11,7 +11,7 @@ export async function GET(request) {
     
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
+    if (authResult instanceof NextResponse) return NextResponse.json(authResult, { status: 401 })
     
     // 从系统配置表获取Banner配置
     const configs = await prisma.systemConfig.findMany({
@@ -54,7 +54,7 @@ export async function PUT(request) {
     
     // 管理员认证
     const authResult = await adminAuthMiddleware(request)
-    if (authResult?.error) return NextResponse.json(authResult, { status: 401 })
+    if (authResult instanceof NextResponse) return NextResponse.json(authResult, { status: 401 })
     
     const body = await request.json()
     const { banner_limit, banner_interval, banner_autoplay } = body

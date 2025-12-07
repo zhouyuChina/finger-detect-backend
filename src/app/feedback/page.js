@@ -27,8 +27,13 @@ export default function FeedbackPage() {
         type: searchType,
         status: searchStatus
       });
-      
-      const response = await fetch(`/api/feedbacks?${params}`);
+
+      const token = getLocalStorage('token');
+      const response = await fetch(`/api/feedbacks?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token || ''}`
+        }
+      });
       const result = await response.json();
       
       if (response.ok) {

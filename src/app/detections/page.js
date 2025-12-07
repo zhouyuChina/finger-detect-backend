@@ -48,7 +48,12 @@ export default function DetectionsPage() {
         }
       })
 
-      const response = await fetch(`/api/detections?${params}`)
+      const token = getLocalStorage('token')
+      const response = await fetch(`/api/detections?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const result = await response.json()
 
       if (response.ok) {

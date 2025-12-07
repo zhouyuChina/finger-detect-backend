@@ -67,7 +67,12 @@ export default function UserManagementPage() {
       const apiUrl = `/api/user-management?${params}`
       console.log('🌐 API URL:', apiUrl)
 
-      const response = await fetch(apiUrl)
+      const token = getLocalStorage('token')
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const result = await response.json()
 
       console.log('🔍 API Response:', result)

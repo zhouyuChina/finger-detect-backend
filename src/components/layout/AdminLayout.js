@@ -45,7 +45,12 @@ export default function AdminLayout({ children }) {
   // 根据权限过滤菜单项
   const menuItems = useMemo(() => {
     if (!currentAdmin) return []
-    return allMenuItems.filter(item => checkRouteAccess(item.href))
+    return allMenuItems.filter(item => {
+      // 系统设置对所有管理员都可见（用于修改密码）
+      if (item.href === '/settings') return true
+      // 其他菜单项根据权限判断
+      return checkRouteAccess(item.href)
+    })
   }, [currentAdmin, checkRouteAccess])
 
   // 点击外部关闭用户菜单

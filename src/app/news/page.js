@@ -22,7 +22,12 @@ export default function NewsPage() {
   const fetchNews = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/news')
+      const token = getLocalStorage('token')
+      const response = await fetch('/api/news', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const result = await response.json()
       
       if (response.ok) {

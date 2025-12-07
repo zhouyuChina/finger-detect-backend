@@ -15,6 +15,7 @@ export function useSystemSettings() {
 
   const fetchSettings = async () => {
     try {
+      // 获取系统设置不需要认证，因为用于显示站点名称等公共信息
       const response = await fetch('/api/settings/system')
       const result = await response.json()
 

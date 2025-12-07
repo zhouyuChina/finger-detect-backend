@@ -187,26 +187,38 @@ export default function SettingsPage() {
     try {
       // 调用 API 创建管理员
       const token = localStorage.getItem('token');
+      const createData = {
+        username: adminForm.username,
+        email: adminForm.email,
+        password: adminForm.password,
+        name: adminForm.username,
+        role: adminForm.role,
+        permissions: adminForm.permissions
+      };
+
+      // 调试信息
+      console.log('准备创建管理员，提交数据:', createData);
+      console.log('表单中的role值:', adminForm.role);
+
       const response = await fetch('/api/admin-management/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          username: adminForm.username,
-          email: adminForm.email,
-          password: adminForm.password,
-          name: adminForm.username,
-          role: adminForm.role,
-          permissions: adminForm.permissions
-        })
+        body: JSON.stringify(createData)
       });
 
       const result = await response.json();
 
+      // 调试信息
+      console.log('API返回结果:', result);
+
       if (!result.success) {
-        throw new Error(result.message || '创建失败');
+        setSaveStatus(result.message || '创建失败');
+        setTimeout(() => setSaveStatus(''), 5000);
+        setIsSaving(false);
+        return;
       }
 
       setSaveStatus('管理员添加成功！');
@@ -367,7 +379,12 @@ export default function SettingsPage() {
 
   const fetchCurrentAdmin = async () => {
     try {
-      const response = await fetch('/api/admin/me');
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const result = await response.json();
       if (result.success) {
         setCurrentAdmin(result.data);
@@ -539,11 +556,22 @@ export default function SettingsPage() {
     }
   };
 
+  // 根据用户角色动态生成标签页
   const tabs = [
     { id: 'password', name: '密码修改', icon: '🔐' },
-    { id: 'admin', name: '管理员管理', icon: '👥' },
-    { id: 'system', name: '系统配置', icon: '⚙️' }
+    ...(currentAdmin?.role === 'super_admin' ? [
+      { id: 'admin', name: '管理员管理', icon: '👥' },
+      { id: 'system', name: '系统配置', icon: '⚙️' }
+    ] : [])
   ];
+
+  // 调试信息
+  useEffect(() => {
+    console.log('当前管理员信息:', currentAdmin);
+    console.log('管理员角色:', currentAdmin?.role);
+    console.log('是否超级管理员:', currentAdmin?.role === 'super_admin');
+    console.log('标签页数量:', tabs.length);
+  }, [currentAdmin, tabs]);
 
   return (
     <div className="space-y-6">
@@ -793,70 +821,78 @@ export default function SettingsPage() {
           {/* 系统配置 */}
           {activeTab === 'system' && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">系统配置</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      系统名称
-                    </label>
-                    <input
-                      type="text"
-                      name="siteName"
-                      value={systemForm.siteName}
-                      onChange={handleSystemChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                    />
+              {/* 权限检查 - 只有超级管理员可见 */}
+              {currentAdmin?.role === 'super_admin' ? (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">系统配置</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        系统名称
+                      </label>
+                      <input
+                        type="text"
+                        name="siteName"
+                        value={systemForm.siteName}
+                        onChange={handleSystemChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        最大上传大小 (MB)
+                      </label>
+                      <input
+                        type="number"
+                        name="maxUploadSize"
+                        value={systemForm.maxUploadSize}
+                        onChange={handleSystemChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        会话超时时间 (分钟)
+                      </label>
+                      <input
+                        type="number"
+                        name="sessionTimeout"
+                        value={systemForm.sessionTimeout}
+                        onChange={handleSystemChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        系统描述
+                      </label>
+                      <textarea
+                        name="siteDescription"
+                        value={systemForm.siteDescription}
+                        onChange={handleSystemChange}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      最大上传大小 (MB)
-                    </label>
-                    <input
-                      type="number"
-                      name="maxUploadSize"
-                      value={systemForm.maxUploadSize}
-                      onChange={handleSystemChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      会话超时时间 (分钟)
-                    </label>
-                    <input
-                      type="number"
-                      name="sessionTimeout"
-                      value={systemForm.sessionTimeout}
-                      onChange={handleSystemChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      系统描述
-                    </label>
-                    <textarea
-                      name="siteDescription"
-                      value={systemForm.siteDescription}
-                      onChange={handleSystemChange}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                    />
+                  <div className="mt-6">
+                    <button
+                      onClick={handleSystemSave}
+                      disabled={isSaving}
+                      className={`px-6 py-2 rounded-md text-white font-medium ${
+                        isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                      }`}
+                    >
+                      {isSaving ? '保存中...' : '保存配置'}
+                    </button>
                   </div>
                 </div>
-                <div className="mt-6">
-                  <button
-                    onClick={handleSystemSave}
-                    disabled={isSaving}
-                    className={`px-6 py-2 rounded-md text-white font-medium ${
-                      isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
-                  >
-                    {isSaving ? '保存中...' : '保存配置'}
-                  </button>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="text-lg">您没有权限访问系统配置功能</p>
+                  <p className="text-sm mt-2">只有超级管理员可以修改系统配置</p>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>

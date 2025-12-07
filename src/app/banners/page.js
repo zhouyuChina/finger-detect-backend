@@ -21,7 +21,12 @@ export default function BannersPage() {
   // 获取Banner列表
   const fetchBanners = async () => {
     try {
-      const response = await fetch('/api/banners')
+      const token = getLocalStorage('token')
+      const response = await fetch('/api/banners', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const result = await response.json()
       
       if (response.ok) {
@@ -39,7 +44,12 @@ export default function BannersPage() {
   // 获取Banner配置
   const fetchConfig = async () => {
     try {
-      const response = await fetch('/api/banners/config')
+      const token = getLocalStorage('token')
+      const response = await fetch('/api/banners/config', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const result = await response.json()
       
       if (response.ok) {

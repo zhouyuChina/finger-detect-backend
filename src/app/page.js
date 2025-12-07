@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSystemSettings } from '@/hooks/useSystemSettings'
 
@@ -9,6 +9,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { settings } = useSystemSettings()
+
+  // 动态更新页面标题
+  useEffect(() => {
+    if (settings.siteName) {
+      document.title = settings.siteName
+    }
+  }, [settings.siteName])
 
   const handleLogin = async (e) => {
     e.preventDefault()
