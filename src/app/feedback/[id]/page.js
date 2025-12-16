@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
-export default function FeedbackDetailPage() {
+function FeedbackDetailPageContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -299,5 +299,13 @@ export default function FeedbackDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function FeedbackDetailPage() {
+  return (
+    <Suspense fallback={<div className="p-6">加载中...</div>}>
+      <FeedbackDetailPageContent />
+    </Suspense>
   );
 }

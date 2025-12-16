@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function SystemReplyFormPage() {
+function SystemReplyFormPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
@@ -291,5 +291,13 @@ export default function SystemReplyFormPage() {
         )}
       </form>
     </div>
+  );
+}
+
+export default function SystemReplyFormPage() {
+  return (
+    <Suspense fallback={<div className="p-6">加载中...</div>}>
+      <SystemReplyFormPageContent />
+    </Suspense>
   );
 }

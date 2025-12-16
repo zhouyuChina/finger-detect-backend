@@ -1,8 +1,8 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function DetectionsPage() {
+function DetectionsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -500,4 +500,12 @@ export default function DetectionsPage() {
       </div>
     </div>
   )
-} 
+}
+
+export default function DetectionsPage() {
+  return (
+    <Suspense fallback={<div className="p-6">加载中...</div>}>
+      <DetectionsPageContent />
+    </Suspense>
+  )
+}

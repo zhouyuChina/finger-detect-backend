@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getLocalStorage } from '@/hooks/useLocalStorage'
 import ExcelExporter from '@/components/ExcelExporter'
 
-export default function UserManagementPage() {
+function UserManagementPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -770,4 +770,12 @@ export default function UserManagementPage() {
       )}
     </div>
   )
-} 
+}
+
+export default function UserManagementPage() {
+  return (
+    <Suspense fallback={<div className="p-6">加载中...</div>}>
+      <UserManagementPageContent />
+    </Suspense>
+  )
+}

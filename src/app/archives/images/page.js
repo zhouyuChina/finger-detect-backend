@@ -1,9 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import SafeImage from '../../../components/SafeImage'
 
-export default function ArchiveImagesPage() {
+function ArchiveImagesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [images, setImages] = useState([])
@@ -375,5 +375,13 @@ export default function ArchiveImagesPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function ArchiveImagesPage() {
+  return (
+    <Suspense fallback={<div className="p-6">加载中...</div>}>
+      <ArchiveImagesPageContent />
+    </Suspense>
   )
 }
