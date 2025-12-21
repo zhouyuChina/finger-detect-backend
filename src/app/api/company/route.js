@@ -4,16 +4,12 @@ import { rateLimitMiddleware, adminAuthMiddleware } from '../../../../src/lib/mi
 
 const prisma = new PrismaClient()
 
-// 获取企业信息
+// 获取企业信息（公开接口，无需认证）
 export async function GET(request) {
   try {
     // 速率限制
-    const rateLimitResult = await rateLimitMiddleware(request)
+    const rateLimitResult = await rateLimitMiddleware(request, 100, 60)
     if (rateLimitResult) return rateLimitResult
-
-    // 管理员认证
-    const authResult = await adminAuthMiddleware(request)
-    if (authResult && authResult.error) return authResult
 
     // 获取企业信息（通常只有一条记录）
     const company = await prisma.company.findFirst({

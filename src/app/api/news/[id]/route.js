@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server'
 import { prisma, handleDatabaseError } from '../../../../lib/db.js'
 import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../../../lib/middleware.js'
 
-// 获取单个资讯
+// 获取单个资讯（公开接口，无需认证）
 export async function GET(request, { params }) {
   try {
     const { id } = await params
-    
+
     // 应用限流中间件
-    const rateLimitResult = await rateLimitMiddleware(request)
+    const rateLimitResult = await rateLimitMiddleware(request, 100, 60)
     if (rateLimitResult) return rateLimitResult
 
     const news = await prisma.news.findUnique({

@@ -2,14 +2,12 @@ import { NextResponse } from 'next/server'
 import { prisma, createPagination, createPaginatedResponse, handleDatabaseError } from '../../../lib/db.js'
 import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../../lib/middleware.js'
 
-// 获取新闻列表
+// 获取新闻列表（公开接口，无需认证）
 export async function GET(request) {
   try {
-    // 管理员认证
-    const authResult = await adminAuthMiddleware(request)
-    if (authResult instanceof NextResponse) {
-      return authResult
-    }
+    // 限流检查
+    const rateLimitResult = await rateLimitMiddleware(request, 100, 60)
+    if (rateLimitResult) return rateLimitResult
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1

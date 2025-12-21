@@ -3,21 +3,13 @@ import { prisma, handleDatabaseError } from '../../../../lib/db.js'
 import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../../../lib/middleware.js'
 import { checkPermission, PERMISSIONS } from '../../../../lib/permissionMiddleware.js'
 
-// 获取单个轮播图详情
+// 获取单个轮播图详情（公开接口，无需认证）
 export async function GET(request, { params }) {
   try {
     // 限流检查
     const rateLimitResult = await rateLimitMiddleware(request, 100, 60)
     if (rateLimitResult) return rateLimitResult
 
-    // 管理员认证
-    const authResult = await adminAuthMiddleware(request)
-    if (authResult instanceof NextResponse) return authResult
-
-    // 权限检查
-    const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_VIEW, '查看轮播图详情')
-    if (permissionError) return permissionError
-    
     const { id } = await params
     
     const banner = await prisma.banner.findUnique({

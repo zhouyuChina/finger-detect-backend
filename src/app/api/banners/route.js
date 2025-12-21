@@ -3,18 +3,12 @@ import { prisma, createPagination, createPaginatedResponse, handleDatabaseError 
 import { rateLimitMiddleware, adminAuthMiddleware, wrapResponse } from '../../../lib/middleware.js'
 import { checkPermission, PERMISSIONS } from '../../../lib/permissionMiddleware.js'
 
-// 获取轮播图列表
+// 获取轮播图列表（公开接口，无需认证）
 export async function GET(request) {
   try {
-    // 管理员认证
-    const authResult = await adminAuthMiddleware(request)
-    if (authResult instanceof NextResponse) {
-      return authResult
-    }
-
-    // 权限检查
-    const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_VIEW, '查看轮播图列表')
-    if (permissionError) return permissionError
+    // 限流检查
+    const rateLimitResult = await rateLimitMiddleware(request, 100, 60)
+    if (rateLimitResult) return rateLimitResult
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page')) || 1
