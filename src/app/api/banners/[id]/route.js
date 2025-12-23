@@ -43,7 +43,7 @@ export async function PUT(request, { params }) {
     if (authResult instanceof NextResponse) return authResult
 
     // 权限检查
-    const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_UPDATE, '更新轮播图')
+    const permissionError = checkPermission(authResult, PERMISSIONS.BANNER_EDIT, '更新轮播图')
     if (permissionError) return permissionError
     
     const { id } = await params
