@@ -89,10 +89,10 @@ export async function PUT(request, { params }) {
         }, { status: 400 })
       }
 
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(username)) {
         return NextResponse.json({
           success: false,
-          message: '用户名只能包含字母、数字和下划线'
+          message: '用户名只能包含字母、数字、下划线和中文'
         }, { status: 400 })
       }
 

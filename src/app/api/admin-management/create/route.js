@@ -28,6 +28,29 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
+    // 验证用户名格式
+    if (username.length < 3 || username.length > 20) {
+      return NextResponse.json({
+        success: false,
+        message: '用户名长度必须在3-20个字符之间'
+      }, { status: 400 })
+    }
+
+    if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(username)) {
+      return NextResponse.json({
+        success: false,
+        message: '用户名只能包含字母、数字、下划线和中文'
+      }, { status: 400 })
+    }
+
+    // 验证密码长度
+    if (password.length < 6) {
+      return NextResponse.json({
+        success: false,
+        message: '密码长度至少为6位'
+      }, { status: 400 })
+    }
+
     // 检查用户名是否已存在
     const existingAdmin = await prisma.admin.findUnique({
       where: { username }
