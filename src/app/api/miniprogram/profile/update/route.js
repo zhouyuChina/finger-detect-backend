@@ -131,10 +131,9 @@ async function updateUserProfile(request) {
           if (needsUpdate) {
             console.log('🔄 更新默认用户的用户名和真实姓名...')
             
-            // 检查新的用户名是否与其他子用户冲突
+            // 检查新的用户名是否与其他子用户冲突（全局检查，因为 username 有全局唯一约束）
             const existingSubUser = await tx.subUser.findFirst({
               where: {
-                wechatUserId: userId,
                 username: nickname,
                 id: { not: defaultSubUser.id }
               }
@@ -144,7 +143,7 @@ async function updateUserProfile(request) {
             if (existingSubUser) {
               // 如果用户名冲突，添加时间戳
               finalUsername = `${nickname}_${Date.now()}`
-              console.log('⚠️ 用户名冲突，使用新用户名:', finalUsername)
+              console.log('⚠️ 用户名冲突（全局），使用新用户名:', finalUsername)
             }
 
             updatedDefaultSubUser = await tx.subUser.update({
